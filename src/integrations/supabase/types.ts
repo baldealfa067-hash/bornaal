@@ -78,15 +78,7 @@ export type Database = {
           rating?: number
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "reviews_provider_id_fkey"
-            columns: ["provider_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       service_requests: {
         Row: {
