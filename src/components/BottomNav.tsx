@@ -2,7 +2,7 @@ import { Home, Search, PlusCircle, User } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 
 const items = [
-  { to: "/", icon: Home, label: "Início" },
+  { to: "/inicio", icon: Home, label: "Início" },
   { to: "/explorar", icon: Search, label: "Explorar" },
   { to: "/publicar", icon: PlusCircle, label: "Publicar" },
   { to: "/perfil", icon: User, label: "Perfil" },
