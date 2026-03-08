@@ -1,155 +1,145 @@
 import { Link } from "react-router-dom";
-import { Search, Star, MapPin, Users, ArrowRight, Zap, Shield, MessageSquare } from "lucide-react";
+import { Search, Star, Phone, ArrowRight, CheckCircle2, Shield, Clock, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { useProviders, useCategories } from "@/hooks/useProviders";
-import { StarRating } from "@/components/StarRating";
 import heroBg from "@/assets/hero-bg.jpg";
 
 const Landing = () => {
-  const { data: providers = [] } = useProviders();
-  const { data: categories = [] } = useCategories();
-  const topProviders = providers
-    .sort((a, b) => b.avgRating - a.avgRating)
-    .slice(0, 4);
+  const steps = [
+    {
+      number: "01",
+      icon: Search,
+      title: "Pesquise o serviço",
+      desc: "Navegue por categorias como electricistas, canalizadores, cabeleireiras e muito mais. Filtre por localização para encontrar profissionais perto de si.",
+    },
+    {
+      number: "02",
+      icon: Phone,
+      title: "Contacte directamente",
+      desc: "Ligue ou envie mensagem ao prestador. Sem intermediários, sem taxas escondidas. Comunicação directa e transparente.",
+    },
+    {
+      number: "03",
+      icon: Star,
+      title: "Avalie o serviço",
+      desc: "Após o serviço, deixe a sua avaliação. Ajude outros utilizadores a escolher os melhores profissionais da comunidade.",
+    },
+  ];
+
+  const benefits = [
+    { icon: Shield, title: "Confiança", desc: "Avaliações reais de clientes verificados" },
+    { icon: Clock, title: "Rapidez", desc: "Encontre o profissional certo em minutos" },
+    { icon: Users, title: "Comunidade", desc: "Rede crescente de prestadores locais" },
+  ];
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Hero Section */}
-      <section className="relative overflow-hidden">
-        <div
-          className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: `url(${heroBg})` }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-foreground/80 via-foreground/60 to-background" />
-        <div className="relative max-w-lg mx-auto px-4 pt-16 pb-20 text-center">
-          <h1 className="text-4xl font-bold text-white mb-2 tracking-tight">
+    <div className="min-h-screen bg-background font-sans">
+      {/* Hero */}
+      <section className="relative overflow-hidden min-h-[85vh] flex items-center">
+        <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${heroBg})` }} />
+        <div className="absolute inset-0 bg-gradient-to-br from-foreground/90 via-foreground/75 to-foreground/60" />
+        <div className="relative w-full max-w-2xl mx-auto px-6 py-20 text-center">
+          <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/15 rounded-full px-4 py-1.5 mb-8">
+            <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+            <span className="text-white/80 text-xs font-medium tracking-wide uppercase">Plataforma de serviços</span>
+          </div>
+          <h1 className="text-5xl md:text-6xl font-bold text-white mb-4 tracking-tight leading-[1.1]">
             Nó <span className="text-secondary">Tarbadja</span>
           </h1>
-          <p className="text-white/80 text-lg mb-8 font-medium">
-            A plataforma de serviços locais da Guiné-Bissau
+          <p className="text-white/70 text-lg md:text-xl mb-10 max-w-md mx-auto leading-relaxed">
+            A forma mais simples de encontrar prestadores de serviços de confiança na Guiné-Bissau.
           </p>
-          <Link to="/inicio">
-            <Button size="lg" className="rounded-full px-8 gap-2 text-base font-semibold shadow-lg">
-              <Search className="h-4 w-4" />
-              Encontrar prestadores
-            </Button>
-          </Link>
-          <p className="text-white/50 text-xs mt-4">
-            Electricistas, canalizadores, cabeleireiras e muito mais
-          </p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Link to="/inicio">
+              <Button size="lg" className="rounded-full px-8 gap-2 text-base font-semibold shadow-xl w-full sm:w-auto">
+                Encontrar prestadores
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            </Link>
+            <Link to="/auth">
+              <Button
+                size="lg"
+                variant="outline"
+                className="rounded-full px-8 text-base font-semibold border-white/20 text-white hover:bg-white/10 hover:text-white w-full sm:w-auto"
+              >
+                Registar como prestador
+              </Button>
+            </Link>
+          </div>
         </div>
       </section>
 
-      {/* Stats */}
-      <section className="max-w-lg mx-auto px-4 -mt-8 relative z-10">
-        <div className="grid grid-cols-3 gap-3">
-          {[
-            { icon: Users, label: "Prestadores", value: providers.length.toString() },
-            { icon: Star, label: "Categorias", value: categories.length.toString() },
-            { icon: MapPin, label: "Cidades", value: "3+" },
-          ].map((stat) => (
-            <div key={stat.label} className="bg-card rounded-xl p-4 text-center shadow-md border border-border/50">
-              <stat.icon className="h-5 w-5 mx-auto text-primary mb-1.5" />
-              <p className="text-xl font-bold text-foreground">{stat.value}</p>
-              <p className="text-[11px] text-muted-foreground">{stat.label}</p>
-            </div>
-          ))}
+      {/* Benefits strip */}
+      <section className="border-b border-border">
+        <div className="max-w-3xl mx-auto px-6 py-10">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
+            {benefits.map((b) => (
+              <div key={b.title} className="flex items-start gap-3">
+                <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                  <b.icon className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-foreground text-sm">{b.title}</h3>
+                  <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{b.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
       {/* How it works */}
-      <section className="max-w-lg mx-auto px-4 py-12">
-        <h2 className="text-xl font-bold text-foreground mb-6 text-center">Como funciona</h2>
-        <div className="flex flex-col gap-4">
-          {[
-            { icon: Search, title: "Pesquise", desc: "Encontre o profissional certo por categoria ou localização" },
-            { icon: MessageSquare, title: "Contacte", desc: "Ligue ou envie mensagem diretamente ao prestador" },
-            { icon: Star, title: "Avalie", desc: "Deixe a sua avaliação para ajudar a comunidade" },
-          ].map((step, i) => (
-            <div key={step.title} className="flex gap-4 items-start">
-              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                <step.icon className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-foreground">
-                  <span className="text-primary mr-1">{i + 1}.</span>
-                  {step.title}
-                </h3>
-                <p className="text-sm text-muted-foreground">{step.desc}</p>
+      <section className="max-w-2xl mx-auto px-6 py-20">
+        <div className="text-center mb-14">
+          <span className="text-xs font-semibold text-primary tracking-widest uppercase">Processo</span>
+          <h2 className="text-3xl font-bold text-foreground mt-2">Como funciona</h2>
+          <p className="text-muted-foreground mt-3 max-w-md mx-auto">
+            Em três passos simples, conecte-se com profissionais qualificados perto de si.
+          </p>
+        </div>
+
+        <div className="flex flex-col gap-0">
+          {steps.map((step, i) => (
+            <div key={step.number} className="relative">
+              {/* Connector line */}
+              {i < steps.length - 1 && (
+                <div className="absolute left-[27px] top-[56px] w-px h-[calc(100%-32px)] bg-border" />
+              )}
+              <div className="flex gap-6 pb-12 last:pb-0">
+                <div className="shrink-0">
+                  <div className="h-14 w-14 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center">
+                    <step.icon className="h-6 w-6 text-primary" />
+                  </div>
+                </div>
+                <div className="pt-1">
+                  <span className="text-[11px] font-bold text-primary tracking-widest">{step.number}</span>
+                  <h3 className="text-xl font-bold text-foreground mt-1">{step.title}</h3>
+                  <p className="text-sm text-muted-foreground mt-2 leading-relaxed">{step.desc}</p>
+                </div>
               </div>
             </div>
           ))}
         </div>
       </section>
 
-      {/* Top Providers */}
-      {topProviders.length > 0 && (
-        <section className="max-w-lg mx-auto px-4 pb-12">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-bold text-foreground">Melhores prestadores</h2>
-            <Link to="/inicio" className="text-sm text-primary flex items-center gap-1">
-              Ver todos <ArrowRight className="h-3 w-3" />
-            </Link>
+      {/* Features detail */}
+      <section className="bg-card border-y border-border">
+        <div className="max-w-2xl mx-auto px-6 py-20">
+          <div className="text-center mb-12">
+            <span className="text-xs font-semibold text-primary tracking-widest uppercase">Vantagens</span>
+            <h2 className="text-3xl font-bold text-foreground mt-2">Porquê Nó Tarbadja?</h2>
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            {topProviders.map((p) => (
-              <Link key={p.id} to={`/prestador/${p.id}`} className="block">
-                <div className="bg-card rounded-xl border border-border/50 overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-                  <div className="p-4 text-center">
-                    <Avatar className="h-16 w-16 mx-auto mb-2">
-                      {p.photo_url && <AvatarImage src={p.photo_url} alt={p.name} className="object-cover" />}
-                      <AvatarFallback className="bg-primary/10 text-primary text-xl font-bold">
-                        {p.name.charAt(0)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <h3 className="font-semibold text-foreground text-sm truncate">{p.name}</h3>
-                    <Badge variant="secondary" className="text-[10px] mt-1">{p.category}</Badge>
-                    <div className="flex items-center justify-center gap-1 mt-1.5">
-                      <StarRating rating={Math.round(p.avgRating)} />
-                      <span className="text-[10px] text-muted-foreground">({p.reviewCount})</span>
-                    </div>
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Categories */}
-      {categories.length > 0 && (
-        <section className="max-w-lg mx-auto px-4 pb-12">
-          <h2 className="text-xl font-bold text-foreground mb-4 text-center">Categorias disponíveis</h2>
-          <div className="flex flex-wrap gap-2 justify-center">
-            {categories.map((cat) => (
-              <Link key={cat} to={`/explorar?categoria=${encodeURIComponent(cat)}`}>
-                <Badge
-                  variant="outline"
-                  className="px-4 py-2 text-sm cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors"
-                >
-                  {cat}
-                </Badge>
-              </Link>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Features */}
-      <section className="max-w-lg mx-auto px-4 pb-12">
-        <div className="bg-primary/5 rounded-2xl p-6 border border-primary/10">
-          <h2 className="text-lg font-bold text-foreground mb-4 text-center">Porquê Nó Tarbadja?</h2>
-          <div className="flex flex-col gap-3">
+          <div className="grid gap-4">
             {[
-              { icon: Zap, text: "Rápido e fácil de usar" },
-              { icon: Shield, text: "Avaliações verificadas pela comunidade" },
-              { icon: MapPin, text: "Focado na Guiné-Bissau" },
-            ].map((f) => (
-              <div key={f.text} className="flex items-center gap-3">
-                <f.icon className="h-4 w-4 text-primary shrink-0" />
-                <span className="text-sm text-foreground">{f.text}</span>
+              "Sem taxas de intermediação — contacto directo",
+              "Avaliações verificadas por utilizadores reais",
+              "Focado exclusivamente na Guiné-Bissau",
+              "Interface simples, pensada para todos",
+              "Registo gratuito para prestadores e clientes",
+              "Suporte para múltiplas categorias de serviço",
+            ].map((text) => (
+              <div key={text} className="flex items-start gap-3 p-4 rounded-xl bg-background border border-border/50">
+                <CheckCircle2 className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                <span className="text-sm text-foreground font-medium">{text}</span>
               </div>
             ))}
           </div>
@@ -157,23 +147,37 @@ const Landing = () => {
       </section>
 
       {/* CTA */}
-      <section className="max-w-lg mx-auto px-4 pb-16 text-center">
-        <h2 className="text-xl font-bold text-foreground mb-2">É prestador de serviços?</h2>
-        <p className="text-sm text-muted-foreground mb-4">
-          Registe-se e alcance mais clientes na sua zona
+      <section className="max-w-2xl mx-auto px-6 py-20 text-center">
+        <h2 className="text-3xl font-bold text-foreground mb-3">
+          Pronto para começar?
+        </h2>
+        <p className="text-muted-foreground mb-8 max-w-sm mx-auto">
+          Junte-se à comunidade de prestadores e clientes na Guiné-Bissau. Registo rápido e gratuito.
         </p>
-        <Link to="/auth">
-          <Button variant="outline" className="rounded-full px-6 gap-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground">
-            Criar conta grátis <ArrowRight className="h-4 w-4" />
-          </Button>
-        </Link>
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <Link to="/inicio">
+            <Button size="lg" className="rounded-full px-8 gap-2 font-semibold shadow-lg w-full sm:w-auto">
+              Explorar prestadores <ArrowRight className="h-4 w-4" />
+            </Button>
+          </Link>
+          <Link to="/auth">
+            <Button size="lg" variant="outline" className="rounded-full px-8 font-semibold border-primary text-primary hover:bg-primary hover:text-primary-foreground w-full sm:w-auto">
+              Criar conta grátis
+            </Button>
+          </Link>
+        </div>
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-border py-6 text-center">
-        <p className="text-xs text-muted-foreground">
-          © 2026 Nó Tarbadja — Serviços locais na Guiné-Bissau
-        </p>
+      <footer className="border-t border-border py-8">
+        <div className="max-w-2xl mx-auto px-6 flex flex-col sm:flex-row justify-between items-center gap-4">
+          <p className="text-sm font-semibold text-foreground">
+            Nó <span className="text-primary">Tarbadja</span>
+          </p>
+          <p className="text-xs text-muted-foreground">
+            © 2026 Todos os direitos reservados
+          </p>
+        </div>
       </footer>
     </div>
   );
