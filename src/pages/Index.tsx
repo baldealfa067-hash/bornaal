@@ -38,9 +38,9 @@ const Index = () => {
     <div className="max-w-lg mx-auto px-4">
       {/* Header */}
       <div className="pt-8 pb-4">
-        <h1 className="text-2xl font-bold text-foreground">
+        <Link to="/" className="text-2xl font-bold text-foreground hover:opacity-80 transition-opacity">
           Nó <span className="text-primary">Tarbadja</span>
-        </h1>
+        </Link>
         <p className="text-sm text-muted-foreground mt-1">
           Encontre serviços locais na Guiné-Bissau
         </p>
