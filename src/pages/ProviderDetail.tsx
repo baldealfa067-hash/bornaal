@@ -61,7 +61,6 @@ const ProviderDetail = () => {
 
   return (
     <div className="max-w-lg mx-auto px-4 pt-6">
-      {/* Profile header */}
       <div className="flex items-start gap-4 mb-6">
         <Avatar className="h-20 w-20 rounded-xl">
           {provider.photo_url ? (
@@ -83,7 +82,6 @@ const ProviderDetail = () => {
         </div>
       </div>
 
-      {/* Info */}
       <div className="space-y-2 mb-6 text-sm">
         <div className="flex items-center gap-2 text-muted-foreground">
           <MapPin className="h-4 w-4" />
@@ -102,23 +100,19 @@ const ProviderDetail = () => {
         </div>
       )}
 
-      {/* WhatsApp button */}
       <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="block mb-8">
-        <Button className="w-full bg-[hsl(145,63%,32%)] hover:bg-[hsl(145,63%,28%)] text-white gap-2">
+        <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground gap-2">
           <MessageCircle className="h-5 w-5" />
           Contactar via WhatsApp
         </Button>
       </a>
 
-      {/* Reviews */}
       <section>
-        <h2 className="font-semibold mb-3">
-          Avaliações ({provider.reviewCount})
-        </h2>
+        <h2 className="font-semibold mb-3">Avaliações ({provider.reviewCount})</h2>
 
         {provider.reviews && provider.reviews.length > 0 ? (
           <div className="flex flex-col gap-3 mb-6">
-            {provider.reviews.map((r: any) => (
+            {provider.reviews.map((r) => (
               <div key={r.id} className="p-3 rounded-lg border bg-card">
                 <StarRating rating={r.rating} />
                 {r.comment && <p className="text-sm mt-1">{r.comment}</p>}
@@ -132,7 +126,6 @@ const ProviderDetail = () => {
           <p className="text-sm text-muted-foreground mb-6">Ainda sem avaliações.</p>
         )}
 
-        {/* Review form */}
         {user && (
           <form onSubmit={handleReview} className="space-y-3 border rounded-lg p-4 bg-card">
             <h3 className="font-medium text-sm">Deixe a sua avaliação</h3>
