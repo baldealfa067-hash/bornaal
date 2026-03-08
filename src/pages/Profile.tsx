@@ -8,7 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
-import { LogOut } from "lucide-react";
+import { LogOut, Trash2, ImagePlus } from "lucide-react";
+import { usePortfolio, useUploadPortfolioImage, useDeletePortfolioImage } from "@/hooks/usePortfolio";
 
 const Profile = () => {
   const { user, role, signOut } = useAuth();
@@ -21,6 +22,11 @@ const Profile = () => {
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [existingProfile, setExistingProfile] = useState(false);
+  const [profileId, setProfileId] = useState<string | null>(null);
+
+  const { data: portfolio = [] } = usePortfolio(profileId ?? "");
+  const uploadPortfolio = useUploadPortfolioImage();
+  const deletePortfolio = useDeletePortfolioImage();
 
   useEffect(() => {
     if (user && role === "provider") {
@@ -38,6 +44,7 @@ const Profile = () => {
             setDescription(data.description ?? "");
             setPhotoUrl(data.photo_url);
             setExistingProfile(true);
+            setProfileId(data.id);
           }
         });
     }
@@ -48,9 +55,7 @@ const Profile = () => {
       <div className="max-w-lg mx-auto px-4 pt-12 text-center">
         <h1 className="text-xl font-bold mb-2">Perfil</h1>
         <p className="text-muted-foreground mb-4">Faça login para ver o seu perfil.</p>
-        <Link to="/auth">
-          <Button>Entrar</Button>
-        </Link>
+        <Link to="/auth"><Button>Entrar</Button></Link>
       </div>
     );
   }
@@ -87,15 +92,13 @@ const Profile = () => {
       };
 
       if (existingProfile) {
-        const { error } = await supabase
-          .from("profiles")
-          .update(profileData)
-          .eq("user_id", user.id);
+        const { error } = await supabase.from("profiles").update(profileData).eq("user_id", user.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("profiles").insert(profileData);
+        const { data, error } = await supabase.from("profiles").insert(profileData).select("id").single();
         if (error) throw error;
         setExistingProfile(true);
+        setProfileId(data.id);
       }
 
       toast({ title: "Perfil guardado com sucesso!" });
@@ -104,6 +107,18 @@ const Profile = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handlePortfolioUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !profileId) return;
+    try {
+      await uploadPortfolio.mutateAsync({ providerId: profileId, userId: user.id, file });
+      toast({ title: "Imagem adicionada ao portfólio!" });
+    } catch (err: any) {
+      toast({ title: "Erro", description: err.message, variant: "destructive" });
+    }
+    e.target.value = "";
   };
 
   return (
@@ -120,72 +135,73 @@ const Profile = () => {
       </div>
 
       {role === "provider" ? (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Perfil do Prestador</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label>Nome *</Label>
-                <Input value={name} onChange={(e) => setName(e.target.value)} maxLength={100} required />
-              </div>
-              <div className="space-y-2">
-                <Label>Categoria *</Label>
-                <Input
-                  placeholder="Ex: Electricista, Carpinteiro..."
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  maxLength={100}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Telefone *</Label>
-                <Input
-                  placeholder="+245..."
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  maxLength={20}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Localização *</Label>
-                <Input
-                  placeholder="Ex: Bissau"
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
-                  maxLength={200}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Descrição</Label>
-                <Textarea
-                  placeholder="Descreva os seus serviços..."
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  maxLength={1000}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Foto</Label>
-                <Input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => setPhotoFile(e.target.files?.[0] ?? null)}
-                />
-                {photoUrl && (
-                  <img src={photoUrl} alt="Foto" className="h-16 w-16 rounded-lg object-cover mt-1" />
-                )}
-              </div>
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? "A guardar..." : existingProfile ? "Atualizar perfil" : "Criar perfil"}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
+        <div className="space-y-4">
+          <Card>
+            <CardHeader><CardTitle className="text-lg">Perfil do Prestador</CardTitle></CardHeader>
+            <CardContent>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Nome *</Label>
+                  <Input value={name} onChange={(e) => setName(e.target.value)} maxLength={100} required />
+                </div>
+                <div className="space-y-2">
+                  <Label>Categoria *</Label>
+                  <Input placeholder="Ex: Electricista, Carpinteiro..." value={category} onChange={(e) => setCategory(e.target.value)} maxLength={100} required />
+                </div>
+                <div className="space-y-2">
+                  <Label>Telefone *</Label>
+                  <Input placeholder="+245..." value={phone} onChange={(e) => setPhone(e.target.value)} maxLength={20} required />
+                </div>
+                <div className="space-y-2">
+                  <Label>Localização *</Label>
+                  <Input placeholder="Ex: Bissau" value={location} onChange={(e) => setLocation(e.target.value)} maxLength={200} required />
+                </div>
+                <div className="space-y-2">
+                  <Label>Descrição</Label>
+                  <Textarea placeholder="Descreva os seus serviços..." value={description} onChange={(e) => setDescription(e.target.value)} maxLength={1000} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Foto de perfil</Label>
+                  <Input type="file" accept="image/*" onChange={(e) => setPhotoFile(e.target.files?.[0] ?? null)} />
+                  {photoUrl && <img src={photoUrl} alt="Foto" className="h-16 w-16 rounded-lg object-cover mt-1" />}
+                </div>
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading ? "A guardar..." : existingProfile ? "Atualizar perfil" : "Criar perfil"}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+
+          {/* Portfolio section */}
+          {existingProfile && profileId && (
+            <Card>
+              <CardHeader><CardTitle className="text-lg">Portfólio ({portfolio.length}/6)</CardTitle></CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-3 gap-2 mb-3">
+                  {portfolio.map((img) => (
+                    <div key={img.id} className="relative aspect-square rounded-lg overflow-hidden border bg-muted group">
+                      <img src={img.image_url} alt={img.caption || "Trabalho"} className="w-full h-full object-cover" />
+                      <button
+                        onClick={() => deletePortfolio.mutate({ id: img.id, providerId: profileId })}
+                        className="absolute top-1 right-1 h-6 w-6 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ))}
+                  {portfolio.length < 6 && (
+                    <label className="aspect-square rounded-lg border-2 border-dashed border-border flex flex-col items-center justify-center cursor-pointer hover:border-primary/50 transition-colors">
+                      <ImagePlus className="h-6 w-6 text-muted-foreground" />
+                      <span className="text-[10px] text-muted-foreground mt-1">Adicionar</span>
+                      <input type="file" accept="image/*" className="hidden" onChange={handlePortfolioUpload} />
+                    </label>
+                  )}
+                </div>
+                <p className="text-[11px] text-muted-foreground">Adicione até 6 fotos dos seus trabalhos.</p>
+              </CardContent>
+            </Card>
+          )}
+        </div>
       ) : (
         <Card>
           <CardContent className="py-8 text-center">
