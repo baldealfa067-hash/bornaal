@@ -1,9 +1,23 @@
-import { Link } from "react-router-dom";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { Search, Star, Phone, ArrowRight, CheckCircle2, Shield, Clock, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import heroBg from "@/assets/hero-bg.jpg";
 
 const Landing = () => {
+  const [searchQuery, setSearchQuery] = useState("");
+  const navigate = useNavigate();
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/explorar?q=${encodeURIComponent(searchQuery.trim())}`);
+    } else {
+      navigate("/explorar");
+    }
+  };
+
   const steps = [
     {
       number: "01",
@@ -45,9 +59,30 @@ const Landing = () => {
           <h1 className="text-5xl md:text-6xl font-bold text-white mb-4 tracking-tight leading-[1.1]">
             Nó <span className="text-secondary">Tarbadja</span>
           </h1>
-          <p className="text-white/70 text-lg md:text-xl mb-10 max-w-md mx-auto leading-relaxed">
+          <p className="text-white/70 text-lg md:text-xl mb-8 max-w-md mx-auto leading-relaxed">
             A forma mais simples de encontrar prestadores de serviços de confiança na Guiné-Bissau.
           </p>
+
+          {/* Search bar */}
+          <form onSubmit={handleSearch} className="max-w-md mx-auto mb-10">
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+              <Input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Pesquisar electricista, canalizador, cabeleireira..."
+                className="pl-12 pr-24 h-13 rounded-full bg-white/95 backdrop-blur-sm border-0 text-foreground text-sm shadow-xl"
+              />
+              <Button
+                type="submit"
+                size="sm"
+                className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded-full px-5"
+              >
+                Buscar
+              </Button>
+            </div>
+          </form>
+
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link to="/inicio">
               <Button size="lg" className="rounded-full px-8 gap-2 text-base font-semibold shadow-xl w-full sm:w-auto">
@@ -100,7 +135,6 @@ const Landing = () => {
         <div className="flex flex-col gap-0">
           {steps.map((step, i) => (
             <div key={step.number} className="relative">
-              {/* Connector line */}
               {i < steps.length - 1 && (
                 <div className="absolute left-[27px] top-[56px] w-px h-[calc(100%-32px)] bg-border" />
               )}
@@ -170,11 +204,18 @@ const Landing = () => {
 
       {/* Footer */}
       <footer className="border-t border-border py-8">
-        <div className="max-w-2xl mx-auto px-6 flex flex-col sm:flex-row justify-between items-center gap-4">
-          <p className="text-sm font-semibold text-foreground">
-            Nó <span className="text-primary">Tarbadja</span>
-          </p>
-          <p className="text-xs text-muted-foreground">
+        <div className="max-w-2xl mx-auto px-6">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-4">
+            <p className="text-sm font-semibold text-foreground">
+              Nó <span className="text-primary">Tarbadja</span>
+            </p>
+            <div className="flex gap-4 text-xs">
+              <Link to="/sobre" className="text-muted-foreground hover:text-foreground transition-colors">Sobre</Link>
+              <Link to="/termos" className="text-muted-foreground hover:text-foreground transition-colors">Termos de Uso</Link>
+              <Link to="/privacidade" className="text-muted-foreground hover:text-foreground transition-colors">Privacidade</Link>
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground text-center sm:text-left">
             © 2026 Todos os direitos reservados
           </p>
         </div>

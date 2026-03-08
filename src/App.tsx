@@ -12,6 +12,10 @@ import Explore from "./pages/Explore";
 import Publish from "./pages/Publish";
 import Profile from "./pages/Profile";
 import ProviderDetail from "./pages/ProviderDetail";
+import Messages from "./pages/Messages";
+import About from "./pages/About";
+import Terms from "./pages/Terms";
+import Privacy from "./pages/Privacy";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -25,12 +29,16 @@ const App = () => (
         <AuthProvider>
           <Routes>
             <Route path="/" element={<Landing />} />
+            <Route path="/sobre" element={<About />} />
+            <Route path="/termos" element={<Terms />} />
+            <Route path="/privacidade" element={<Privacy />} />
             <Route element={<Layout />}>
               <Route path="/inicio" element={<Index />} />
               <Route path="/explorar" element={<Explore />} />
               <Route path="/publicar" element={<Publish />} />
               <Route path="/perfil" element={<Profile />} />
               <Route path="/prestador/:id" element={<ProviderDetail />} />
+              <Route path="/mensagens" element={<Messages />} />
             </Route>
             <Route path="/auth" element={<Auth />} />
             <Route path="*" element={<NotFound />} />
