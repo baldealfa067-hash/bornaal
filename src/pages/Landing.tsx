@@ -83,20 +83,11 @@ const Landing = () => {
             </div>
           </form>
 
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <div className="flex justify-center">
             <Link to="/inicio">
-              <Button size="lg" className="rounded-full px-8 gap-2 text-base font-semibold shadow-xl w-full sm:w-auto">
+              <Button size="lg" className="rounded-full px-8 gap-2 text-base font-semibold shadow-xl">
                 Encontrar prestadores
                 <ArrowRight className="h-4 w-4" />
-              </Button>
-            </Link>
-            <Link to="/auth">
-              <Button
-                size="lg"
-                variant="outline"
-                className="rounded-full px-8 text-base font-semibold bg-white/10 backdrop-blur-sm border-white/40 text-white hover:bg-white hover:text-foreground w-full sm:w-auto"
-              >
-                Registar como prestador
               </Button>
             </Link>
           </div>
@@ -188,15 +179,10 @@ const Landing = () => {
         <p className="text-muted-foreground mb-8 max-w-sm mx-auto">
           Junte-se à comunidade de prestadores e clientes na Guiné-Bissau. Registo rápido e gratuito.
         </p>
-        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+        <div className="flex justify-center">
           <Link to="/inicio">
-            <Button size="lg" className="rounded-full px-8 gap-2 font-semibold shadow-lg w-full sm:w-auto">
+            <Button size="lg" className="rounded-full px-8 gap-2 font-semibold shadow-lg">
               Explorar prestadores <ArrowRight className="h-4 w-4" />
-            </Button>
-          </Link>
-          <Link to="/auth">
-            <Button size="lg" variant="outline" className="rounded-full px-8 font-semibold border-primary text-primary hover:bg-primary hover:text-primary-foreground w-full sm:w-auto">
-              Criar conta grátis
             </Button>
           </Link>
         </div>
