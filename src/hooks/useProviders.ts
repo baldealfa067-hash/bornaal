@@ -10,6 +10,7 @@ export interface ProviderWithRating {
   location: string;
   description: string | null;
   photo_url: string | null;
+  starting_price: number | null;
   avgRating: number;
   reviewCount: number;
 }
