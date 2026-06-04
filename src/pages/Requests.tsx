@@ -54,7 +54,7 @@ const Requests = () => {
       return;
     }
     try {
-      await create.mutateAsync(parsed.data);
+      await create.mutateAsync(parsed.data as Required<typeof form>);
       toast({ title: "Pedido publicado!", description: "Os prestadores podem agora contactá-lo." });
       setOpen(false);
       setForm({ requester_name: "", requester_phone: "", category: "", location: "", description: "" });
