@@ -154,8 +154,10 @@ export type Database = {
           description: string
           id: string
           location: string
+          requester_name: string | null
+          requester_phone: string | null
           status: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           category: string
@@ -163,8 +165,10 @@ export type Database = {
           description: string
           id?: string
           location: string
+          requester_name?: string | null
+          requester_phone?: string | null
           status?: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           category?: string
@@ -172,8 +176,10 @@ export type Database = {
           description?: string
           id?: string
           location?: string
+          requester_name?: string | null
+          requester_phone?: string | null
           status?: string
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: []
       }
