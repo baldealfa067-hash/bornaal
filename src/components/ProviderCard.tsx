@@ -19,7 +19,6 @@ interface ProviderCardProps {
 
 export const ProviderCard = ({
   id, name, category, location, phone, photo_url, avgRating, reviewCount
-}: ProviderCardProps) => (
 }: ProviderCardProps) => {
   const whatsappUrl = `https://wa.me/${phone.replace(/\D/g, "")}?text=${encodeURIComponent(
     `Olá ${name}, encontrei o seu perfil no Nó Tarbadja e gostaria de saber mais sobre os seus serviços.`
