@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { StarRating } from "./StarRating";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { formatCFA } from "@/lib/format";
 
 interface ProviderCardProps {
   id: string;
@@ -13,12 +14,13 @@ interface ProviderCardProps {
   location: string;
   phone: string;
   photo_url?: string | null;
+  starting_price?: number | null;
   avgRating: number;
   reviewCount: number;
 }
 
 export const ProviderCard = ({
-  id, name, category, location, phone, photo_url, avgRating, reviewCount
+  id, name, category, location, phone, photo_url, starting_price, avgRating, reviewCount
 }: ProviderCardProps) => {
   const whatsappUrl = `https://wa.me/${phone.replace(/\D/g, "")}?text=${encodeURIComponent(
     `Olá ${name}, encontrei o seu perfil no Nó Tarbadja e gostaria de saber mais sobre os seus serviços.`
@@ -47,6 +49,11 @@ export const ProviderCard = ({
               <MapPin className="h-3 w-3" />
               <span className="truncate">{location}</span>
             </div>
+            {starting_price != null && (
+              <div className="mt-1 text-xs font-semibold text-primary">
+                desde {formatCFA(starting_price)}
+              </div>
+            )}
           </div>
         </Link>
         <a

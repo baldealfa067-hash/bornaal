@@ -83,6 +83,7 @@ export type Database = {
           name: string
           phone: string
           photo_url: string | null
+          starting_price: number | null
           updated_at: string
           user_id: string
         }
@@ -95,6 +96,7 @@ export type Database = {
           name: string
           phone: string
           photo_url?: string | null
+          starting_price?: number | null
           updated_at?: string
           user_id: string
         }
@@ -107,6 +109,7 @@ export type Database = {
           name?: string
           phone?: string
           photo_url?: string | null
+          starting_price?: number | null
           updated_at?: string
           user_id?: string
         }
