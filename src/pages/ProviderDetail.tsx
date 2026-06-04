@@ -1,10 +1,11 @@
 import { useParams } from "react-router-dom";
-import { MapPin, Phone, MessageCircle } from "lucide-react";
+import { MapPin, Phone, MessageCircle, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { StarRating } from "@/components/StarRating";
 import { useProvider } from "@/hooks/useProviders";
+import { formatCFA } from "@/lib/format";
 
 const ProviderDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -54,6 +55,12 @@ const ProviderDetail = () => {
           <Phone className="h-4 w-4" />
           <span>{provider.phone}</span>
         </div>
+        {provider.starting_price != null && (
+          <div className="flex items-center gap-2 text-foreground">
+            <Wallet className="h-4 w-4 text-primary" />
+            <span className="font-semibold">A partir de {formatCFA(provider.starting_price)}</span>
+          </div>
+        )}
       </div>
 
       {provider.description && (
