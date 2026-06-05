@@ -12,6 +12,9 @@ import About from "./pages/About";
 import Requests from "./pages/Requests";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
+import Login from "./pages/Login";
+import AdminDashboard from "./pages/AdminDashboard";
+import ProviderDashboard from "./pages/ProviderDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -27,6 +30,9 @@ const App = () => (
           <Route path="/sobre" element={<About />} />
           <Route path="/termos" element={<Terms />} />
           <Route path="/privacidade" element={<Privacy />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/painel" element={<ProviderDashboard />} />
           <Route element={<Layout />}>
             <Route path="/inicio" element={<Index />} />
             <Route path="/explorar" element={<Explore />} />
