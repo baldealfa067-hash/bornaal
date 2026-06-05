@@ -57,7 +57,7 @@ export const useProvider = (id: string) =>
 
       const { data: reviews } = await supabase
         .from("reviews")
-        .select("id, rating, comment, created_at, user_id")
+        .select("id, rating, comment, created_at, user_id, reviewer_name")
         .eq("provider_id", id);
 
       const ratings = (reviews ?? []).map((r) => r.rating);
