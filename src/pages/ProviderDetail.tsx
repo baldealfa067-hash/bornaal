@@ -1,15 +1,56 @@
 import { useParams } from "react-router-dom";
+import { useState } from "react";
 import { MapPin, Phone, MessageCircle, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { StarRating } from "@/components/StarRating";
 import { useProvider } from "@/hooks/useProviders";
 import { formatCFA } from "@/lib/format";
+import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 const ProviderDetail = () => {
   const { id } = useParams<{ id: string }>();
   const { data: provider, isLoading } = useProvider(id!);
+  const queryClient = useQueryClient();
+  const [rating, setRating] = useState(0);
+  const [reviewerName, setReviewerName] = useState("");
+  const [comment, setComment] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  const submitReview = async () => {
+    if (!id) return;
+    if (rating < 1) {
+      toast.error("Selecione uma avaliação em estrelas");
+      return;
+    }
+    if (!reviewerName.trim()) {
+      toast.error("Indique o seu nome");
+      return;
+    }
+    setSubmitting(true);
+    const { error } = await supabase.from("reviews").insert({
+      provider_id: id,
+      rating,
+      comment: comment.trim() || null,
+      reviewer_name: reviewerName.trim(),
+    } as never);
+    setSubmitting(false);
+    if (error) {
+      toast.error("Erro ao enviar avaliação");
+      return;
+    }
+    toast.success("Avaliação enviada. Obrigado!");
+    setRating(0);
+    setReviewerName("");
+    setComment("");
+    queryClient.invalidateQueries({ queryKey: ["provider", id] });
+    queryClient.invalidateQueries({ queryKey: ["providers"] });
+  };
 
   if (isLoading) {
     return <div className="flex items-center justify-center min-h-screen text-muted-foreground">A carregar...</div>;
@@ -83,11 +124,37 @@ const ProviderDetail = () => {
       <section>
         <h2 className="font-semibold mb-3">Avaliações ({provider.reviewCount})</h2>
 
+        <div className="p-4 rounded-lg border bg-card mb-4 space-y-3">
+          <p className="text-sm font-medium">Deixe a sua avaliação</p>
+          <div className="flex items-center gap-2">
+            <StarRating rating={rating} onChange={setRating} size="md" />
+          </div>
+          <Input
+            placeholder="O seu nome"
+            value={reviewerName}
+            onChange={(e) => setReviewerName(e.target.value)}
+          />
+          <Textarea
+            placeholder="Comentário (opcional)"
+            value={comment}
+            onChange={(e) => setComment(e.target.value)}
+            rows={3}
+          />
+          <Button onClick={submitReview} disabled={submitting} className="w-full">
+            {submitting ? "A enviar..." : "Enviar avaliação"}
+          </Button>
+        </div>
+
         {provider.reviews && provider.reviews.length > 0 ? (
           <div className="flex flex-col gap-3">
             {provider.reviews.map((r) => (
               <div key={r.id} className="p-3 rounded-lg border bg-card">
                 <StarRating rating={r.rating} />
+                {(r as { reviewer_name?: string | null }).reviewer_name && (
+                  <p className="text-sm font-medium mt-1">
+                    {(r as { reviewer_name?: string | null }).reviewer_name}
+                  </p>
+                )}
                 {r.comment && <p className="text-sm mt-1">{r.comment}</p>}
                 <p className="text-[11px] text-muted-foreground mt-1">
                   {new Date(r.created_at).toLocaleDateString("pt")}
