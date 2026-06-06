@@ -1,16 +1,22 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { z } from "zod";
-import { MapPin, MessageCircle, Plus, Tag, Clock } from "lucide-react";
+import { MapPin, MessageCircle, Plus, Tag, Clock, BadgeCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { StarRating } from "@/components/StarRating";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter,
 } from "@/components/ui/dialog";
 import { useRequests, useCreateRequest } from "@/hooks/useRequests";
 import { useCategories } from "@/hooks/useProviders";
+import { useProposals } from "@/hooks/useProposals";
+import { formatCFA } from "@/lib/format";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
@@ -31,9 +37,11 @@ const schema = z.object({
 
 const Requests = () => {
   const { data: requests = [], isLoading } = useRequests();
+  const { data: proposals = [], isLoading: loadingProposals } = useProposals();
   const { data: categories = [] } = useCategories();
   const create = useCreateRequest();
   const [open, setOpen] = useState(false);
+  const [tab, setTab] = useState<"pedidos" | "propostas">("propostas");
   const [form, setForm] = useState({
     requester_name: "",
     requester_phone: "",
@@ -67,13 +75,13 @@ const Requests = () => {
     <div className="max-w-lg mx-auto px-4 pt-6">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h1 className="text-xl font-bold">Pedidos</h1>
-          <p className="text-xs text-muted-foreground">Publique o que precisa — os prestadores contactam-no.</p>
+          <h1 className="text-xl font-bold">Pedidos & Propostas</h1>
+          <p className="text-xs text-muted-foreground">Veja propostas de prestadores ou publique o que precisa.</p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button size="sm" className="gap-1">
-              <Plus className="h-4 w-4" /> Publicar
+              <Plus className="h-4 w-4" /> Pedido
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-md">
@@ -127,6 +135,84 @@ const Requests = () => {
         </Dialog>
       </div>
 
+      <Tabs value={tab} onValueChange={(v) => setTab(v as any)} className="mb-4">
+        <TabsList className="grid grid-cols-2 w-full">
+          <TabsTrigger value="propostas">Propostas ({proposals.length})</TabsTrigger>
+          <TabsTrigger value="pedidos">Pedidos ({requests.length})</TabsTrigger>
+        </TabsList>
+        <TabsContent value="propostas" className="mt-4">
+          {loadingProposals ? (
+            <p className="text-sm text-muted-foreground">A carregar...</p>
+          ) : proposals.length === 0 ? (
+            <div className="text-center py-12 text-sm text-muted-foreground">
+              Ainda não existem propostas publicadas.
+              <div className="mt-4">
+                <Link to="/login?tab=registar">
+                  <Button size="sm" variant="outline">Sou prestador — cadastrar</Button>
+                </Link>
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {proposals.map((p) => {
+                const phone = (p.provider?.phone ?? "").replace(/\D/g, "");
+                const wa = phone
+                  ? `https://wa.me/${phone}?text=${encodeURIComponent(
+                      `Olá ${p.provider?.name ?? ""}, vi a sua proposta "${p.title}" no Nó Tarbadja e tenho interesse.`,
+                    )}`
+                  : null;
+                return (
+                  <Card key={p.id} className="border-border/60">
+                    <CardContent className="p-4">
+                      <div className="flex items-center gap-3 mb-3">
+                        <Link to={`/prestador/${p.provider_id}`}>
+                          <Avatar className="h-11 w-11 rounded-lg">
+                            {p.provider?.photo_url ? (
+                              <AvatarImage src={p.provider.photo_url} alt={p.provider.name} className="object-cover" />
+                            ) : null}
+                            <AvatarFallback className="rounded-lg bg-primary/10 text-primary font-semibold">
+                              {p.provider?.name?.charAt(0) ?? "?"}
+                            </AvatarFallback>
+                          </Avatar>
+                        </Link>
+                        <div className="flex-1 min-w-0">
+                          <Link to={`/prestador/${p.provider_id}`} className="font-semibold text-sm hover:underline flex items-center gap-1">
+                            {p.provider?.name ?? "Prestador"}
+                            {p.provider?.is_verified && (
+                              <BadgeCheck className="h-4 w-4 text-primary" />
+                            )}
+                          </Link>
+                          <div className="flex items-center gap-2">
+                            <StarRating rating={Math.round(p.avgRating)} />
+                            <span className="text-[11px] text-muted-foreground">({p.reviewCount})</span>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-[10px] text-muted-foreground uppercase">{p.price_type}</div>
+                          <div className="text-sm font-bold text-primary">{formatCFA(p.price)}</div>
+                        </div>
+                      </div>
+                      <h3 className="font-semibold text-foreground mb-1">{p.title}</h3>
+                      <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground mb-2">
+                        <span className="flex items-center gap-1"><Tag className="h-3 w-3" />{p.category}</span>
+                        <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{p.location}</span>
+                      </div>
+                      <p className="text-sm text-foreground/90 mb-3 whitespace-pre-wrap">{p.description}</p>
+                      {wa && (
+                        <a href={wa} target="_blank" rel="noopener noreferrer" className="block">
+                          <Button className="w-full bg-[#25D366] hover:bg-[#1ebe57] text-white gap-2">
+                            <MessageCircle className="h-4 w-4" /> Contactar via WhatsApp
+                          </Button>
+                        </a>
+                      )}
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
+        </TabsContent>
+        <TabsContent value="pedidos" className="mt-4">
       {isLoading ? (
         <p className="text-sm text-muted-foreground">A carregar...</p>
       ) : requests.length === 0 ? (
@@ -173,6 +259,8 @@ const Requests = () => {
           })}
         </div>
       )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
