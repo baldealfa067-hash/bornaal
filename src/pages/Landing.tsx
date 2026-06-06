@@ -91,6 +91,17 @@ const Landing = () => {
               </Button>
             </Link>
           </div>
+          <div className="mt-4 flex justify-center">
+            <Link to="/login?tab=registar">
+              <Button
+                size="lg"
+                variant="outline"
+                className="rounded-full px-8 gap-2 text-base font-semibold bg-white/10 backdrop-blur-sm border-white/40 text-white hover:bg-white hover:text-foreground"
+              >
+                Sou prestador — cadastrar
+              </Button>
+            </Link>
+          </div>
         </div>
       </section>
 

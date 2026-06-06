@@ -79,6 +79,7 @@ export type Database = {
           created_at: string
           description: string | null
           id: string
+          is_verified: boolean
           location: string
           name: string
           phone: string
@@ -92,6 +93,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          is_verified?: boolean
           location: string
           name: string
           phone: string
@@ -105,6 +107,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          is_verified?: boolean
           location?: string
           name?: string
           phone?: string
@@ -114,6 +117,56 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      proposals: {
+        Row: {
+          category: string
+          created_at: string
+          description: string
+          id: string
+          location: string
+          price: number
+          price_type: string
+          provider_id: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          description: string
+          id?: string
+          location: string
+          price: number
+          price_type?: string
+          provider_id: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string
+          id?: string
+          location?: string
+          price?: number
+          price_type?: string
+          provider_id?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proposals_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       reviews: {
         Row: {
