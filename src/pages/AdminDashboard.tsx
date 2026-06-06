@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { LogOut, ArrowLeft, Trash2 } from "lucide-react";
+import { LogOut, ArrowLeft, Trash2, BadgeCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -10,7 +10,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { formatCFA } from "@/lib/format";
 
-type Provider = { id: string; name: string; category: string; phone: string; location: string; starting_price: number | null };
+type Provider = { id: string; name: string; category: string; phone: string; location: string; starting_price: number | null; is_verified: boolean };
 type Request = { id: string; requester_name: string | null; category: string; location: string; description: string; status: string; created_at: string };
 type Review = { id: string; provider_id: string; reviewer_name: string | null; rating: number; comment: string | null; created_at: string };
 
@@ -29,7 +29,7 @@ const AdminDashboard = () => {
 
   const loadAll = async () => {
     const [{ data: p }, { data: r }, { data: rv }] = await Promise.all([
-      supabase.from("profiles").select("id, name, category, phone, location, starting_price").order("name"),
+      supabase.from("profiles").select("id, name, category, phone, location, starting_price, is_verified").order("name"),
       supabase.from("service_requests").select("id, requester_name, category, location, description, status, created_at").order("created_at", { ascending: false }),
       supabase.from("reviews").select("id, provider_id, reviewer_name, rating, comment, created_at").order("created_at", { ascending: false }),
     ]);
@@ -43,6 +43,13 @@ const AdminDashboard = () => {
     const { error } = await supabase.from(table).delete().eq("id", id);
     if (error) return toast.error(error.message);
     toast.success("Eliminado");
+    loadAll();
+  };
+
+  const toggleVerified = async (p: Provider) => {
+    const { error } = await supabase.from("profiles").update({ is_verified: !p.is_verified }).eq("id", p.id);
+    if (error) return toast.error(error.message);
+    toast.success(!p.is_verified ? "Marcado como verificado" : "Verificação removida");
     loadAll();
   };
 
@@ -78,15 +85,29 @@ const AdminDashboard = () => {
               <Card key={p.id}>
                 <CardContent className="p-3 flex items-center justify-between gap-2">
                   <div className="min-w-0">
-                    <Link to={`/prestador/${p.id}`} className="font-semibold hover:underline">{p.name}</Link>
+                    <Link to={`/prestador/${p.id}`} className="font-semibold hover:underline inline-flex items-center gap-1">
+                      {p.name}
+                      {p.is_verified && <BadgeCheck className="h-4 w-4 text-primary" />}
+                    </Link>
                     <div className="text-xs text-muted-foreground truncate">
                       {p.category} · {p.location} · {p.phone}
                       {p.starting_price != null && ` · desde ${formatCFA(p.starting_price)}`}
                     </div>
                   </div>
-                  <Button variant="ghost" size="icon" onClick={() => remove("profiles", p.id)}>
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                  </Button>
+                  <div className="flex gap-1 shrink-0">
+                    <Button
+                      variant={p.is_verified ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => toggleVerified(p)}
+                      className="gap-1"
+                    >
+                      <BadgeCheck className="h-3 w-3" />
+                      {p.is_verified ? "Verificado" : "Verificar"}
+                    </Button>
+                    <Button variant="ghost" size="icon" onClick={() => remove("profiles", p.id)}>
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             ))}

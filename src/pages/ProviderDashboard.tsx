@@ -1,14 +1,23 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { LogOut, ArrowLeft } from "lucide-react";
+import { LogOut, ArrowLeft, Plus, Trash2, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { formatCFA } from "@/lib/format";
+import { useMyProposals, useSaveProposal, useDeleteProposal, type Proposal } from "@/hooks/useProposals";
 
 type Form = {
   name: string;
@@ -144,6 +153,8 @@ const ProviderDashboard = () => {
             </form>
           </CardContent>
         </Card>
+
+        {profileId && <ProposalsSection providerId={profileId} category={form.category} location={form.location} />}
       </main>
     </div>
   );
@@ -155,5 +166,145 @@ const Field = ({ label, children }: { label: string; children: React.ReactNode }
     {children}
   </div>
 );
+
+type ProposalForm = {
+  id?: string;
+  title: string;
+  category: string;
+  description: string;
+  price: string;
+  price_type: "fixo" | "desde";
+  location: string;
+  status: "ativa" | "pausada";
+};
+
+const emptyProposal = (category: string, location: string): ProposalForm => ({
+  title: "", category: category || "", description: "", price: "",
+  price_type: "desde", location: location || "", status: "ativa",
+});
+
+const ProposalsSection = ({ providerId, category, location }: { providerId: string; category: string; location: string }) => {
+  const { data: proposals = [], isLoading } = useMyProposals(providerId);
+  const save = useSaveProposal();
+  const del = useDeleteProposal();
+  const [open, setOpen] = useState(false);
+  const [form, setForm] = useState<ProposalForm>(emptyProposal(category, location));
+
+  const startNew = () => { setForm(emptyProposal(category, location)); setOpen(true); };
+  const startEdit = (p: Proposal) => {
+    setForm({
+      id: p.id, title: p.title, category: p.category, description: p.description,
+      price: p.price.toString(), price_type: p.price_type, location: p.location, status: p.status,
+    });
+    setOpen(true);
+  };
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.title.trim() || !form.category.trim() || !form.description.trim() || !form.location.trim() || !form.price) {
+      return toast.error("Preencha todos os campos");
+    }
+    const price = parseInt(form.price, 10);
+    if (isNaN(price) || price < 0) return toast.error("Preço inválido");
+    try {
+      await save.mutateAsync({
+        id: form.id,
+        provider_id: providerId,
+        title: form.title.trim(),
+        category: form.category.trim(),
+        description: form.description.trim(),
+        price,
+        price_type: form.price_type,
+        location: form.location.trim(),
+        status: form.status,
+      });
+      toast.success(form.id ? "Proposta atualizada" : "Proposta publicada");
+      setOpen(false);
+    } catch (err: any) {
+      toast.error(err.message ?? "Erro ao guardar");
+    }
+  };
+
+  const remove = async (id: string) => {
+    if (!confirm("Eliminar esta proposta?")) return;
+    try { await del.mutateAsync(id); toast.success("Eliminada"); }
+    catch (err: any) { toast.error(err.message); }
+  };
+
+  return (
+    <Card className="mt-6">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0">
+        <CardTitle className="text-base">As minhas propostas</CardTitle>
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger asChild>
+            <Button size="sm" onClick={startNew} className="gap-1">
+              <Plus className="h-4 w-4" /> Nova
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>{form.id ? "Editar proposta" : "Nova proposta"}</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={submit} className="flex flex-col gap-3">
+              <Input placeholder="Título (ex: Instalação elétrica residencial)" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} maxLength={120} />
+              <Input placeholder="Categoria" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} maxLength={60} />
+              <Input placeholder="Localização" value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} maxLength={80} />
+              <div className="grid grid-cols-2 gap-2">
+                <Select value={form.price_type} onValueChange={(v) => setForm({ ...form, price_type: v as any })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="desde">Desde</SelectItem>
+                    <SelectItem value="fixo">Fixo</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Input type="number" min="0" placeholder="Preço (CFA)" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} />
+              </div>
+              <Textarea rows={4} placeholder="Descreva o serviço..." value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} maxLength={800} />
+              <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v as any })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ativa">Ativa (visível ao público)</SelectItem>
+                  <SelectItem value="pausada">Pausada (oculta)</SelectItem>
+                </SelectContent>
+              </Select>
+              <DialogFooter>
+                <Button type="submit" disabled={save.isPending} className="w-full">
+                  {save.isPending ? "A guardar..." : form.id ? "Guardar" : "Publicar proposta"}
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
+      </CardHeader>
+      <CardContent>
+        {isLoading ? (
+          <p className="text-sm text-muted-foreground">A carregar...</p>
+        ) : proposals.length === 0 ? (
+          <p className="text-sm text-muted-foreground text-center py-4">Ainda não publicou nenhuma proposta.</p>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {proposals.map((p) => (
+              <div key={p.id} className="flex items-start justify-between gap-2 p-3 rounded-lg border">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold text-sm">{p.title}</span>
+                    <Badge variant={p.status === "ativa" ? "default" : "secondary"} className="text-[10px]">{p.status}</Badge>
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    {p.category} · {p.location} · {p.price_type} {formatCFA(p.price)}
+                  </div>
+                </div>
+                <div className="flex gap-1 shrink-0">
+                  <Button variant="ghost" size="icon" onClick={() => startEdit(p)}><Pencil className="h-4 w-4" /></Button>
+                  <Button variant="ghost" size="icon" onClick={() => remove(p.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
 
 export default ProviderDashboard;
