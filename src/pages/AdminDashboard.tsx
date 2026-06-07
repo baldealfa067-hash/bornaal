@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { LogOut, ArrowLeft, Trash2, BadgeCheck } from "lucide-react";
+import { LogOut, ArrowLeft, Trash2, BadgeCheck, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -12,7 +12,7 @@ import { formatCFA } from "@/lib/format";
 
 type Provider = { id: string; name: string; category: string; phone: string; location: string; starting_price: number | null; is_verified: boolean };
 type Request = { id: string; requester_name: string | null; category: string; location: string; description: string; status: string; created_at: string };
-type Review = { id: string; provider_id: string; reviewer_name: string | null; rating: number; comment: string | null; created_at: string };
+type Review = { id: string; provider_id: string; reviewer_name: string | null; rating: number; comment: string | null; created_at: string; status: string };
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -31,7 +31,7 @@ const AdminDashboard = () => {
     const [{ data: p }, { data: r }, { data: rv }] = await Promise.all([
       supabase.from("profiles").select("id, name, category, phone, location, starting_price, is_verified").order("name"),
       supabase.from("service_requests").select("id, requester_name, category, location, description, status, created_at").order("created_at", { ascending: false }),
-      supabase.from("reviews").select("id, provider_id, reviewer_name, rating, comment, created_at").order("created_at", { ascending: false }),
+      supabase.from("reviews").select("id, provider_id, reviewer_name, rating, comment, created_at, status").order("created_at", { ascending: false }),
     ]);
     setProviders((p ?? []) as Provider[]);
     setRequests((r ?? []) as Request[]);
@@ -52,6 +52,17 @@ const AdminDashboard = () => {
     toast.success(!p.is_verified ? "Marcado como verificado" : "Verificação removida");
     loadAll();
   };
+
+  const approveReview = async (id: string) => {
+    const { error } = await supabase.from("reviews").update({ status: "aprovado" }).eq("id", id);
+    if (error) return toast.error(error.message);
+    toast.success("Avaliação aprovada");
+    loadAll();
+  };
+
+  const providerName = (pid: string) => providers.find((p) => p.id === pid)?.name ?? "Prestador";
+  const pendingReviews = reviews.filter((r) => r.status === "pendente");
+  const approvedReviews = reviews.filter((r) => r.status === "aprovado");
 
   if (loading) return <div className="min-h-screen flex items-center justify-center text-muted-foreground">A carregar...</div>;
 
@@ -74,10 +85,11 @@ const AdminDashboard = () => {
       <main className="max-w-3xl mx-auto px-4 py-6">
         <h1 className="text-2xl font-bold mb-4">Painel de administração</h1>
         <Tabs defaultValue="providers">
-          <TabsList className="grid grid-cols-3 w-full mb-4">
+          <TabsList className="grid grid-cols-4 w-full mb-4">
             <TabsTrigger value="providers">Prestadores ({providers.length})</TabsTrigger>
             <TabsTrigger value="requests">Pedidos ({requests.length})</TabsTrigger>
-            <TabsTrigger value="reviews">Avaliações ({reviews.length})</TabsTrigger>
+            <TabsTrigger value="pending">Pendentes ({pendingReviews.length})</TabsTrigger>
+            <TabsTrigger value="reviews">Aprovadas ({approvedReviews.length})</TabsTrigger>
           </TabsList>
 
           <TabsContent value="providers" className="flex flex-col gap-2">
@@ -132,8 +144,36 @@ const AdminDashboard = () => {
             {!requests.length && <p className="text-sm text-muted-foreground text-center py-6">Sem pedidos.</p>}
           </TabsContent>
 
+          <TabsContent value="pending" className="flex flex-col gap-2">
+            {pendingReviews.map((r) => (
+              <Card key={r.id} className="border-yellow-500/40">
+                <CardContent className="p-3 flex items-start justify-between gap-2">
+                  <div className="min-w-0 flex-1">
+                    <div className="text-xs text-muted-foreground">Prestador:</div>
+                    <Link to={`/prestador/${r.provider_id}`} className="font-semibold hover:underline text-sm">
+                      {providerName(r.provider_id)}
+                    </Link>
+                    <div className="text-sm mt-1">
+                      <span className="font-medium">{r.reviewer_name ?? "Anónimo"}</span> · {r.rating}★
+                    </div>
+                    {r.comment && <p className="text-sm text-muted-foreground mt-1">{r.comment}</p>}
+                  </div>
+                  <div className="flex flex-col gap-1 shrink-0">
+                    <Button size="sm" onClick={() => approveReview(r.id)} className="gap-1 bg-green-600 hover:bg-green-700 text-white">
+                      <Check className="h-3.5 w-3.5" /> Aprovar
+                    </Button>
+                    <Button size="sm" variant="destructive" onClick={() => remove("reviews", r.id)} className="gap-1">
+                      <X className="h-3.5 w-3.5" /> Rejeitar
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+            {!pendingReviews.length && <p className="text-sm text-muted-foreground text-center py-6">Sem avaliações pendentes.</p>}
+          </TabsContent>
+
           <TabsContent value="reviews" className="flex flex-col gap-2">
-            {reviews.map((r) => (
+            {approvedReviews.map((r) => (
               <Card key={r.id}>
                 <CardContent className="p-3 flex items-start justify-between gap-2">
                   <div className="min-w-0">
@@ -147,7 +187,7 @@ const AdminDashboard = () => {
                 </CardContent>
               </Card>
             ))}
-            {!reviews.length && <p className="text-sm text-muted-foreground text-center py-6">Sem avaliações.</p>}
+            {!approvedReviews.length && <p className="text-sm text-muted-foreground text-center py-6">Sem avaliações aprovadas.</p>}
           </TabsContent>
         </Tabs>
       </main>
