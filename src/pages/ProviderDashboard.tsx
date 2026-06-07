@@ -1,23 +1,19 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { LogOut, ArrowLeft, Plus, Trash2, Pencil } from "lucide-react";
+import { LogOut, ArrowLeft, Upload, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel,
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import { formatCFA } from "@/lib/format";
-import { useMyProposals, useSaveProposal, useDeleteProposal, type Proposal } from "@/hooks/useProposals";
+import { LOCATIONS } from "@/lib/locations";
 
 type Form = {
   name: string;
@@ -38,6 +34,8 @@ const ProviderDashboard = () => {
   const [form, setForm] = useState<Form>(empty);
   const [saving, setSaving] = useState(false);
   const [fetching, setFetching] = useState(true);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (loading) return;
@@ -60,6 +58,22 @@ const ProviderDashboard = () => {
       setFetching(false);
     })();
   }, [user, isProvider, isAdmin, loading, navigate]);
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+    if (file.size > 5 * 1024 * 1024) return toast.error("Imagem demasiado grande (máx 5MB)");
+    setUploading(true);
+    const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+    const path = `${user.id}/${Date.now()}.${ext}`;
+    const { error } = await supabase.storage.from("avatars").upload(path, file, { upsert: true, contentType: file.type });
+    if (error) { setUploading(false); return toast.error(error.message); }
+    const { data } = supabase.storage.from("avatars").getPublicUrl(path);
+    setForm((f) => ({ ...f, photo_url: data.publicUrl }));
+    setUploading(false);
+    toast.success("Foto carregada");
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
 
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -110,7 +124,7 @@ const ProviderDashboard = () => {
       </header>
 
       <main className="max-w-2xl mx-auto px-4 py-6">
-        <h1 className="text-2xl font-bold mb-1">Meu perfil de prestador</h1>
+        <h1 className="text-2xl font-bold mb-1">Meu perfil profissional</h1>
         <p className="text-sm text-muted-foreground mb-6">
           {profileId ? "Atualize os seus dados." : "Complete o perfil para aparecer no diretório."}
         </p>
@@ -119,6 +133,35 @@ const ProviderDashboard = () => {
           <CardHeader><CardTitle className="text-base">Dados</CardTitle></CardHeader>
           <CardContent>
             <form onSubmit={save} className="grid gap-4">
+              <div className="flex items-center gap-4">
+                <Avatar className="h-20 w-20 rounded-xl">
+                  {form.photo_url ? <AvatarImage src={form.photo_url} className="object-cover" /> : null}
+                  <AvatarFallback className="rounded-xl bg-primary/10 text-primary text-xl font-bold">
+                    {form.name.charAt(0) || "?"}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handlePhotoUpload}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={uploading}
+                    onClick={() => fileInputRef.current?.click()}
+                    className="gap-2"
+                  >
+                    {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                    Carregar Foto de Perfil / Trabalho
+                  </Button>
+                  <p className="text-[11px] text-muted-foreground mt-1">JPG ou PNG, máx 5MB</p>
+                </div>
+              </div>
               <Field label="Nome *">
                 <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
               </Field>
@@ -130,14 +173,23 @@ const ProviderDashboard = () => {
                   <Input placeholder="+245 955 000 000" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
                 </Field>
                 <Field label="Localização *">
-                  <Input placeholder="ex: Bissau" value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} />
+                  <Select value={form.location} onValueChange={(v) => setForm({ ...form, location: v })}>
+                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectContent>
+                      {LOCATIONS.map((g) => (
+                        <SelectGroup key={g.group}>
+                          <SelectLabel>{g.group}</SelectLabel>
+                          {g.options.map((opt) => (
+                            <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                          ))}
+                        </SelectGroup>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </Field>
               </div>
               <Field label="Preço inicial (CFA)">
                 <Input type="number" min="0" placeholder="ex: 10000" value={form.starting_price} onChange={(e) => setForm({ ...form, starting_price: e.target.value })} />
-              </Field>
-              <Field label="URL da foto">
-                <Input placeholder="https://..." value={form.photo_url} onChange={(e) => setForm({ ...form, photo_url: e.target.value })} />
               </Field>
               <Field label="Descrição">
                 <Textarea rows={4} placeholder="Fale sobre o seu trabalho, experiência, serviços..." value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
@@ -153,8 +205,6 @@ const ProviderDashboard = () => {
             </form>
           </CardContent>
         </Card>
-
-        {profileId && <ProposalsSection providerId={profileId} category={form.category} location={form.location} />}
       </main>
     </div>
   );
@@ -166,145 +216,5 @@ const Field = ({ label, children }: { label: string; children: React.ReactNode }
     {children}
   </div>
 );
-
-type ProposalForm = {
-  id?: string;
-  title: string;
-  category: string;
-  description: string;
-  price: string;
-  price_type: "fixo" | "desde";
-  location: string;
-  status: "ativa" | "pausada";
-};
-
-const emptyProposal = (category: string, location: string): ProposalForm => ({
-  title: "", category: category || "", description: "", price: "",
-  price_type: "desde", location: location || "", status: "ativa",
-});
-
-const ProposalsSection = ({ providerId, category, location }: { providerId: string; category: string; location: string }) => {
-  const { data: proposals = [], isLoading } = useMyProposals(providerId);
-  const save = useSaveProposal();
-  const del = useDeleteProposal();
-  const [open, setOpen] = useState(false);
-  const [form, setForm] = useState<ProposalForm>(emptyProposal(category, location));
-
-  const startNew = () => { setForm(emptyProposal(category, location)); setOpen(true); };
-  const startEdit = (p: Proposal) => {
-    setForm({
-      id: p.id, title: p.title, category: p.category, description: p.description,
-      price: p.price.toString(), price_type: p.price_type, location: p.location, status: p.status,
-    });
-    setOpen(true);
-  };
-
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!form.title.trim() || !form.category.trim() || !form.description.trim() || !form.location.trim() || !form.price) {
-      return toast.error("Preencha todos os campos");
-    }
-    const price = parseInt(form.price, 10);
-    if (isNaN(price) || price < 0) return toast.error("Preço inválido");
-    try {
-      await save.mutateAsync({
-        id: form.id,
-        provider_id: providerId,
-        title: form.title.trim(),
-        category: form.category.trim(),
-        description: form.description.trim(),
-        price,
-        price_type: form.price_type,
-        location: form.location.trim(),
-        status: form.status,
-      });
-      toast.success(form.id ? "Proposta atualizada" : "Proposta publicada");
-      setOpen(false);
-    } catch (err: any) {
-      toast.error(err.message ?? "Erro ao guardar");
-    }
-  };
-
-  const remove = async (id: string) => {
-    if (!confirm("Eliminar esta proposta?")) return;
-    try { await del.mutateAsync(id); toast.success("Eliminada"); }
-    catch (err: any) { toast.error(err.message); }
-  };
-
-  return (
-    <Card className="mt-6">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0">
-        <CardTitle className="text-base">As minhas propostas</CardTitle>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button size="sm" onClick={startNew} className="gap-1">
-              <Plus className="h-4 w-4" /> Nova
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>{form.id ? "Editar proposta" : "Nova proposta"}</DialogTitle>
-            </DialogHeader>
-            <form onSubmit={submit} className="flex flex-col gap-3">
-              <Input placeholder="Título (ex: Instalação elétrica residencial)" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} maxLength={120} />
-              <Input placeholder="Categoria" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} maxLength={60} />
-              <Input placeholder="Localização" value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} maxLength={80} />
-              <div className="grid grid-cols-2 gap-2">
-                <Select value={form.price_type} onValueChange={(v) => setForm({ ...form, price_type: v as any })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="desde">Desde</SelectItem>
-                    <SelectItem value="fixo">Fixo</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Input type="number" min="0" placeholder="Preço (CFA)" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} />
-              </div>
-              <Textarea rows={4} placeholder="Descreva o serviço..." value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} maxLength={800} />
-              <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v as any })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ativa">Ativa (visível ao público)</SelectItem>
-                  <SelectItem value="pausada">Pausada (oculta)</SelectItem>
-                </SelectContent>
-              </Select>
-              <DialogFooter>
-                <Button type="submit" disabled={save.isPending} className="w-full">
-                  {save.isPending ? "A guardar..." : form.id ? "Guardar" : "Publicar proposta"}
-                </Button>
-              </DialogFooter>
-            </form>
-          </DialogContent>
-        </Dialog>
-      </CardHeader>
-      <CardContent>
-        {isLoading ? (
-          <p className="text-sm text-muted-foreground">A carregar...</p>
-        ) : proposals.length === 0 ? (
-          <p className="text-sm text-muted-foreground text-center py-4">Ainda não publicou nenhuma proposta.</p>
-        ) : (
-          <div className="flex flex-col gap-2">
-            {proposals.map((p) => (
-              <div key={p.id} className="flex items-start justify-between gap-2 p-3 rounded-lg border">
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="font-semibold text-sm">{p.title}</span>
-                    <Badge variant={p.status === "ativa" ? "default" : "secondary"} className="text-[10px]">{p.status}</Badge>
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    {p.category} · {p.location} · {p.price_type} {formatCFA(p.price)}
-                  </div>
-                </div>
-                <div className="flex gap-1 shrink-0">
-                  <Button variant="ghost" size="icon" onClick={() => startEdit(p)}><Pencil className="h-4 w-4" /></Button>
-                  <Button variant="ghost" size="icon" onClick={() => remove(p.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  );
-};
 
 export default ProviderDashboard;
