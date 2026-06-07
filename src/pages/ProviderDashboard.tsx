@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { LogOut, ArrowLeft, Upload, Loader2 } from "lucide-react";
+import { LogOut, ArrowLeft, Upload, Loader2, Trash2, ImagePlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -36,6 +36,19 @@ const ProviderDashboard = () => {
   const [fetching, setFetching] = useState(true);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const galleryInputRef = useRef<HTMLInputElement>(null);
+  const [gallery, setGallery] = useState<{ id: string; image_url: string }[]>([]);
+  const [galleryUploading, setGalleryUploading] = useState(false);
+  const MAX_GALLERY = 4;
+
+  const loadGallery = async (pid: string) => {
+    const { data } = await supabase
+      .from("portfolio_images")
+      .select("id, image_url")
+      .eq("provider_id", pid)
+      .order("created_at", { ascending: false });
+    setGallery((data ?? []) as { id: string; image_url: string }[]);
+  };
 
   useEffect(() => {
     if (loading) return;
@@ -54,6 +67,7 @@ const ProviderDashboard = () => {
           photo_url: data.photo_url ?? "",
           starting_price: data.starting_price?.toString() ?? "",
         });
+        loadGallery(data.id);
       }
       setFetching(false);
     })();
@@ -73,6 +87,35 @@ const ProviderDashboard = () => {
     setUploading(false);
     toast.success("Foto carregada");
     if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const handleGalleryUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user || !profileId) return;
+    if (gallery.length >= MAX_GALLERY) return toast.error(`Máximo de ${MAX_GALLERY} fotos`);
+    if (file.size > 5 * 1024 * 1024) return toast.error("Imagem demasiado grande (máx 5MB)");
+    setGalleryUploading(true);
+    const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+    const path = `${user.id}/${Date.now()}.${ext}`;
+    const { error: upErr } = await supabase.storage.from("portfolio").upload(path, file, { contentType: file.type });
+    if (upErr) { setGalleryUploading(false); return toast.error(upErr.message); }
+    const { data: pub } = supabase.storage.from("portfolio").getPublicUrl(path);
+    const { error: insErr } = await supabase
+      .from("portfolio_images")
+      .insert({ provider_id: profileId, image_url: pub.publicUrl });
+    setGalleryUploading(false);
+    if (galleryInputRef.current) galleryInputRef.current.value = "";
+    if (insErr) return toast.error(insErr.message);
+    toast.success("Foto adicionada à galeria");
+    loadGallery(profileId);
+  };
+
+  const deleteGalleryImage = async (id: string) => {
+    if (!confirm("Remover esta foto da galeria?")) return;
+    const { error } = await supabase.from("portfolio_images").delete().eq("id", id);
+    if (error) return toast.error(error.message);
+    toast.success("Foto removida");
+    if (profileId) loadGallery(profileId);
   };
 
   const save = async (e: React.FormEvent) => {
@@ -99,6 +142,7 @@ const ProviderDashboard = () => {
     if (error) return toast.error(error.message);
     if (data) setProfileId(data.id);
     toast.success("Perfil guardado");
+    if (data?.id) loadGallery(data.id);
   };
 
   if (loading || fetching) {
@@ -205,6 +249,59 @@ const ProviderDashboard = () => {
             </form>
           </CardContent>
         </Card>
+
+        {profileId && (
+          <Card className="mt-4">
+            <CardHeader>
+              <CardTitle className="text-base">Galeria de Trabalhos (Opcional)</CardTitle>
+              <p className="text-xs text-muted-foreground">
+                Adicione até {MAX_GALLERY} fotos dos seus trabalhos anteriores. Ajuda clientes a confiar no seu serviço.
+              </p>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
+                {gallery.map((img) => (
+                  <div key={img.id} className="relative aspect-square rounded-lg overflow-hidden border bg-muted group">
+                    <img src={img.image_url} alt="Trabalho" className="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => deleteGalleryImage(img.id)}
+                      className="absolute top-1 right-1 p-1 rounded-md bg-background/90 hover:bg-destructive hover:text-destructive-foreground transition-colors"
+                      aria-label="Remover foto"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ))}
+                {gallery.length < MAX_GALLERY && (
+                  <button
+                    type="button"
+                    onClick={() => galleryInputRef.current?.click()}
+                    disabled={galleryUploading}
+                    className="aspect-square rounded-lg border-2 border-dashed border-border hover:border-primary hover:bg-primary/5 transition-colors flex flex-col items-center justify-center gap-1 text-muted-foreground hover:text-primary"
+                  >
+                    {galleryUploading ? (
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                    ) : (
+                      <>
+                        <ImagePlus className="h-5 w-5" />
+                        <span className="text-[11px]">Adicionar</span>
+                      </>
+                    )}
+                  </button>
+                )}
+              </div>
+              <input
+                ref={galleryInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleGalleryUpload}
+              />
+              <p className="text-[11px] text-muted-foreground">JPG ou PNG, máx 5MB cada · {gallery.length}/{MAX_GALLERY}</p>
+            </CardContent>
+          </Card>
+        )}
       </main>
     </div>
   );
