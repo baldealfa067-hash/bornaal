@@ -29,6 +29,7 @@ export const useProviders = (category?: string) =>
       const { data: reviews } = await supabase
         .from("reviews")
         .select("provider_id, rating")
+        .eq("status", "aprovado")
         .in("provider_id", profileIds.length ? profileIds : ["__none__"]);
 
       return (profiles ?? []).map((p) => {
@@ -58,6 +59,7 @@ export const useProvider = (id: string) =>
       const { data: reviews } = await supabase
         .from("reviews")
         .select("id, rating, comment, created_at, user_id, reviewer_name")
+        .eq("status", "aprovado")
         .eq("provider_id", id);
 
       const ratings = (reviews ?? []).map((r) => r.rating);

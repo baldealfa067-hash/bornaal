@@ -9,13 +9,14 @@ export const LOCATIONS: { group: string; options: string[] }[] = [
       "Mindará",
       "Belém",
       "Santa Luzia",
-      "Centro",
+      "Cupelum",
+      "Cuntum",
+      "Chapa de Bissau",
+      "Centro / Praça",
     ],
-  },
-  {
-    group: "Regiões",
-    options: ["Gabú", "Bafatá", "Canchungo", "Mansôa"],
   },
 ];
 
 export const LOCATION_OPTIONS = LOCATIONS.flatMap((g) => g.options);
+
+export const BAIRROS_FILTER = ["Todos os Bairros", ...LOCATIONS[0].options];

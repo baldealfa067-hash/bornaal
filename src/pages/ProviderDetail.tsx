@@ -1,5 +1,5 @@
 import { useParams } from "react-router-dom";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { MapPin, Phone, MessageCircle, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,6 +21,17 @@ const ProviderDetail = () => {
   const [reviewerName, setReviewerName] = useState("");
   const [comment, setComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [portfolio, setPortfolio] = useState<{ id: string; image_url: string }[]>([]);
+
+  useEffect(() => {
+    if (!id) return;
+    supabase
+      .from("portfolio_images")
+      .select("id, image_url")
+      .eq("provider_id", id)
+      .order("created_at", { ascending: false })
+      .then(({ data }) => setPortfolio((data ?? []) as { id: string; image_url: string }[]));
+  }, [id]);
 
   const submitReview = async () => {
     if (!id) return;
@@ -44,7 +55,9 @@ const ProviderDetail = () => {
       toast.error("Erro ao enviar avaliação");
       return;
     }
-    toast.success("Avaliação enviada. Obrigado!");
+    toast.success(
+      "Obrigado! A sua avaliação foi enviada com sucesso e será exibida no perfil assim que for validada pela nossa equipa."
+    );
     setRating(0);
     setReviewerName("");
     setComment("");
@@ -108,6 +121,25 @@ const ProviderDetail = () => {
         <div className="mb-6">
           <h2 className="font-semibold mb-1">Sobre</h2>
           <p className="text-sm text-muted-foreground">{provider.description}</p>
+        </div>
+      )}
+
+      {portfolio.length > 0 && (
+        <div className="mb-6">
+          <h2 className="font-semibold mb-2">Meus Trabalhos anteriores</h2>
+          <div className="grid grid-cols-2 gap-2">
+            {portfolio.map((img) => (
+              <a
+                key={img.id}
+                href={img.image_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block aspect-square overflow-hidden rounded-lg border bg-muted"
+              >
+                <img src={img.image_url} alt="Trabalho do prestador" className="w-full h-full object-cover hover:scale-105 transition-transform" loading="lazy" />
+              </a>
+            ))}
+          </div>
         </div>
       )}
 

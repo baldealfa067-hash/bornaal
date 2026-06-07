@@ -176,6 +176,7 @@ export type Database = {
           provider_id: string
           rating: number
           reviewer_name: string | null
+          status: string
           user_id: string | null
         }
         Insert: {
@@ -185,6 +186,7 @@ export type Database = {
           provider_id: string
           rating: number
           reviewer_name?: string | null
+          status?: string
           user_id?: string | null
         }
         Update: {
@@ -194,6 +196,7 @@ export type Database = {
           provider_id?: string
           rating?: number
           reviewer_name?: string | null
+          status?: string
           user_id?: string | null
         }
         Relationships: [

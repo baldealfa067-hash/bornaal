@@ -211,6 +211,7 @@ const Landing = () => {
               <Link to="/termos" className="text-muted-foreground hover:text-foreground transition-colors">Termos de Uso</Link>
               <Link to="/privacidade" className="text-muted-foreground hover:text-foreground transition-colors">Privacidade</Link>
               <Link to="/login" className="text-muted-foreground hover:text-foreground transition-colors">Entrar</Link>
+              <Link to="/admin-moderacao" className="text-muted-foreground/50 hover:text-foreground transition-colors">·</Link>
             </div>
           </div>
           <p className="text-xs text-muted-foreground text-center sm:text-left">
