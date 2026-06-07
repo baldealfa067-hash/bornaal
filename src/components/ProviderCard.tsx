@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { MapPin, MessageCircle } from "lucide-react";
+import { MapPin, MessageCircle, Phone } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { StarRating } from "./StarRating";
@@ -22,9 +22,11 @@ interface ProviderCardProps {
 export const ProviderCard = ({
   id, name, category, location, phone, photo_url, starting_price, avgRating, reviewCount
 }: ProviderCardProps) => {
-  const whatsappUrl = `https://wa.me/${phone.replace(/\D/g, "")}?text=${encodeURIComponent(
+  const cleanPhone = phone.replace(/\D/g, "");
+  const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(
     `Olá ${name}, encontrei o seu perfil no Nó Tarbadja e gostaria de saber mais sobre os seus serviços.`
   )}`;
+  const telUrl = `tel:${phone.replace(/\s/g, "")}`;
 
   return (
     <Card className="overflow-hidden hover:shadow-md transition-shadow border-border/60">
@@ -56,17 +58,23 @@ export const ProviderCard = ({
             )}
           </div>
         </Link>
-        <a
+        <div className="flex flex-col gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
+          <a
           href={whatsappUrl}
           target="_blank"
           rel="noopener noreferrer"
-          onClick={(e) => e.stopPropagation()}
           aria-label={`Contactar ${name} via WhatsApp`}
-        >
-          <Button size="icon" className="h-10 w-10 bg-[#25D366] hover:bg-[#1ebe57] text-white shrink-0">
-            <MessageCircle className="h-5 w-5" />
-          </Button>
-        </a>
+          >
+            <Button size="icon" className="h-10 w-10 bg-[#25D366] hover:bg-[#1ebe57] text-white">
+              <MessageCircle className="h-5 w-5" />
+            </Button>
+          </a>
+          <a href={telUrl} aria-label={`Ligar para ${name}`}>
+            <Button size="icon" variant="secondary" className="h-10 w-10">
+              <Phone className="h-5 w-5" />
+            </Button>
+          </a>
+        </div>
       </CardContent>
     </Card>
   );

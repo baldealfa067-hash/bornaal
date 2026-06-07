@@ -111,12 +111,18 @@ const ProviderDetail = () => {
         </div>
       )}
 
-      {/* Contact button */}
-      <div className="mb-8">
+      {/* Contact buttons */}
+      <div className="mb-8 grid grid-cols-2 gap-2">
         <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="block">
-          <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground gap-2">
+          <Button className="w-full bg-[#25D366] hover:bg-[#1ebe57] text-white gap-2">
             <MessageCircle className="h-5 w-5" />
-            Contactar via WhatsApp
+            WhatsApp
+          </Button>
+        </a>
+        <a href={`tel:${provider.phone.replace(/\s/g, "")}`} className="block">
+          <Button variant="secondary" className="w-full gap-2">
+            <Phone className="h-5 w-5" />
+            Ligar
           </Button>
         </a>
       </div>
