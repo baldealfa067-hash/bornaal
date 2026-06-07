@@ -6,29 +6,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Search, MapPin } from "lucide-react";
 import { ProviderCard } from "@/components/ProviderCard";
 import { useProviders, useCategories } from "@/hooks/useProviders";
-
-const LOCATIONS = [
-  "Todas",
-  "Bissau",
-  "Bafatá",
-  "Gabú",
-  "Cacheu",
-  "Biombo",
-  "Bolama",
-  "Bubaque",
-  "Canchungo",
-  "Mansoa",
-  "Buba",
-  "Farim",
-  "Quinhámel",
-];
+import { BAIRROS_FILTER } from "@/lib/locations";
 
 const Explore = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const activeCategory = searchParams.get("categoria") || "";
   const qParam = searchParams.get("q") || "";
   const [search, setSearch] = useState(qParam);
-  const [location, setLocation] = useState("Todas");
+  const [location, setLocation] = useState(BAIRROS_FILTER[0]);
   const { data: providers = [] } = useProviders();
   const { data: categories = [] } = useCategories();
 
@@ -45,7 +30,7 @@ const Explore = () => {
       p.location.toLowerCase().includes(search.toLowerCase()) ||
       p.category.toLowerCase().includes(search.toLowerCase());
     const matchLocation =
-      location === "Todas" ||
+      location === BAIRROS_FILTER[0] ||
       p.location.toLowerCase().includes(location.toLowerCase());
     return matchCat && matchSearch && matchLocation;
   });
@@ -72,7 +57,7 @@ const Explore = () => {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {LOCATIONS.map((loc) => (
+            {BAIRROS_FILTER.map((loc) => (
               <SelectItem key={loc} value={loc}>{loc}</SelectItem>
             ))}
           </SelectContent>
