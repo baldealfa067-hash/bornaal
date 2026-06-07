@@ -1,11 +1,10 @@
-import { Home, Search, Info, ClipboardList } from "lucide-react";
+import { Home, Search, User } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 
 const items = [
   { to: "/inicio", icon: Home, label: "Início" },
   { to: "/explorar", icon: Search, label: "Explorar" },
-  { to: "/pedidos", icon: ClipboardList, label: "Pedidos" },
-  { to: "/sobre", icon: Info, label: "Sobre" },
+  { to: "/painel", icon: User, label: "Meu Perfil" },
 ];
 
 export const BottomNav = () => {

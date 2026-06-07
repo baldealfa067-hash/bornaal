@@ -9,7 +9,6 @@ import Index from "./pages/Index";
 import Explore from "./pages/Explore";
 import ProviderDetail from "./pages/ProviderDetail";
 import About from "./pages/About";
-import Requests from "./pages/Requests";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import Login from "./pages/Login";
@@ -36,7 +35,6 @@ const App = () => (
           <Route element={<Layout />}>
             <Route path="/inicio" element={<Index />} />
             <Route path="/explorar" element={<Explore />} />
-            <Route path="/pedidos" element={<Requests />} />
             <Route path="/prestador/:id" element={<ProviderDetail />} />
           </Route>
           <Route path="*" element={<NotFound />} />
