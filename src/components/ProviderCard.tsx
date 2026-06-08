@@ -42,8 +42,8 @@ export const ProviderCard = ({
             </AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-foreground truncate flex items-center gap-1">
-              {name}
+            <h3 className="font-semibold text-foreground flex items-center gap-1 min-w-0">
+              <span className="truncate">{name}</span>
               {is_verified && (
                 <BadgeCheck
                   className="h-4 w-4 text-primary shrink-0"
