@@ -109,13 +109,15 @@ const AdminDashboard = () => {
       <main className="max-w-3xl mx-auto px-4 py-6">
         <h1 className="text-2xl font-bold mb-4">Painel de administração</h1>
         <Tabs defaultValue="providers">
-          <TabsList className="grid grid-cols-5 w-full mb-4">
-            <TabsTrigger value="providers">Prestadores ({providers.length})</TabsTrigger>
-            <TabsTrigger value="requests">Pedidos ({requests.length})</TabsTrigger>
-            <TabsTrigger value="pending">Pendentes ({pendingReviews.length})</TabsTrigger>
-            <TabsTrigger value="reviews">Aprovadas ({approvedReviews.length})</TabsTrigger>
-            <TabsTrigger value="categories">Categorias ({categories.length})</TabsTrigger>
-          </TabsList>
+          <div className="overflow-x-auto -mx-4 px-4 mb-4">
+            <TabsList className="inline-flex w-max gap-1">
+              <TabsTrigger value="providers" className="whitespace-nowrap">Prestadores ({providers.length})</TabsTrigger>
+              <TabsTrigger value="requests" className="whitespace-nowrap">Pedidos ({requests.length})</TabsTrigger>
+              <TabsTrigger value="pending" className="whitespace-nowrap">Pendentes ({pendingReviews.length})</TabsTrigger>
+              <TabsTrigger value="reviews" className="whitespace-nowrap">Aprovadas ({approvedReviews.length})</TabsTrigger>
+              <TabsTrigger value="categories" className="whitespace-nowrap">Categorias ({categories.length})</TabsTrigger>
+            </TabsList>
+          </div>
 
           <TabsContent value="providers" className="flex flex-col gap-2">
             {providers.map((p) => (
