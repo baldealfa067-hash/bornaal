@@ -50,8 +50,8 @@ const Login = () => {
       setSubmitting(false);
       return toast.error(error?.message ?? "Erro no registo");
     }
-    // assign provider role
-    await supabase.from("user_roles").insert({ user_id: data.user.id, role: "provider" });
+    // assign provider role via secure function (prevents self-assigning admin)
+    await supabase.rpc("register_as_provider");
     setSubmitting(false);
     toast.success("Conta criada. A entrar...");
   };
