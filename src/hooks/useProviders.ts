@@ -11,6 +11,7 @@ export interface ProviderWithRating {
   description: string | null;
   photo_url: string | null;
   starting_price: number | null;
+  is_verified?: boolean | null;
   avgRating: number;
   reviewCount: number;
 }
