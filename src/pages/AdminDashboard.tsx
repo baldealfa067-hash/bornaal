@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { LogOut, ArrowLeft, Trash2, BadgeCheck, Check, X } from "lucide-react";
+import { LogOut, ArrowLeft, Trash2, BadgeCheck, Check, X, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -13,6 +14,7 @@ import { formatCFA } from "@/lib/format";
 type Provider = { id: string; name: string; category: string; phone: string; location: string; starting_price: number | null; is_verified: boolean };
 type Request = { id: string; requester_name: string | null; category: string; location: string; description: string; status: string; created_at: string };
 type Review = { id: string; provider_id: string; reviewer_name: string | null; rating: number; comment: string | null; created_at: string; status: string };
+type Category = { id: string; name: string };
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -20,6 +22,8 @@ const AdminDashboard = () => {
   const [providers, setProviders] = useState<Provider[]>([]);
   const [requests, setRequests] = useState<Request[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [newCategory, setNewCategory] = useState("");
 
   useEffect(() => {
     if (loading) return;
@@ -28,14 +32,16 @@ const AdminDashboard = () => {
   }, [user, isAdmin, loading, navigate]);
 
   const loadAll = async () => {
-    const [{ data: p }, { data: r }, { data: rv }] = await Promise.all([
+    const [{ data: p }, { data: r }, { data: rv }, { data: c }] = await Promise.all([
       supabase.from("profiles").select("id, name, category, phone, location, starting_price, is_verified").order("name"),
       supabase.from("service_requests").select("id, requester_name, category, location, description, status, created_at").order("created_at", { ascending: false }),
       supabase.from("reviews").select("id, provider_id, reviewer_name, rating, comment, created_at, status").order("created_at", { ascending: false }),
+      supabase.from("categories").select("id, name").order("name"),
     ]);
     setProviders((p ?? []) as Provider[]);
     setRequests((r ?? []) as Request[]);
     setReviews((rv ?? []) as Review[]);
+    setCategories((c ?? []) as Category[]);
   };
 
   const remove = async (table: "profiles" | "service_requests" | "reviews", id: string) => {
@@ -57,6 +63,24 @@ const AdminDashboard = () => {
     const { error } = await supabase.from("reviews").update({ status: "aprovado" }).eq("id", id);
     if (error) return toast.error(error.message);
     toast.success("Avaliação aprovada");
+    loadAll();
+  };
+
+  const addCategory = async () => {
+    const name = newCategory.trim();
+    if (!name) return;
+    const { error } = await supabase.from("categories").insert({ name });
+    if (error) return toast.error(error.message);
+    setNewCategory("");
+    toast.success("Categoria adicionada");
+    loadAll();
+  };
+
+  const removeCategory = async (id: string) => {
+    if (!confirm("Eliminar esta categoria?")) return;
+    const { error } = await supabase.from("categories").delete().eq("id", id);
+    if (error) return toast.error(error.message);
+    toast.success("Categoria eliminada");
     loadAll();
   };
 
@@ -85,11 +109,12 @@ const AdminDashboard = () => {
       <main className="max-w-3xl mx-auto px-4 py-6">
         <h1 className="text-2xl font-bold mb-4">Painel de administração</h1>
         <Tabs defaultValue="providers">
-          <TabsList className="grid grid-cols-4 w-full mb-4">
+          <TabsList className="grid grid-cols-5 w-full mb-4">
             <TabsTrigger value="providers">Prestadores ({providers.length})</TabsTrigger>
             <TabsTrigger value="requests">Pedidos ({requests.length})</TabsTrigger>
             <TabsTrigger value="pending">Pendentes ({pendingReviews.length})</TabsTrigger>
             <TabsTrigger value="reviews">Aprovadas ({approvedReviews.length})</TabsTrigger>
+            <TabsTrigger value="categories">Categorias ({categories.length})</TabsTrigger>
           </TabsList>
 
           <TabsContent value="providers" className="flex flex-col gap-2">
@@ -188,6 +213,31 @@ const AdminDashboard = () => {
               </Card>
             ))}
             {!approvedReviews.length && <p className="text-sm text-muted-foreground text-center py-6">Sem avaliações aprovadas.</p>}
+          </TabsContent>
+
+          <TabsContent value="categories" className="flex flex-col gap-2">
+            <div className="flex gap-2 mb-2">
+              <Input
+                placeholder="Nova categoria (ex: Jardinagem)"
+                value={newCategory}
+                onChange={(e) => setNewCategory(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && addCategory()}
+              />
+              <Button onClick={addCategory} className="gap-1 shrink-0">
+                <Plus className="h-4 w-4" /> Adicionar
+              </Button>
+            </div>
+            {categories.map((c) => (
+              <Card key={c.id}>
+                <CardContent className="p-3 flex items-center justify-between gap-2">
+                  <span className="font-medium text-sm">{c.name}</span>
+                  <Button variant="ghost" size="icon" onClick={() => removeCategory(c.id)}>
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+            {!categories.length && <p className="text-sm text-muted-foreground text-center py-6">Sem categorias.</p>}
           </TabsContent>
         </Tabs>
       </main>
