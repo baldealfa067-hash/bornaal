@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { MapPin, MessageCircle, Phone } from "lucide-react";
+import { MapPin, MessageCircle, Phone, BadgeCheck } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { StarRating } from "./StarRating";
@@ -15,12 +15,13 @@ interface ProviderCardProps {
   phone: string;
   photo_url?: string | null;
   starting_price?: number | null;
+  is_verified?: boolean | null;
   avgRating: number;
   reviewCount: number;
 }
 
 export const ProviderCard = ({
-  id, name, category, location, phone, photo_url, starting_price, avgRating, reviewCount
+  id, name, category, location, phone, photo_url, starting_price, is_verified, avgRating, reviewCount
 }: ProviderCardProps) => {
   const cleanPhone = phone.replace(/\D/g, "");
   const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(
@@ -41,7 +42,15 @@ export const ProviderCard = ({
             </AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-foreground truncate">{name}</h3>
+            <h3 className="font-semibold text-foreground truncate flex items-center gap-1">
+              {name}
+              {is_verified && (
+                <BadgeCheck
+                  className="h-4 w-4 text-primary shrink-0"
+                  aria-label="Prestador verificado"
+                />
+              )}
+            </h3>
             <Badge variant="secondary" className="text-[11px] mt-0.5 font-medium">{category}</Badge>
             <div className="flex items-center gap-2 mt-1">
               <StarRating rating={Math.round(avgRating)} />
