@@ -78,9 +78,7 @@ export const useCategories = () =>
   useQuery({
     queryKey: ["categories"],
     queryFn: async () => {
-      const { data, error } = await (supabase as unknown as {
-        from: (t: string) => { select: (c: string) => Promise<{ data: { name: string }[] | null; error: Error | null }> };
-      }).from("categories").select("name");
+      const { data, error } = await supabase.from("categories").select("name");
       if (error) throw error;
       return (data ?? []).map((c) => c.name).sort();
     },
