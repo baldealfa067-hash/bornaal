@@ -78,9 +78,8 @@ export const useCategories = () =>
   useQuery({
     queryKey: ["categories"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("profiles").select("category");
+      const { data, error } = await supabase.from("categories").select("name");
       if (error) throw error;
-      const cats = [...new Set((data ?? []).map((p) => p.category))];
-      return cats.sort();
+      return (data ?? []).map((c) => c.name).sort();
     },
   });
