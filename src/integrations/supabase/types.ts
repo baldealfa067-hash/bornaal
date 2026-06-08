@@ -296,6 +296,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      register_as_provider: { Args: never; Returns: undefined }
     }
     Enums: {
       app_role: "client" | "provider" | "admin"
