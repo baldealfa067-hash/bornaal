@@ -1,6 +1,6 @@
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { MapPin, Phone, MessageCircle, Wallet } from "lucide-react";
+import { MapPin, Phone, MessageCircle, Wallet, BadgeCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -89,7 +89,12 @@ const ProviderDetail = () => {
           </AvatarFallback>
         </Avatar>
         <div className="flex-1">
-          <h1 className="text-xl font-bold">{provider.name}</h1>
+          <h1 className="text-xl font-bold flex items-center gap-1.5">
+            {provider.name}
+            {(provider as { is_verified?: boolean }).is_verified && (
+              <BadgeCheck className="h-5 w-5 text-primary" aria-label="Prestador verificado" />
+            )}
+          </h1>
           <Badge variant="secondary" className="mt-1">{provider.category}</Badge>
           <div className="flex items-center gap-2 mt-2">
             <StarRating rating={Math.round(provider.avgRating)} size="md" />
