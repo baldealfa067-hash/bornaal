@@ -14,6 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { LOCATIONS } from "@/lib/locations";
+import { useCategories } from "@/hooks/useProviders";
 
 type Form = {
   name: string;
@@ -40,6 +41,7 @@ const ProviderDashboard = () => {
   const [gallery, setGallery] = useState<{ id: string; image_url: string }[]>([]);
   const [galleryUploading, setGalleryUploading] = useState(false);
   const MAX_GALLERY = 4;
+  const { data: categories = [] } = useCategories();
 
   const loadGallery = async (pid: string) => {
     const { data } = await supabase
@@ -210,7 +212,14 @@ const ProviderDashboard = () => {
                 <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
               </Field>
               <Field label="Categoria *">
-                <Input placeholder="ex: Electricista, Pintor, Cabeleireira..." value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} />
+                <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
+                  <SelectTrigger><SelectValue placeholder="Selecione uma categoria" /></SelectTrigger>
+                  <SelectContent>
+                    {categories.map((c) => (
+                      <SelectItem key={c} value={c}>{c}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </Field>
               <div className="grid grid-cols-2 gap-3">
                 <Field label="Telefone (WhatsApp) *">
