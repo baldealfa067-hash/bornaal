@@ -27,11 +27,15 @@ export const useProviders = (category?: string) =>
 
       // Fetch all reviews separately
       const profileIds = (profiles ?? []).map((p) => p.id);
-      const { data: reviews } = await supabase
-        .from("reviews")
-        .select("provider_id, rating")
-        .eq("status", "aprovado")
-        .in("provider_id", profileIds.length ? profileIds : ["__none__"]);
+      const reviews = profileIds.length
+        ? (
+            await supabase
+              .from("reviews")
+              .select("provider_id, rating")
+              .eq("status", "aprovado")
+              .in("provider_id", profileIds)
+          ).data
+        : [];
 
       return (profiles ?? []).map((p) => {
         const ratings = (reviews ?? [])
