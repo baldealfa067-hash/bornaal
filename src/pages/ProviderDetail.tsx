@@ -96,6 +96,13 @@ const ProviderDetail = () => {
             )}
           </h1>
           <Badge variant="secondary" className="mt-1">{provider.category}</Badge>
+          {(provider as { services?: string[] }).services?.length ? (
+            <div className="flex flex-wrap gap-1 mt-2">
+              {(provider as { services?: string[] }).services!.map((s) => (
+                <Badge key={s} variant="outline" className="text-[11px]">{s}</Badge>
+              ))}
+            </div>
+          ) : null}
           <div className="flex items-center gap-2 mt-2">
             <StarRating rating={Math.round(provider.avgRating)} size="md" />
             <span className="text-sm text-muted-foreground">
