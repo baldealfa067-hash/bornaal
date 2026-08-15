@@ -53,6 +53,18 @@ export const ProviderCard = ({
               )}
             </h3>
             <Badge variant="secondary" className="text-[11px] mt-0.5 font-medium">{category}</Badge>
+            {services && services.length > 0 && (
+              <div className="flex flex-wrap gap-1 mt-1">
+                {services.slice(0, 3).map((s) => (
+                  <span key={s} className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
+                    {s}
+                  </span>
+                ))}
+                {services.length > 3 && (
+                  <span className="text-[10px] text-muted-foreground">+{services.length - 3}</span>
+                )}
+              </div>
+            )}
             <div className="flex items-center gap-2 mt-1">
               <StarRating rating={Math.round(avgRating)} />
               <span className="text-xs text-muted-foreground">({reviewCount})</span>
