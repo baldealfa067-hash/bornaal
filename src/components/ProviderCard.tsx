@@ -15,13 +15,14 @@ interface ProviderCardProps {
   phone: string;
   photo_url?: string | null;
   starting_price?: number | null;
+  services?: string[] | null;
   is_verified?: boolean | null;
   avgRating: number;
   reviewCount: number;
 }
 
 export const ProviderCard = ({
-  id, name, category, location, phone, photo_url, starting_price, is_verified, avgRating, reviewCount
+  id, name, category, location, phone, photo_url, starting_price, services, is_verified, avgRating, reviewCount
 }: ProviderCardProps) => {
   const cleanPhone = phone.replace(/\D/g, "");
   const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(
