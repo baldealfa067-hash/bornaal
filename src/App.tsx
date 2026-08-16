@@ -15,6 +15,7 @@ import Login from "./pages/Login";
 import AdminDashboard from "./pages/AdminDashboard";
 import ProviderDashboard from "./pages/ProviderDashboard";
 import NotFound from "./pages/NotFound";
+import Models from "./pages/Models";
 
 const queryClient = new QueryClient();
 
@@ -32,6 +33,7 @@ const App = () => (
           <Route path="/login" element={<Login />} />
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/admin-moderacao" element={<AdminDashboard />} />
+          <Route path="/models" element={<Models />} />
           <Route path="/painel" element={<ProviderDashboard />} />
           <Route element={<Layout />}>
             <Route path="/inicio" element={<Index />} />
