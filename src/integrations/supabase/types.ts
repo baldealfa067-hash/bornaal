@@ -248,10 +248,55 @@ export type Database = {
           },
         ]
       }
+      request_bids: {
+        Row: {
+          created_at: string
+          id: string
+          message: string | null
+          provider_id: string
+          request_id: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message?: string | null
+          provider_id: string
+          request_id: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string | null
+          provider_id?: string
+          request_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "request_bids_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "request_bids_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "service_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       service_requests: {
         Row: {
+          budget_amount: number | null
+          budget_type: string
           category: string
           created_at: string
+          deadline: string | null
           description: string
           id: string
           location: string
@@ -261,11 +306,28 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          budget_amount?: number | null
+          budget_type?: string
           category: string
           created_at?: string
+          deadline?: string | null
           description: string
           id?: string
           location: string
+          requester_name?: string | null
+          requester_phone?: string | null
+          status?: string
+          user_id?: string | null
+        }
+        Update: {
+          budget_amount?: number | null
+          budget_type?: string
+          category?: string
+          created_at?: string
+          deadline?: string | null
+          description?: string
+          id?: string
+          location?: string
           requester_name?: string | null
           requester_phone?: string | null
           status?: string

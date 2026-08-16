@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { z } from "zod";
-import { MapPin, MessageCircle, Plus, Tag, Clock, BadgeCheck } from "lucide-react";
+import { MapPin, MessageCircle, Plus, Tag, Clock, ChevronDown, ChevronUp, Users, CheckCircle2, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -9,260 +8,538 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { StarRating } from "@/components/StarRating";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
-import { useRequests, useCreateRequest } from "@/hooks/useRequests";
-import { useCategories } from "@/hooks/useProviders";
-import { useProposals } from "@/hooks/useProposals";
-import { formatCFA } from "@/lib/format";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { toast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import { useMyProvider } from "@/hooks/useMyProvider";
+import { useCategories } from "@/hooks/useProviders";
+import { useBairros } from "@/hooks/useBairros";
+import { BAIRROS_FILTER } from "@/lib/locations";
+import { formatCFA } from "@/lib/format";
+import {
+  useRequests, useCreateRequest,
+  useBidsForRequest, useBidOnRequest, useUpdateBidStatus, useMyBidOnRequest,
+  type ServiceRequest, type RequestBidWithProvider,
+} from "@/hooks/useRequests";
+import { toast } from "sonner";
 
-const schema = z.object({
-  requester_name: z.string().trim().min(2, "Nome obrigatório").max(80),
-  requester_phone: z
-    .string()
-    .trim()
-    .min(7, "Telefone inválido")
-    .max(25)
-    .regex(/^[+\d\s()-]+$/, "Telefone inválido"),
-  category: z.string().min(1, "Selecione uma categoria"),
-  location: z.string().trim().min(2, "Localização obrigatória").max(80),
-  description: z.string().trim().min(10, "Descreva o pedido (mín. 10 caracteres)").max(500),
-});
+const DEADLINE_OPTIONS = [
+  { value: "urgente", label: "Urgente" },
+  { value: "hoje", label: "Hoje" },
+  { value: "esta_semana", label: "Esta semana" },
+  { value: "proxima_semana", label: "Próxima semana" },
+  { value: "flexivel", label: "Flexível" },
+];
+
+const BUDGET_OPTIONS = [
+  { value: "fixo", label: "Valor fixo" },
+  { value: "negociavel", label: "Negociável" },
+  { value: "combinar", label: "A combinar" },
+];
 
 const Requests = () => {
+  const { user } = useAuth();
+  const { data: providerProfile } = useMyProvider(user?.id ?? null);
   const { data: requests = [], isLoading } = useRequests();
-  const { data: proposals = [], isLoading: loadingProposals } = useProposals();
   const { data: categories = [] } = useCategories();
+  const { data: bairros = [] } = useBairros();
+  const bairroOptions = bairros.length ? bairros : BAIRROS_FILTER.slice(1);
   const create = useCreateRequest();
-  const [open, setOpen] = useState(false);
-  const [tab, setTab] = useState<"pedidos" | "propostas">("propostas");
+  const bidOnRequest = useBidOnRequest();
+  const updateBid = useUpdateBidStatus();
+
+  const [tab, setTab] = useState<"disponiveis" | "publicar" | "meus">("disponiveis");
+  const [filterCategory, setFilterCategory] = useState("all");
+  const [filterLocation, setFilterLocation] = useState("all");
+  const [expandedRequest, setExpandedRequest] = useState<string | null>(null);
+
   const [form, setForm] = useState({
     requester_name: "",
     requester_phone: "",
     category: "",
     location: "",
     description: "",
+    deadline: "",
+    budget_type: "combinar",
+    budget_amount: "",
   });
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const [bidForm, setBidForm] = useState<{ requestId: string; message: string } | null>(null);
+
+  const openRequests = requests.filter((r) => r.status === "open");
+  const myRequests = user ? requests.filter((r) => r.user_id === user.id) : [];
+
+  const filtered = openRequests.filter((r) => {
+    if (filterCategory !== "all" && r.category !== filterCategory) return false;
+    if (filterLocation !== "all" && !r.location.toLowerCase().includes(filterLocation.toLowerCase())) return false;
+    return true;
+  });
+
+  const handlePublish = async (e: React.FormEvent) => {
     e.preventDefault();
-    const parsed = schema.safeParse(form);
-    if (!parsed.success) {
-      toast({
-        title: "Erro de validação",
-        description: parsed.error.issues[0].message,
-        variant: "destructive",
-      });
-      return;
-    }
+    if (!form.category) return toast.error("Selecione uma categoria");
+    if (!form.description.trim()) return toast.error("Descreva o pedido");
     try {
-      await create.mutateAsync(parsed.data as Required<typeof form>);
-      toast({ title: "Pedido publicado!", description: "Os prestadores podem agora contactá-lo." });
-      setOpen(false);
-      setForm({ requester_name: "", requester_phone: "", category: "", location: "", description: "" });
-    } catch (err: any) {
-      toast({ title: "Erro", description: err.message ?? "Tente novamente", variant: "destructive" });
+      await create.mutateAsync({
+        category: form.category,
+        description: form.description.trim(),
+        location: form.location.trim() || "Bissau",
+        requester_name: form.requester_name.trim() || "Cliente",
+        requester_phone: form.requester_phone.trim(),
+        user_id: user?.id,
+        deadline: form.deadline || null,
+        budget_type: form.budget_type,
+        budget_amount: form.budget_amount ? Number(form.budget_amount) : null,
+      });
+      toast.success("Pedido publicado!");
+      setForm({ requester_name: "", requester_phone: "", category: "", location: "", description: "", deadline: "", budget_type: "combinar", budget_amount: "" });
+      setTab("meus");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Tente novamente";
+      toast.error(msg);
+    }
+  };
+
+  const handleBid = async () => {
+    if (!bidForm || !providerProfile) return;
+    try {
+      await bidOnRequest.mutateAsync({
+        request_id: bidForm.request_id,
+        provider_id: providerProfile.id,
+        message: bidForm.message || undefined,
+      });
+      toast.success("Candidatura enviada!");
+      setBidForm(null);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Já se candidatou a este pedido";
+      toast.error(msg);
+    }
+  };
+
+  const handleBidStatus = async (bidId: string, status: "aceite" | "recusado") => {
+    try {
+      await updateBid.mutateAsync({ id: bidId, status });
+      toast.success(status === "aceite" ? "Candidatura aceite!" : "Candidatura recusada");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Erro";
+      toast.error(msg);
     }
   };
 
   return (
     <div className="max-w-lg mx-auto px-4 pt-6">
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <h1 className="text-xl font-bold">Pedidos & Propostas</h1>
-          <p className="text-xs text-muted-foreground">Veja propostas de prestadores ou publique o que precisa.</p>
-        </div>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button size="sm" className="gap-1">
-              <Plus className="h-4 w-4" /> Pedido
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>Publicar pedido</DialogTitle>
-            </DialogHeader>
-            <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-              <Input
-                placeholder="O seu nome"
-                value={form.requester_name}
-                onChange={(e) => setForm({ ...form, requester_name: e.target.value })}
-                maxLength={80}
-              />
-              <Input
-                placeholder="Telefone (WhatsApp), ex: +245 955 000 000"
-                value={form.requester_phone}
-                onChange={(e) => setForm({ ...form, requester_phone: e.target.value })}
-                maxLength={25}
-              />
-              <Select
-                value={form.category}
-                onValueChange={(v) => setForm({ ...form, category: v })}
-              >
-                <SelectTrigger><SelectValue placeholder="Categoria do serviço" /></SelectTrigger>
-                <SelectContent>
-                  {categories.map((c) => (
-                    <SelectItem key={c} value={c}>{c}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Input
-                placeholder="Localização (ex: Bissau, Bafatá...)"
-                value={form.location}
-                onChange={(e) => setForm({ ...form, location: e.target.value })}
-                maxLength={80}
-              />
-              <Textarea
-                placeholder="Descreva o que precisa..."
-                value={form.description}
-                onChange={(e) => setForm({ ...form, description: e.target.value })}
-                maxLength={500}
-                rows={4}
-              />
-              <DialogFooter>
-                <Button type="submit" disabled={create.isPending} className="w-full">
-                  {create.isPending ? "A publicar..." : "Publicar pedido"}
-                </Button>
-              </DialogFooter>
-            </form>
-          </DialogContent>
-        </Dialog>
-      </div>
+      <h1 className="text-xl font-bold mb-4">Pedidos de Serviço</h1>
 
-      <Tabs value={tab} onValueChange={(v) => setTab(v as any)} className="mb-4">
-        <TabsList className="grid grid-cols-2 w-full">
-          <TabsTrigger value="propostas">Propostas ({proposals.length})</TabsTrigger>
-          <TabsTrigger value="pedidos">Pedidos ({requests.length})</TabsTrigger>
+      <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)}>
+        <TabsList className="grid grid-cols-3 w-full mb-4">
+          <TabsTrigger value="disponiveis" className="whitespace-nowrap">Disponíveis</TabsTrigger>
+          <TabsTrigger value="publicar" className="whitespace-nowrap">Publicar</TabsTrigger>
+          <TabsTrigger value="meus" className="whitespace-nowrap">Os Meus</TabsTrigger>
         </TabsList>
-        <TabsContent value="propostas" className="mt-4">
-          {loadingProposals ? (
-            <p className="text-sm text-muted-foreground">A carregar...</p>
-          ) : proposals.length === 0 ? (
+
+        {/* ─── TAB: Disponíveis (feed) ─── */}
+        <TabsContent value="disponiveis">
+          <div className="flex flex-col gap-3 mb-3">
+            <Select value={filterCategory} onValueChange={setFilterCategory}>
+              <SelectTrigger className="h-9 text-sm bg-card">
+                <SelectValue placeholder="Todas as categorias" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas as categorias</SelectItem>
+                {categories.map((c) => (
+                  <SelectItem key={c} value={c}>{c}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={filterLocation} onValueChange={setFilterLocation}>
+              <SelectTrigger className="h-9 text-sm bg-card">
+                <SelectValue placeholder="Todas as localizações" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas as localizações</SelectItem>
+                {bairroOptions.map((b) => (
+                  <SelectItem key={b} value={b}>{b}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {isLoading ? (
+            <p className="text-sm text-muted-foreground text-center py-8">A carregar...</p>
+          ) : filtered.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-12">
+              {openRequests.length === 0
+                ? "Ainda não há pedidos publicados."
+                : "Nenhum pedido para estes filtros."}
+            </p>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {filtered.map((r) => (
+                <RequestCard
+                  key={r.id}
+                  request={r}
+                  providerProfile={providerProfile}
+                  expanded={expandedRequest === r.id}
+                  onToggle={() => setExpandedRequest(expandedRequest === r.id ? null : r.id)}
+                  onBid={() => setBidForm({ requestId: r.id, message: "" })}
+                  bidOnRequest={bidOnRequest}
+                />
+              ))}
+            </div>
+          )}
+        </TabsContent>
+
+        {/* ─── TAB: Publicar ─── */}
+        <TabsContent value="publicar">
+          <form onSubmit={handlePublish} className="flex flex-col gap-3">
+            <Input
+              placeholder="O seu nome (opcional)"
+              value={form.requester_name}
+              onChange={(e) => setForm({ ...form, requester_name: e.target.value })}
+              maxLength={80}
+            />
+            <Input
+              placeholder="Telefone (WhatsApp)"
+              value={form.requester_phone}
+              onChange={(e) => setForm({ ...form, requester_phone: e.target.value })}
+              maxLength={25}
+            />
+            <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
+              <SelectTrigger><SelectValue placeholder="Categoria do serviço *" /></SelectTrigger>
+              <SelectContent>
+                {categories.map((c) => (
+                  <SelectItem key={c} value={c}>{c}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={form.location} onValueChange={(v) => setForm({ ...form, location: v })}>
+              <SelectTrigger><SelectValue placeholder="Localização / Bairro" /></SelectTrigger>
+              <SelectContent>
+                {bairroOptions.map((b) => (
+                  <SelectItem key={b} value={b}>{b}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Textarea
+              placeholder="Descreva o que precisa (mín. 10 caracteres)..."
+              value={form.description}
+              onChange={(e) => setForm({ ...form, description: e.target.value })}
+              maxLength={500}
+              rows={4}
+            />
+
+            <div className="border-t border-border pt-3">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Prazo</p>
+              <div className="flex flex-wrap gap-2">
+                {DEADLINE_OPTIONS.map((opt) => (
+                  <Badge
+                    key={opt.value}
+                    variant={form.deadline === opt.value ? "default" : "outline"}
+                    className="cursor-pointer px-3 py-1.5 text-xs"
+                    onClick={() => setForm({ ...form, deadline: form.deadline === opt.value ? "" : opt.value })}
+                  >
+                    {opt.label}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+
+            <div className="border-t border-border pt-3">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Orçamento</p>
+              <div className="flex flex-wrap gap-2 mb-2">
+                {BUDGET_OPTIONS.map((opt) => (
+                  <Badge
+                    key={opt.value}
+                    variant={form.budget_type === opt.value ? "default" : "outline"}
+                    className="cursor-pointer px-3 py-1.5 text-xs"
+                    onClick={() => setForm({ ...form, budget_type: opt.value, budget_amount: opt.value === "fixo" ? form.budget_amount : "" })}
+                  >
+                    {opt.label}
+                  </Badge>
+                ))}
+              </div>
+              {form.budget_type === "fixo" && (
+                <Input
+                  type="number"
+                  min="0"
+                  placeholder="Valor em CFA (ex: 15000)"
+                  value={form.budget_amount}
+                  onChange={(e) => setForm({ ...form, budget_amount: e.target.value })}
+                />
+              )}
+            </div>
+
+            <Button type="submit" disabled={create.isPending} className="w-full mt-2">
+              {create.isPending ? "A publicar..." : "Publicar Pedido"}
+            </Button>
+          </form>
+        </TabsContent>
+
+        {/* ─── TAB: Os Meus (pedidos que publiquei) ─── */}
+        <TabsContent value="meus">
+          {!user ? (
+            <div className="text-center py-12">
+              <p className="text-sm text-muted-foreground mb-4">Faça login para ver os seus pedidos.</p>
+              <Link to="/login">
+                <Button size="sm">Entrar</Button>
+              </Link>
+            </div>
+          ) : myRequests.length === 0 ? (
             <div className="text-center py-12 text-sm text-muted-foreground">
-              Ainda não existem propostas publicadas.
+              Ainda não publicou nenhum pedido.
               <div className="mt-4">
-                <Link to="/login?tab=registar">
-                  <Button size="sm" variant="outline">Sou prestador — cadastrar</Button>
-                </Link>
+                <Button size="sm" onClick={() => setTab("publicar")}>
+                  <Plus className="h-4 w-4 mr-1" /> Publicar pedido
+                </Button>
               </div>
             </div>
           ) : (
             <div className="flex flex-col gap-3">
-              {proposals.map((p) => {
-                const phone = (p.provider?.phone ?? "").replace(/\D/g, "");
-                const wa = phone
-                  ? `https://wa.me/${phone}?text=${encodeURIComponent(
-                      `Olá ${p.provider?.name ?? ""}, vi a sua proposta "${p.title}" no BissauService e tenho interesse.`,
-                    )}`
-                  : null;
-                return (
-                  <Card key={p.id} className="border-border/60">
-                    <CardContent className="p-4">
-                      <div className="flex items-center gap-3 mb-3">
-                        <Link to={`/prestador/${p.provider_id}`}>
-                          <Avatar className="h-11 w-11 rounded-lg">
-                            {p.provider?.photo_url ? (
-                              <AvatarImage src={p.provider.photo_url} alt={p.provider.name} className="object-cover" />
-                            ) : null}
-                            <AvatarFallback className="rounded-lg bg-primary/10 text-primary font-semibold">
-                              {p.provider?.name?.charAt(0) ?? "?"}
-                            </AvatarFallback>
-                          </Avatar>
-                        </Link>
-                        <div className="flex-1 min-w-0">
-                          <Link to={`/prestador/${p.provider_id}`} className="font-semibold text-sm hover:underline flex items-center gap-1">
-                            {p.provider?.name ?? "Prestador"}
-                            {p.provider?.is_verified && (
-                              <BadgeCheck className="h-4 w-4 text-primary" />
-                            )}
-                          </Link>
-                          <div className="flex items-center gap-2">
-                            <StarRating rating={Math.round(p.avgRating)} />
-                            <span className="text-[11px] text-muted-foreground">({p.reviewCount})</span>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <div className="text-[10px] text-muted-foreground uppercase">{p.price_type}</div>
-                          <div className="text-sm font-bold text-primary">{formatCFA(p.price)}</div>
-                        </div>
-                      </div>
-                      <h3 className="font-semibold text-foreground mb-1">{p.title}</h3>
-                      <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground mb-2">
-                        <span className="flex items-center gap-1"><Tag className="h-3 w-3" />{p.category}</span>
-                        <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{p.location}</span>
-                      </div>
-                      <p className="text-sm text-foreground/90 mb-3 whitespace-pre-wrap">{p.description}</p>
-                      {wa && (
-                        <a href={wa} target="_blank" rel="noopener noreferrer" className="block">
-                          <Button className="w-full bg-[#25D366] hover:bg-[#1ebe57] text-white gap-2">
-                            <MessageCircle className="h-4 w-4" /> Contactar via WhatsApp
-                          </Button>
-                        </a>
-                      )}
-                    </CardContent>
-                  </Card>
-                );
-              })}
+              {myRequests.map((r) => (
+                <MyRequestCard
+                  key={r.id}
+                  request={r}
+                  expanded={expandedRequest === r.id}
+                  onToggle={() => setExpandedRequest(expandedRequest === r.id ? null : r.id)}
+                  onBidStatus={handleBidStatus}
+                />
+              ))}
             </div>
           )}
         </TabsContent>
-        <TabsContent value="pedidos" className="mt-4">
-      {isLoading ? (
-        <p className="text-sm text-muted-foreground">A carregar...</p>
-      ) : requests.length === 0 ? (
-        <div className="text-center py-12 text-sm text-muted-foreground">
-          Ainda não existem pedidos. Seja o primeiro a publicar!
-        </div>
-      ) : (
-        <div className="flex flex-col gap-3">
-          {requests.map((r) => {
-            const phone = (r.requester_phone ?? "").replace(/\D/g, "");
-            const whatsappUrl = phone
-              ? `https://wa.me/${phone}?text=${encodeURIComponent(
-                  `Olá ${r.requester_name ?? ""}, vi o seu pedido (${r.category}) no BissauService e posso ajudar.`,
-                )}`
-              : null;
-            return (
-              <Card key={r.id} className="border-border/60">
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between gap-2 mb-2">
-                    <div className="min-w-0">
-                      <h3 className="font-semibold truncate">{r.requester_name ?? "Cliente"}</h3>
-                      <div className="flex flex-wrap items-center gap-2 mt-1 text-xs text-muted-foreground">
-                        <span className="flex items-center gap-1"><Tag className="h-3 w-3" />{r.category}</span>
-                        <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{r.location}</span>
-                        <span className="flex items-center gap-1"><Clock className="h-3 w-3" />
-                          {new Date(r.created_at).toLocaleDateString("pt")}
-                        </span>
-                      </div>
-                    </div>
-                    <Badge variant="secondary" className="text-[10px]">{r.status}</Badge>
-                  </div>
-                  <p className="text-sm text-foreground/90 mb-3 whitespace-pre-wrap">{r.description}</p>
-                  {whatsappUrl && (
-                    <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="block">
-                      <Button className="w-full bg-[#25D366] hover:bg-[#1ebe57] text-white gap-2">
-                        <MessageCircle className="h-4 w-4" />
-                        Aceitar e contactar via WhatsApp
-                      </Button>
-                    </a>
-                  )}
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-      )}
-        </TabsContent>
       </Tabs>
+
+      {/* ─── Dialog: Candidatar-se ─── */}
+      <Dialog open={!!bidForm} onOpenChange={(open) => { if (!open) setBidForm(null); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Candidatar-se ao pedido</DialogTitle>
+          </DialogHeader>
+          <Textarea
+            placeholder="Mensagem opcional: explique porquê deve escolhê-lo..."
+            value={bidForm?.message ?? ""}
+            onChange={(e) => setBidForm(bidForm ? { ...bidForm, message: e.target.value } : null)}
+            rows={3}
+          />
+          <DialogFooter>
+            <Button onClick={handleBid} disabled={bidOnRequest.isPending} className="w-full">
+              {bidOnRequest.isPending ? "A enviar..." : "Enviar candidatura"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
+
+/* ─── Card de pedido disponível (feed para prestadores) ─── */
+function RequestCard({
+  request: r,
+  providerProfile,
+  expanded,
+  onToggle,
+  onBid,
+  bidOnRequest,
+}: {
+  request: ServiceRequest;
+  providerProfile: { id: string } | null;
+  expanded: boolean;
+  onToggle: () => void;
+  onBid: () => void;
+  bidOnRequest: { isPending: boolean };
+}) {
+  const { data: myBid } = useMyBidOnRequest(r.id, providerProfile?.id ?? null);
+  const deadlineLabel = DEADLINE_OPTIONS.find((d) => d.value === r.deadline)?.label;
+
+  return (
+    <Card className="border-border/60">
+      <CardContent className="p-4">
+        <div className="flex items-start justify-between gap-2 mb-2">
+          <div className="min-w-0">
+            <h3 className="font-semibold text-sm">{r.requester_name ?? "Cliente"}</h3>
+            <div className="flex flex-wrap items-center gap-2 mt-1 text-xs text-muted-foreground">
+              <span className="flex items-center gap-1"><Tag className="h-3 w-3" />{r.category}</span>
+              <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{r.location}</span>
+              {deadlineLabel && (
+                <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{deadlineLabel}</span>
+              )}
+            </div>
+          </div>
+          <Badge variant={r.budget_type === "fixo" ? "default" : "secondary"} className="text-[10px] shrink-0">
+            {r.budget_type === "fixo" && r.budget_amount
+              ? formatCFA(r.budget_amount)
+              : BUDGET_OPTIONS.find((b) => b.value === r.budget_type)?.label ?? r.budget_type}
+          </Badge>
+        </div>
+
+        <p className="text-sm text-foreground/90 mb-3 whitespace-pre-wrap">{r.description}</p>
+
+        <div className="flex items-center gap-2 text-[11px] text-muted-foreground mb-3">
+          <span>Publicado {new Date(r.created_at).toLocaleDateString("pt")}</span>
+        </div>
+
+        {providerProfile ? (
+          myBid ? (
+            <div className={`flex items-center gap-2 text-sm font-medium py-2 px-3 rounded-lg ${
+              myBid.status === "aceite"
+                ? "bg-green-500/10 text-green-600"
+                : myBid.status === "recusado"
+                  ? "bg-destructive/10 text-destructive"
+                  : "bg-muted text-muted-foreground"
+            }`}>
+              {myBid.status === "aceite" ? <CheckCircle2 className="h-4 w-4" /> : myBid.status === "recusado" ? <XCircle className="h-4 w-4" /> : null}
+              {myBid.status === "pendente" ? "Candidatura enviada — aguarde resposta" : myBid.status === "aceite" ? "Candidatura aceite!" : "Candidatura recusada"}
+            </div>
+          ) : (
+            <Button
+              onClick={onBid}
+              disabled={bidOnRequest.isPending}
+              className="w-full"
+              variant="outline"
+            >
+              Tenho interesse
+            </Button>
+          )
+        ) : (
+          <Link to="/login" className="block">
+            <Button variant="outline" className="w-full" size="sm">Faça login para se candidatar</Button>
+          </Link>
+        )}
+
+        <button onClick={onToggle} className="flex items-center gap-1 text-xs text-muted-foreground mt-3 hover:text-foreground transition-colors">
+          {expanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+          {expanded ? "Recolher" : "Mais detalhes"}
+        </button>
+        {expanded && (
+          <div className="mt-2 text-xs text-muted-foreground space-y-1">
+            <p><span className="font-medium text-foreground">Categoria:</span> {r.category}</p>
+            <p><span className="font-medium text-foreground">Localização:</span> {r.location}</p>
+            {deadlineLabel && <p><span className="font-medium text-foreground">Prazo:</span> {deadlineLabel}</p>}
+            <p><span className="font-medium text-foreground">Orçamento:</span>{" "}
+              {r.budget_type === "fixo" && r.budget_amount ? formatCFA(r.budget_amount) : BUDGET_OPTIONS.find((b) => b.value === r.budget_type)?.label}
+            </p>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+/* ─── Card de pedido meu (cliente vê quem se candidatou) ─── */
+function MyRequestCard({
+  request: r,
+  expanded,
+  onToggle,
+  onBidStatus,
+}: {
+  request: ServiceRequest;
+  expanded: boolean;
+  onToggle: () => void;
+  onBidStatus: (bidId: string, status: "aceite" | "recusado") => void;
+}) {
+  const { data: bids = [], isLoading: loadingBids } = useBidsForRequest(r.id);
+  const deadlineLabel = DEADLINE_OPTIONS.find((d) => d.value === r.deadline)?.label;
+
+  return (
+    <Card className="border-border/60">
+      <CardContent className="p-4">
+        <div className="flex items-start justify-between gap-2 mb-2">
+          <div className="min-w-0">
+            <h3 className="font-semibold text-sm">{r.category}</h3>
+            <div className="flex flex-wrap items-center gap-2 mt-1 text-xs text-muted-foreground">
+              <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{r.location}</span>
+              {deadlineLabel && (
+                <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{deadlineLabel}</span>
+              )}
+            </div>
+          </div>
+          <Badge variant="secondary" className="text-[10px]">
+            {bids.length} {bids.length === 1 ? "candidatura" : "candidaturas"}
+          </Badge>
+        </div>
+
+        <p className="text-sm text-foreground/90 mb-2 whitespace-pre-wrap">{r.description}</p>
+
+        <button onClick={onToggle} className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
+          {expanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+          {expanded ? "Recolher" : `Ver candidaturas (${bids.length})`}
+        </button>
+
+        {expanded && (
+          <div className="mt-3 border-t border-border pt-3">
+            {loadingBids ? (
+              <p className="text-xs text-muted-foreground">A carregar candidaturas...</p>
+            ) : bids.length === 0 ? (
+              <p className="text-xs text-muted-foreground text-center py-3">Nenhuma candidatura ainda.</p>
+            ) : (
+              <div className="flex flex-col gap-2">
+                {bids.map((bid) => {
+                  const phone = (bid.provider?.phone ?? "").replace(/[^\d+]/g, "");
+                  const waMsg = `Ola ${bid.provider?.name ?? ""}, o seu pedido "${r.category}" foi aceite no BissauService!`;
+                  const wa = phone
+                    ? `https://wa.me/${phone}?text=${encodeURIComponent(waMsg)}`
+                    : null;
+                  return (
+                    <div key={bid.id} className="flex items-center gap-3 p-2 rounded-lg bg-muted/50">
+                      <Avatar className="h-9 w-9 rounded-lg shrink-0">
+                        {bid.provider?.photo_url ? (
+                          <AvatarImage src={bid.provider.photo_url} alt={bid.provider.name} className="object-cover" />
+                        ) : null}
+                        <AvatarFallback className="rounded-lg bg-primary/10 text-primary text-xs font-semibold">
+                          {bid.provider?.name?.charAt(0) ?? "?"}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{bid.provider?.name ?? "Prestador"}</p>
+                        <p className="text-[11px] text-muted-foreground">{bid.provider?.category}</p>
+                        {bid.message && <p className="text-xs text-muted-foreground mt-0.5 italic">"{bid.message}"</p>}
+                      </div>
+                      <div className="flex flex-col gap-1 shrink-0">
+                        {bid.status === "pendente" ? (
+                          <>
+                            <Button
+                              size="sm"
+                              onClick={() => onBidStatus(bid.id, "aceite")}
+                              className="h-7 text-[11px] bg-green-600 hover:bg-green-700 text-white gap-1"
+                            >
+                              <CheckCircle2 className="h-3 w-3" /> Aceitar
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => onBidStatus(bid.id, "recusado")}
+                              className="h-7 text-[11px] gap-1"
+                            >
+                              <XCircle className="h-3 w-3" /> Recusar
+                            </Button>
+                          </>
+                        ) : (
+                          <Badge variant={bid.status === "aceite" ? "default" : "secondary"} className="text-[10px]">
+                            {bid.status === "aceite" ? "Aceite" : "Recusado"}
+                          </Badge>
+                        )}
+                      </div>
+                      {bid.status === "aceite" && wa && (
+                        <a href={wa} target="_blank" rel="noopener noreferrer" className="block mt-1">
+                          <Button size="sm" className="w-full bg-[#25D366] hover:bg-[#1ebe57] text-white gap-1 h-7 text-[11px]">
+                            <MessageCircle className="h-3 w-3" /> WhatsApp
+                          </Button>
+                        </a>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
 
 export default Requests;

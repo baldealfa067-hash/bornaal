@@ -14,6 +14,7 @@ import Privacy from "./pages/Privacy";
 import Login from "./pages/Login";
 import AdminDashboard from "./pages/AdminDashboard";
 import ProviderDashboard from "./pages/ProviderDashboard";
+import Requests from "./pages/Requests";
 import NotFound from "./pages/NotFound";
 import Models from "./pages/Models";
 
@@ -38,6 +39,7 @@ const App = () => (
           <Route element={<Layout />}>
             <Route path="/inicio" element={<Index />} />
             <Route path="/explorar" element={<Explore />} />
+            <Route path="/pedidos" element={<Requests />} />
             <Route path="/prestador/:id" element={<ProviderDetail />} />
           </Route>
           <Route path="*" element={<NotFound />} />
