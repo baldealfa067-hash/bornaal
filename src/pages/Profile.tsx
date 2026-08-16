@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { LogOut, Settings, Shield, Briefcase } from "lucide-react";
+import { LogOut, Settings, Briefcase, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -20,10 +20,11 @@ type ProviderProfile = {
 
 const Profile = () => {
   const navigate = useNavigate();
-  const { user, isProvider, isAdmin, roles, signOut } = useAuth();
+  const { user, isProvider, isAdmin, roles, loading, signOut } = useAuth();
   const [profile, setProfile] = useState<ProviderProfile | null>(null);
 
   useEffect(() => {
+    if (loading) return;
     if (!user) {
       navigate("/login", { replace: true });
       return;
@@ -42,13 +43,21 @@ const Profile = () => {
           if (data) setProfile(data as ProviderProfile);
         });
     }
-  }, [user, isAdmin, isProvider, navigate]);
+  }, [user, isAdmin, isProvider, loading, navigate]);
 
   const handleLogout = async () => {
     await signOut();
     toast.success("Sessão encerrada");
     navigate("/", { replace: true });
   };
+
+  if (loading) {
+    return (
+      <div className="max-w-lg mx-auto px-4 py-8 flex justify-center">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   if (!user || isAdmin) return null;
 
@@ -87,7 +96,7 @@ const Profile = () => {
                 <span className="text-muted-foreground">Localização</span>
                 <span className="font-medium">{profile.location}</span>
               </div>
-              {profile.starting_price && (
+              {profile.starting_price != null && (
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Preço inicial</span>
                   <span className="font-medium">{profile.starting_price} FCFA</span>

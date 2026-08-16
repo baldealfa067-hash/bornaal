@@ -53,9 +53,10 @@ const Login = () => {
       setSubmitting(false);
       return toast.error(error?.message ?? "Erro no registo");
     }
-    // Wait for session to be ready before assigning role
+    // Wait for session, then assign provider role
     if (data.session) {
-      await supabase.rpc("register_as_provider");
+      const { error: roleErr } = await supabase.rpc("register_as_provider");
+      if (roleErr) console.error("Role error:", roleErr);
     }
     setSubmitting(false);
     toast.success("Conta criada. A entrar...");
