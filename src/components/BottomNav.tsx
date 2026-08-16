@@ -5,7 +5,7 @@ const items = [
   { to: "/inicio", icon: Home, label: "Início" },
   { to: "/explorar", icon: Search, label: "Explorar" },
   { to: "/pedidos", icon: ClipboardList, label: "Pedidos" },
-  { to: "/painel", icon: User, label: "Perfil" },
+  { to: "/perfil", icon: User, label: "Perfil" },
 ];
 
 export const BottomNav = () => {

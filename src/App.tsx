@@ -17,6 +17,7 @@ import ProviderDashboard from "./pages/ProviderDashboard";
 import Requests from "./pages/Requests";
 import NotFound from "./pages/NotFound";
 import Models from "./pages/Models";
+import Profile from "./pages/Profile";
 
 const queryClient = new QueryClient();
 
@@ -40,6 +41,7 @@ const App = () => (
             <Route path="/inicio" element={<Index />} />
             <Route path="/explorar" element={<Explore />} />
             <Route path="/pedidos" element={<Requests />} />
+            <Route path="/perfil" element={<Profile />} />
             <Route path="/prestador/:id" element={<ProviderDetail />} />
           </Route>
           <Route path="*" element={<NotFound />} />

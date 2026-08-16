@@ -23,9 +23,11 @@ const Login = () => {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    if (loading || !user) return;
+    if (loading) return;
+    if (!user) return;
     if (isAdmin) navigate("/admin", { replace: true });
     else if (isProvider) navigate("/painel", { replace: true });
+    else navigate("/inicio", { replace: true });
   }, [user, isAdmin, isProvider, loading, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -51,8 +53,10 @@ const Login = () => {
       setSubmitting(false);
       return toast.error(error?.message ?? "Erro no registo");
     }
-    // assign provider role via secure function (prevents self-assigning admin)
-    await supabase.rpc("register_as_provider");
+    // Wait for session to be ready before assigning role
+    if (data.session) {
+      await supabase.rpc("register_as_provider");
+    }
     setSubmitting(false);
     toast.success("Conta criada. A entrar...");
   };

@@ -68,7 +68,7 @@ const Requests = () => {
     budget_amount: "",
   });
 
-  const [bidForm, setBidForm] = useState<{ requestId: string; message: string } | null>(null);
+  const [bidForm, setBidForm] = useState<{ requestId: string; message: string; requesterPhone: string | null; requesterName: string | null; category: string } | null>(null);
 
   const openRequests = requests.filter((r) => r.status === "open");
   const myRequests = user ? requests.filter((r) => r.user_id === user.id) : [];
@@ -113,6 +113,12 @@ const Requests = () => {
         message: bidForm.message || undefined,
       });
       toast.success("Candidatura enviada!");
+      // Open WhatsApp to client
+      if (bidForm.requesterPhone) {
+        const phone = bidForm.requesterPhone.replace(/[^\d+]/g, "");
+        const msg = `Ola ${bidForm.requesterName ?? "Cliente"}, sou ${providerProfile.name ?? "um prestador"}, vi o seu pedido "${bidForm.category}" no BissauService e tenho interesse! ${bidForm.message ? "\n\nMensagem: " + bidForm.message : ""}`;
+        window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, "_blank");
+      }
       setBidForm(null);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Já se candidatou a este pedido";
@@ -185,7 +191,7 @@ const Requests = () => {
                   providerProfile={providerProfile}
                   expanded={expandedRequest === r.id}
                   onToggle={() => setExpandedRequest(expandedRequest === r.id ? null : r.id)}
-                  onBid={() => setBidForm({ requestId: r.id, message: "" })}
+                  onBid={() => setBidForm({ requestId: r.id, message: "", requesterPhone: r.requester_phone, requesterName: r.requester_name, category: r.category })}
                   bidOnRequest={bidOnRequest}
                 />
               ))}
@@ -393,16 +399,40 @@ function RequestCard({
             }`}>
               {myBid.status === "aceite" ? <CheckCircle2 className="h-4 w-4" /> : myBid.status === "recusado" ? <XCircle className="h-4 w-4" /> : null}
               {myBid.status === "pendente" ? "Candidatura enviada — aguarde resposta" : myBid.status === "aceite" ? "Candidatura aceite!" : "Candidatura recusada"}
+              {myBid.status === "aceite" && r.requester_phone && (
+                <a
+                  href={`https://wa.me/${r.requester_phone.replace(/[^\d+]/g, "")}?text=${encodeURIComponent(`Ola ${r.requester_name ?? "Cliente"}, sou ${providerProfile.name ?? "um prestador"}, o seu pedido "${r.category}" foi aceite no BissauService!`)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Button size="sm" className="ml-2 bg-[#25D366] hover:bg-[#1ebe57] text-white gap-1 h-7 text-[11px]">
+                    <MessageCircle className="h-3 w-3" /> WhatsApp
+                  </Button>
+                </a>
+              )}
             </div>
           ) : (
-            <Button
-              onClick={onBid}
-              disabled={bidOnRequest.isPending}
-              className="w-full"
-              variant="outline"
-            >
-              Tenho interesse
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                onClick={onBid}
+                disabled={bidOnRequest.isPending}
+                className="flex-1"
+                variant="outline"
+              >
+                Tenho interesse
+              </Button>
+              {r.requester_phone && (
+                <a
+                  href={`https://wa.me/${r.requester_phone.replace(/[^\d+]/g, "")}?text=${encodeURIComponent(`Ola ${r.requester_name ?? "Cliente"}, sou um prestador de ${r.category}, vi o seu pedido no BissauService e tenho interesse!`)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Button className="bg-[#25D366] hover:bg-[#1ebe57] text-white gap-1">
+                    <MessageCircle className="h-4 w-4" /> WhatsApp
+                  </Button>
+                </a>
+              )}
+            </div>
           )
         ) : (
           <Link to="/login" className="block">
