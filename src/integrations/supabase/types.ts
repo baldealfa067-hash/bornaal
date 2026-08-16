@@ -164,6 +164,7 @@ export type Database = {
           name: string
           phone: string
           photo_url: string | null
+          price_type: string
           services: string[]
           starting_price: number | null
           updated_at: string
@@ -179,6 +180,7 @@ export type Database = {
           name: string
           phone: string
           photo_url?: string | null
+          price_type?: string
           services?: string[]
           starting_price?: number | null
           updated_at?: string
@@ -194,6 +196,7 @@ export type Database = {
           name?: string
           phone?: string
           photo_url?: string | null
+          price_type?: string
           services?: string[]
           starting_price?: number | null
           updated_at?: string

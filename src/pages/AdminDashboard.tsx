@@ -11,7 +11,7 @@ import { toast } from "sonner";
 import { formatCFA } from "@/lib/format";
 import ManageList from "@/components/ManageList";
 
-type Provider = { id: string; name: string; category: string; phone: string; location: string; starting_price: number | null; is_verified: boolean };
+type Provider = { id: string; name: string; category: string; phone: string; location: string; price_type: string; starting_price: number | null; is_verified: boolean };
 type Request = { id: string; requester_name: string | null; category: string; location: string; description: string; status: string; created_at: string };
 type Review = { id: string; provider_id: string; reviewer_name: string | null; rating: number; comment: string | null; created_at: string; status: string };
 type Category = { id: string; name: string };
@@ -34,7 +34,7 @@ const AdminDashboard = () => {
 
   const loadAll = async () => {
     const [{ data: p }, { data: r }, { data: rv }, { data: c }, { data: b }] = await Promise.all([
-      supabase.from("profiles").select("id, name, category, phone, location, starting_price, is_verified").order("name"),
+      supabase.from("profiles").select("id, name, category, phone, location, price_type, starting_price, is_verified").order("name"),
       supabase.from("service_requests").select("id, requester_name, category, location, description, status, created_at").order("created_at", { ascending: false }),
       supabase.from("reviews").select("id, provider_id, reviewer_name, rating, comment, created_at, status").order("created_at", { ascending: false }),
       supabase.from("categories").select("id, name").order("name"),
@@ -160,7 +160,9 @@ const AdminDashboard = () => {
                     </Link>
                     <div className="text-xs text-muted-foreground truncate">
                       {p.category} · {p.location} · {p.phone}
-                      {p.starting_price != null && ` · desde ${formatCFA(p.starting_price)}`}
+                      {p.price_type === "fixo" && p.starting_price != null && ` · ${formatCFA(p.starting_price)}`}
+                      {p.price_type === "negociavel" && " · Negociável"}
+                      {p.price_type === "combinar" && " · A combinar"}
                     </div>
                   </div>
                   <div className="flex gap-1 shrink-0">

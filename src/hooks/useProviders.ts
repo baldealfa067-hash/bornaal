@@ -10,6 +10,7 @@ export interface ProviderWithRating {
   location: string;
   description: string | null;
   photo_url: string | null;
+  price_type: string;
   starting_price: number | null;
   services?: string[] | null;
   is_verified?: boolean | null;

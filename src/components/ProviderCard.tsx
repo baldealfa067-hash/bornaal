@@ -14,6 +14,7 @@ interface ProviderCardProps {
   location: string;
   phone: string;
   photo_url?: string | null;
+  price_type?: string;
   starting_price?: number | null;
   services?: string[] | null;
   is_verified?: boolean | null;
@@ -22,7 +23,7 @@ interface ProviderCardProps {
 }
 
 export const ProviderCard = ({
-  id, name, category, location, phone, photo_url, starting_price, services, is_verified, avgRating, reviewCount
+  id, name, category, location, phone, photo_url, price_type, starting_price, services, is_verified, avgRating, reviewCount
 }: ProviderCardProps) => {
   const cleanPhone = phone.replace(/\D/g, "");
   const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(
@@ -73,9 +74,19 @@ export const ProviderCard = ({
               <MapPin className="h-3 w-3" />
               <span className="truncate">{location}</span>
             </div>
-            {starting_price != null && (
+            {price_type === "fixo" && starting_price != null && (
               <div className="mt-1 text-xs font-semibold text-primary">
-                desde {formatCFA(starting_price)}
+                {formatCFA(starting_price)}
+              </div>
+            )}
+            {price_type === "negociavel" && (
+              <div className="mt-1 text-xs font-semibold text-primary">
+                Negociável
+              </div>
+            )}
+            {price_type === "combinar" && (
+              <div className="mt-1 text-xs text-muted-foreground">
+                A combinar
               </div>
             )}
           </div>

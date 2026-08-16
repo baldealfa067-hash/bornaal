@@ -15,6 +15,7 @@ type ProviderProfile = {
   location: string;
   description: string | null;
   photo_url: string | null;
+  price_type: string;
   starting_price: number | null;
 };
 
@@ -36,7 +37,7 @@ const Profile = () => {
     if (isProvider) {
       supabase
         .from("profiles")
-        .select("name, category, phone, location, description, photo_url, starting_price")
+        .select("name, category, phone, location, description, photo_url, price_type, starting_price")
         .eq("user_id", user.id)
         .maybeSingle()
         .then(({ data }) => {
@@ -96,10 +97,22 @@ const Profile = () => {
                 <span className="text-muted-foreground">Localização</span>
                 <span className="font-medium">{profile.location}</span>
               </div>
-              {profile.starting_price != null && (
+              {profile.price_type === "fixo" && profile.starting_price != null && (
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Preço inicial</span>
+                  <span className="text-muted-foreground">Preço</span>
                   <span className="font-medium">{profile.starting_price} FCFA</span>
+                </div>
+              )}
+              {profile.price_type === "negociavel" && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Preço</span>
+                  <span className="font-medium">Negociável</span>
+                </div>
+              )}
+              {profile.price_type === "combinar" && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Preço</span>
+                  <span className="font-medium">A combinar</span>
                 </div>
               )}
               {profile.description && (

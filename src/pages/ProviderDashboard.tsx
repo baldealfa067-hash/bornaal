@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -24,10 +25,11 @@ type Form = {
   location: string;
   description: string;
   photo_url: string;
+  price_type: string;
   starting_price: string;
 };
 
-const empty: Form = { name: "", category: "", phone: "", location: "", description: "", photo_url: "", starting_price: "" };
+const empty: Form = { name: "", category: "", phone: "", location: "", description: "", photo_url: "", price_type: "combinar", starting_price: "" };
 
 const ProviderDashboard = () => {
   const navigate = useNavigate();
@@ -69,6 +71,7 @@ const ProviderDashboard = () => {
           location: data.location ?? "",
           description: data.description ?? "",
           photo_url: data.photo_url ?? "",
+          price_type: data.price_type ?? "combinar",
           starting_price: data.starting_price?.toString() ?? "",
         });
         loadGallery(data.id);
@@ -136,7 +139,8 @@ const ProviderDashboard = () => {
       location: form.location.trim(),
       description: form.description.trim() || null,
       photo_url: form.photo_url.trim() || null,
-      starting_price: form.starting_price ? parseInt(form.starting_price, 10) : null,
+      price_type: form.price_type,
+      starting_price: form.price_type === "fixo" ? (form.starting_price ? parseInt(form.starting_price, 10) : null) : null,
       user_id: user.id,
     };
     const { error, data } = profileId
@@ -242,8 +246,26 @@ const ProviderDashboard = () => {
                   </Select>
                 </Field>
               </div>
-              <Field label="Preço inicial (CFA)">
-                <Input type="number" min="0" placeholder="ex: 10000" value={form.starting_price} onChange={(e) => setForm({ ...form, starting_price: e.target.value })} />
+              <Field label="Preço">
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {[
+                    { value: "fixo", label: "Valor fixo" },
+                    { value: "negociavel", label: "Negociável" },
+                    { value: "combinar", label: "A combinar" },
+                  ].map((opt) => (
+                    <Badge
+                      key={opt.value}
+                      variant={form.price_type === opt.value ? "default" : "outline"}
+                      className="cursor-pointer px-3 py-1.5 text-xs"
+                      onClick={() => setForm({ ...form, price_type: opt.value, starting_price: opt.value === "fixo" ? form.starting_price : "" })}
+                    >
+                      {opt.label}
+                    </Badge>
+                  ))}
+                </div>
+                {form.price_type === "fixo" && (
+                  <Input type="number" min="0" placeholder="Valor em CFA (ex: 15000)" value={form.starting_price} onChange={(e) => setForm({ ...form, starting_price: e.target.value })} />
+                )}
               </Field>
               <Field label="Descrição">
                 <Textarea rows={4} placeholder="Fale sobre o seu trabalho, experiência, serviços..." value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />

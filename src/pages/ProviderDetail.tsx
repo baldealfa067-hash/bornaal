@@ -121,10 +121,22 @@ const ProviderDetail = () => {
           <Phone className="h-4 w-4" />
           <span>{provider.phone}</span>
         </div>
-        {provider.starting_price != null && (
+        {provider.price_type === "fixo" && provider.starting_price != null && (
           <div className="flex items-center gap-2 text-foreground">
             <Wallet className="h-4 w-4 text-primary" />
-            <span className="font-semibold">A partir de {formatCFA(provider.starting_price)}</span>
+            <span className="font-semibold">{formatCFA(provider.starting_price)}</span>
+          </div>
+        )}
+        {provider.price_type === "negociavel" && (
+          <div className="flex items-center gap-2 text-foreground">
+            <Wallet className="h-4 w-4 text-primary" />
+            <span className="font-semibold">Negociável</span>
+          </div>
+        )}
+        {provider.price_type === "combinar" && (
+          <div className="flex items-center gap-2 text-foreground">
+            <Wallet className="h-4 w-4 text-primary" />
+            <span className="font-semibold">A combinar</span>
           </div>
         )}
       </div>
