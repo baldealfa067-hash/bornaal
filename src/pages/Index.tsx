@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Search, ArrowRight } from "lucide-react";
+import { Search, ArrowRight, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ProviderCard } from "@/components/ProviderCard";
@@ -12,9 +12,9 @@ import { NotificationBell } from "@/components/NotificationBell";
 
 const Index = () => {
   const [search, setSearch] = useState("");
-  const { data: providers = [] } = useProviders();
+  const { data: providers = [], isLoading: loadingProviders, error: providersError } = useProviders();
   const { data: categories = [] } = useCategories();
-  const { data: requests = [] } = useQuery({
+  const { data: requests = [], isLoading: loadingRequests } = useQuery({
     queryKey: ["recent-requests"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -88,7 +88,13 @@ const Index = () => {
         <h2 className="text-lg font-semibold mb-3">
           {search ? "Resultados" : "Prestadores em destaque"}
         </h2>
-        {filtered.length === 0 ? (
+        {loadingProviders ? (
+          <div className="flex justify-center py-8">
+            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+          </div>
+        ) : providersError ? (
+          <p className="text-sm text-destructive py-8 text-center">Erro ao carregar prestadores.</p>
+        ) : filtered.length === 0 ? (
           <p className="text-sm text-muted-foreground py-8 text-center">
             {search ? "Nenhum resultado encontrado." : "Ainda não há prestadores registados."}
           </p>
@@ -102,7 +108,12 @@ const Index = () => {
       </section>
 
       {/* Recent requests */}
-      {!search && requests.length > 0 && (
+      {!search && loadingRequests && (
+        <div className="flex justify-center py-4 mb-6">
+          <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+        </div>
+      )}
+      {!search && !loadingRequests && requests.length > 0 && (
         <section className="mb-6">
           <h2 className="text-lg font-semibold mb-3">Pedidos recentes</h2>
           <div className="flex flex-col gap-2">

@@ -3,7 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, MapPin } from "lucide-react";
+import { Search, MapPin, Loader2 } from "lucide-react";
 import { ProviderCard } from "@/components/ProviderCard";
 import { useProviders, useCategories } from "@/hooks/useProviders";
 import { useBairros } from "@/hooks/useBairros";
@@ -15,7 +15,7 @@ const Explore = () => {
   const qParam = searchParams.get("q") || "";
   const [search, setSearch] = useState(qParam);
   const [location, setLocation] = useState(BAIRROS_FILTER[0]);
-  const { data: providers = [] } = useProviders();
+  const { data: providers = [], isLoading: loadingProviders, error: providersError } = useProviders();
   const { data: categories = [] } = useCategories();
   const { data: bairros = [] } = useBairros();
   const bairroOptions = bairros.length ? ["Todos os Bairros", ...bairros] : BAIRROS_FILTER;
@@ -89,7 +89,13 @@ const Explore = () => {
         </div>
       )}
 
-      {filtered.length === 0 ? (
+      {loadingProviders ? (
+        <div className="flex justify-center py-12">
+          <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+        </div>
+      ) : providersError ? (
+        <p className="text-center text-destructive py-12 text-sm">Erro ao carregar prestadores.</p>
+      ) : filtered.length === 0 ? (
         <p className="text-center text-muted-foreground py-12 text-sm">
           Nenhum prestador encontrado.
         </p>

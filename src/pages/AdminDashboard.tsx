@@ -25,6 +25,7 @@ const AdminDashboard = () => {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [bairros, setBairros] = useState<Bairro[]>([]);
+  const [loadingData, setLoadingData] = useState(true);
 
   useEffect(() => {
     if (loading) return;
@@ -33,6 +34,7 @@ const AdminDashboard = () => {
   }, [user, isAdmin, loading, navigate]);
 
   const loadAll = async () => {
+    setLoadingData(true);
     const [{ data: p }, { data: r }, { data: rv }, { data: c }, { data: b }] = await Promise.all([
       supabase.from("profiles").select("id, name, category, phone, location, price_type, starting_price, is_verified").order("name"),
       supabase.from("service_requests").select("id, requester_name, category, location, description, status, created_at").order("created_at", { ascending: false }),
@@ -45,6 +47,7 @@ const AdminDashboard = () => {
     setReviews((rv ?? []) as Review[]);
     setCategories((c ?? []) as Category[]);
     setBairros((b ?? []) as Bairro[]);
+    setLoadingData(false);
   };
 
   const remove = async (table: "profiles" | "service_requests" | "reviews", id: string) => {
@@ -117,7 +120,7 @@ const AdminDashboard = () => {
   const pendingReviews = reviews.filter((r) => r.status === "pendente");
   const approvedReviews = reviews.filter((r) => r.status === "aprovado");
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center text-muted-foreground">A carregar...</div>;
+  if (loading || loadingData) return <div className="min-h-screen flex items-center justify-center text-muted-foreground">A carregar...</div>;
 
   return (
     <div className="min-h-screen bg-background">
