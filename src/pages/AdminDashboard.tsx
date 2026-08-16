@@ -11,7 +11,7 @@ import { toast } from "sonner";
 import { formatCFA } from "@/lib/format";
 import ManageList from "@/components/ManageList";
 
-type Provider = { id: string; name: string; category: string; phone: string; location: string; price_type: string; starting_price: number | null; is_verified: boolean };
+type Provider = { id: string; name: string; category: string; phone: string; location: string; price_type: string; starting_price: number | null; is_verified: boolean; verification_status: string; verification_reason: string | null; verification_doc_url: string | null; verification_selfie_url: string | null };
 type Request = { id: string; requester_name: string | null; category: string; location: string; description: string; status: string; created_at: string };
 type Review = { id: string; provider_id: string; reviewer_name: string | null; rating: number; comment: string | null; created_at: string; status: string };
 type Category = { id: string; name: string };
@@ -36,7 +36,7 @@ const AdminDashboard = () => {
   const loadAll = async () => {
     setLoadingData(true);
     const [{ data: p }, { data: r }, { data: rv }, { data: c }, { data: b }] = await Promise.all([
-      supabase.from("profiles").select("id, name, category, phone, location, price_type, starting_price, is_verified").order("name"),
+      supabase.from("profiles").select("id, name, category, phone, location, price_type, starting_price, is_verified, verification_status, verification_reason, verification_doc_url, verification_selfie_url").order("name"),
       supabase.from("service_requests").select("id, requester_name, category, location, description, status, created_at").order("created_at", { ascending: false }),
       supabase.from("reviews").select("id, provider_id, reviewer_name, rating, comment, created_at, status").order("created_at", { ascending: false }),
       supabase.from("categories").select("id, name").order("name"),
@@ -63,6 +63,37 @@ const AdminDashboard = () => {
     if (error) return toast.error(error.message);
     toast.success(!p.is_verified ? "Marcado como verificado" : "Verificação removida");
     loadAll();
+  };
+
+  const approveVerification = async (p: Provider) => {
+    const { error } = await supabase.from("profiles").update({
+      is_verified: true,
+      verification_status: "aprovado",
+      verification_reason: null,
+    }).eq("id", p.id);
+    if (error) return toast.error(error.message);
+    toast.success(`${p.name} verificado`);
+    loadAll();
+  };
+
+  const rejectVerification = async (p: Provider) => {
+    const reason = prompt("Motivo da rejeição (será mostrado ao prestador):");
+    if (reason === null) return;
+    const { error } = await supabase.from("profiles").update({
+      is_verified: false,
+      verification_status: "rejeitado",
+      verification_reason: reason.trim() || "Documentação não aprovada",
+    }).eq("id", p.id);
+    if (error) return toast.error(error.message);
+    toast.success("Verificação rejeitada");
+    loadAll();
+  };
+
+  const openVerificationFile = async (path: string | null) => {
+    if (!path) return;
+    const { data } = await supabase.storage.from("verification").createSignedUrl(path, 300);
+    if (!data?.signedUrl) return toast.error("Não foi possível abrir o ficheiro");
+    window.open(data.signedUrl, "_blank");
   };
 
   const approveReview = async (id: string) => {
@@ -119,6 +150,7 @@ const AdminDashboard = () => {
   const providerName = (pid: string) => providers.find((p) => p.id === pid)?.name ?? "Prestador";
   const pendingReviews = reviews.filter((r) => r.status === "pendente");
   const approvedReviews = reviews.filter((r) => r.status === "aprovado");
+  const pendingVerifications = providers.filter((p) => p.verification_status === "pendente");
 
   if (loading || loadingData) return <div className="min-h-screen flex items-center justify-center text-muted-foreground">A carregar...</div>;
 
@@ -144,6 +176,7 @@ const AdminDashboard = () => {
           <div className="overflow-x-auto -mx-4 px-4 mb-4">
             <TabsList className="inline-flex w-max gap-1">
               <TabsTrigger value="providers" className="whitespace-nowrap">Prestadores ({providers.length})</TabsTrigger>
+              <TabsTrigger value="verifications" className="whitespace-nowrap">Verificações ({pendingVerifications.length})</TabsTrigger>
               <TabsTrigger value="requests" className="whitespace-nowrap">Pedidos ({requests.length})</TabsTrigger>
               <TabsTrigger value="pending" className="whitespace-nowrap">Pendentes ({pendingReviews.length})</TabsTrigger>
               <TabsTrigger value="reviews" className="whitespace-nowrap">Aprovadas ({approvedReviews.length})</TabsTrigger>
@@ -186,6 +219,38 @@ const AdminDashboard = () => {
               </Card>
             ))}
             {!providers.length && <p className="text-sm text-muted-foreground text-center py-6">Sem prestadores.</p>}
+          </TabsContent>
+
+          <TabsContent value="verifications" className="flex flex-col gap-2">
+            {pendingVerifications.map((p) => (
+              <Card key={p.id} className="border-yellow-500/40">
+                <CardContent className="p-3 flex items-start justify-between gap-2">
+                  <div className="min-w-0 flex-1">
+                    <Link to={`/prestador/${p.id}`} className="font-semibold hover:underline inline-flex items-center gap-1">
+                      {p.name}
+                    </Link>
+                    <div className="text-xs text-muted-foreground mt-1">{p.category} · {p.location} · {p.phone}</div>
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      <Button variant="outline" size="sm" onClick={() => openVerificationFile(p.verification_doc_url)}>
+                        Ver documento
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => openVerificationFile(p.verification_selfie_url)}>
+                        Ver selfie
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-1 shrink-0">
+                    <Button size="sm" onClick={() => approveVerification(p)} className="gap-1 bg-green-600 hover:bg-green-700 text-white">
+                      <Check className="h-3.5 w-3.5" /> Aprovar
+                    </Button>
+                    <Button size="sm" variant="destructive" onClick={() => rejectVerification(p)} className="gap-1">
+                      <X className="h-3.5 w-3.5" /> Rejeitar
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+            {!pendingVerifications.length && <p className="text-sm text-muted-foreground text-center py-6">Sem verificações pendentes.</p>}
           </TabsContent>
 
           <TabsContent value="requests" className="flex flex-col gap-2">

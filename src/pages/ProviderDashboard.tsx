@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { LogOut, ArrowLeft, Upload, Loader2, Trash2, ImagePlus } from "lucide-react";
+import { LogOut, ArrowLeft, Upload, Loader2, Trash2, ImagePlus, ShieldCheck, ShieldAlert, ShieldX, FileCheck2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -47,6 +47,13 @@ const ProviderDashboard = () => {
   const { data: categories = [] } = useCategories();
   const { data: bairros = [] } = useBairros();
   const locationOptions = bairros.length ? bairros : LOCATION_OPTIONS;
+  const [verificationStatus, setVerificationStatus] = useState<string>("none");
+  const [verificationReason, setVerificationReason] = useState<string | null>(null);
+  const [verifyDoc, setVerifyDoc] = useState<File | null>(null);
+  const [verifySelfie, setVerifySelfie] = useState<File | null>(null);
+  const [verifying, setVerifying] = useState(false);
+  const verifyDocRef = useRef<HTMLInputElement>(null);
+  const verifySelfieRef = useRef<HTMLInputElement>(null);
 
   const loadGallery = async (pid: string) => {
     const { data } = await supabase
@@ -64,6 +71,8 @@ const ProviderDashboard = () => {
       const { data } = await supabase.from("profiles").select("*").eq("user_id", user.id).maybeSingle();
       if (data) {
         setProfileId(data.id);
+        setVerificationStatus(data.verification_status ?? "none");
+        setVerificationReason(data.verification_reason);
         setForm({
           name: data.name ?? "",
           category: data.category ?? "",
@@ -123,6 +132,37 @@ const ProviderDashboard = () => {
     if (error) return toast.error(error.message);
     toast.success("Foto removida");
     if (profileId) loadGallery(profileId);
+  };
+
+  const submitVerification = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user || !profileId) return;
+    if (!verifyDoc || !verifySelfie) return toast.error("Envie o documento de identificação e a selfie");
+    if (verifyDoc.size > 5 * 1024 * 1024 || verifySelfie.size > 5 * 1024 * 1024) {
+      return toast.error("Ficheiros demasiado grandes (máx 5MB cada)");
+    }
+    setVerifying(true);
+    const ext = (f: File) => f.name.split(".").pop()?.toLowerCase() || "jpg";
+    const docPath = `${user.id}/doc-${Date.now()}.${ext(verifyDoc)}`;
+    const selfiePath = `${user.id}/selfie-${Date.now()}.${ext(verifySelfie)}`;
+    const { error: docErr } = await supabase.storage.from("verification").upload(docPath, verifyDoc, { contentType: verifyDoc.type });
+    if (docErr) { setVerifying(false); return toast.error(docErr.message); }
+    const { error: selfieErr } = await supabase.storage.from("verification").upload(selfiePath, verifySelfie, { contentType: verifySelfie.type });
+    if (selfieErr) { setVerifying(false); return toast.error(selfieErr.message); }
+    const { error } = await supabase.from("profiles").update({
+      verification_status: "pendente",
+      verification_doc_url: docPath,
+      verification_selfie_url: selfiePath,
+      verification_reason: null,
+      verification_submitted_at: new Date().toISOString(),
+    }).eq("id", profileId);
+    setVerifying(false);
+    if (error) return toast.error(error.message);
+    setVerificationStatus("pendente");
+    setVerificationReason(null);
+    setVerifyDoc(null);
+    setVerifySelfie(null);
+    toast.success("Verificação submetida! Aguarde a análise do administrador.");
   };
 
   const save = async (e: React.FormEvent) => {
@@ -331,6 +371,76 @@ const ProviderDashboard = () => {
                 onChange={handleGalleryUpload}
               />
               <p className="text-[11px] text-muted-foreground">JPG ou PNG, máx 5MB cada · {gallery.length}/{MAX_GALLERY}</p>
+            </CardContent>
+          </Card>
+        )}
+
+        {profileId && (
+          <Card className="mt-4">
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                {verificationStatus === "aprovado" && <ShieldCheck className="h-5 w-5 text-green-600" />}
+                {verificationStatus === "pendente" && <ShieldAlert className="h-5 w-5 text-yellow-600" />}
+                {verificationStatus === "rejeitado" && <ShieldX className="h-5 w-5 text-destructive" />}
+                {verificationStatus === "none" && <ShieldCheck className="h-5 w-5 text-muted-foreground" />}
+                Verificação de Identidade
+              </CardTitle>
+              {verificationStatus !== "aprovado" && (
+                <p className="text-xs text-muted-foreground">
+                  Confirme a sua identidade para receber o selo de perfil verificado e ganhar a confiança dos clientes.
+                </p>
+              )}
+            </CardHeader>
+            <CardContent>
+              {verificationStatus === "aprovado" && (
+                <div className="flex items-center gap-2 text-green-700">
+                  <ShieldCheck className="h-5 w-5" />
+                  <span className="text-sm font-medium">Perfil verificado!</span>
+                </div>
+              )}
+
+              {verificationStatus === "pendente" && (
+                <p className="text-sm text-yellow-700">
+                  A sua verificação está em análise. Voltaremos a dar-lhe resposta em breve.
+                </p>
+              )}
+
+              {verificationStatus === "rejeitado" && (
+                <div className="mb-3 rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+                  <p className="font-medium">A verificação foi rejeitada.</p>
+                  {verificationReason && <p className="mt-1">Motivo: {verificationReason}</p>}
+                </div>
+              )}
+
+              {(verificationStatus === "none" || verificationStatus === "rejeitado") && (
+                <form onSubmit={submitVerification} className="grid gap-4">
+                  <div className="grid sm:grid-cols-2 gap-3">
+                    <div>
+                      <Label>Documento de identificação (BI / Passaporte)</Label>
+                      <input ref={verifyDocRef} type="file" accept="image/*,.pdf" className="hidden" onChange={(e) => setVerifyDoc(e.target.files?.[0] ?? null)} />
+                      <Button type="button" variant="outline" className="w-full justify-start gap-2" onClick={() => verifyDocRef.current?.click()}>
+                        <FileCheck2 className="h-4 w-4" />
+                        {verifyDoc ? verifyDoc.name : "Escolher documento"}
+                      </Button>
+                    </div>
+                    <div>
+                      <Label>Selfie (foto do seu rosto)</Label>
+                      <input ref={verifySelfieRef} type="file" accept="image/*" className="hidden" onChange={(e) => setVerifySelfie(e.target.files?.[0] ?? null)} />
+                      <Button type="button" variant="outline" className="w-full justify-start gap-2" onClick={() => verifySelfieRef.current?.click()}>
+                        <Upload className="h-4 w-4" />
+                        {verifySelfie ? verifySelfie.name : "Escolher selfie"}
+                      </Button>
+                    </div>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground">
+                    Apenas o administrador terá acesso aos seus ficheiros. JPG, PNG ou PDF, máx 5MB cada.
+                  </p>
+                  <Button type="submit" disabled={verifying} className="w-full">
+                    {verifying ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                    {verifying ? "A submeter..." : "Submeter para verificação"}
+                  </Button>
+                </form>
+              )}
             </CardContent>
           </Card>
         )}
