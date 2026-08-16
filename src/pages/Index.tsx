@@ -38,11 +38,11 @@ const Index = () => {
   return (
     <div className="max-w-lg mx-auto px-4">
       {/* Header */}
-      <div className="pt-8 pb-4">
-        <Link to="/" className="inline-block">
-          <img src={logo} alt="BissauService" className="h-10 w-auto" />
+      <div className="pt-8 pb-5">
+        <Link to="/" className="inline-flex items-center gap-3">
+          <img src={logo} alt="BissauService" className="h-14 md:h-16 w-auto" />
         </Link>
-        <p className="text-sm text-muted-foreground mt-1">
+        <p className="text-sm text-muted-foreground mt-2">
           Encontre serviços locais na Guiné-Bissau
         </p>
       </div>

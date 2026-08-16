@@ -60,7 +60,7 @@ const Login = () => {
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center px-4">
       <Link to="/" className="mb-6 inline-block">
-        <img src={logo} alt="BissauService" className="h-10 w-auto" />
+        <img src={logo} alt="BissauService" className="h-14 md:h-16 w-auto" />
       </Link>
       <Card className="w-full max-w-sm">
         <CardHeader>
