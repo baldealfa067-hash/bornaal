@@ -57,7 +57,9 @@ const Landing = () => {
             <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
             <span className="text-white/80 text-xs font-medium tracking-wide uppercase">Plataforma de serviços</span>
           </div>
-          <img src={logo} alt="BissauService" className="h-24 md:h-28 w-auto mx-auto mb-5 rounded-2xl shadow-2xl" />
+          <h1 className="text-5xl md:text-6xl font-extrabold text-white mb-5 tracking-tight drop-shadow-lg">
+            Bissau<span className="text-primary">Service</span>
+          </h1>
           <p className="text-white/70 text-lg md:text-xl mb-8 max-w-md mx-auto leading-relaxed">
             A forma mais simples de encontrar prestadores de serviços de confiança na Guiné-Bissau.
           </p>
