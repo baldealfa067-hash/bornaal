@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import logo from "@/assets/logo.png";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -58,8 +59,8 @@ const Login = () => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center px-4">
-      <Link to="/" className="mb-6 text-lg font-bold">
-        Nó <span className="text-primary">Tarbadja</span>
+      <Link to="/" className="mb-6 inline-block">
+        <img src={logo} alt="BissauService" className="h-10 w-auto" />
       </Link>
       <Card className="w-full max-w-sm">
         <CardHeader>

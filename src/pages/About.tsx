@@ -9,15 +9,12 @@ const About = () => (
         <ArrowLeft className="h-4 w-4" /> Voltar
       </Link>
 
-      <h1 className="text-2xl font-bold mb-6">Sobre o Nó Tarbadja</h1>
+      <h1 className="text-2xl font-bold mb-6">Sobre o BissauService</h1>
 
       <section className="space-y-4 mb-10">
         <h2 className="text-lg font-semibold">A nossa missão</h2>
         <p className="text-sm text-muted-foreground leading-relaxed">
-          O <strong className="text-foreground">Nó Tarbadja</strong> nasceu com uma missão simples: conectar pessoas que precisam de serviços com prestadores de confiança na Guiné-Bissau. Acreditamos que todos merecem acesso fácil a profissionais qualificados, sem intermediários e sem complicações.
-        </p>
-        <p className="text-sm text-muted-foreground leading-relaxed">
-          "Nó Tarbadja" significa "Nós Trabalhamos" em crioulo guineense — um reflexo do espírito empreendedor e da força de trabalho do nosso povo.
+          O <strong className="text-foreground">BissauService</strong> nasceu com uma missão simples: conectar pessoas que precisam de serviços com prestadores de confiança na Guiné-Bissau. Acreditamos que todos merecem acesso fácil a profissionais qualificados, sem intermediários e sem complicações.
         </p>
       </section>
 
@@ -51,7 +48,7 @@ const About = () => (
         <div className="space-y-3 text-sm">
           <div className="flex items-center gap-3 text-muted-foreground">
             <Mail className="h-4 w-4 text-primary" />
-            <span>contacto@notarbadja.gw</span>
+            <span>contacto@bissauservice.gw</span>
           </div>
           <div className="flex items-center gap-3 text-muted-foreground">
             <Phone className="h-4 w-4 text-primary" />

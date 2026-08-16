@@ -74,7 +74,7 @@ const ProviderDetail = () => {
   }
 
   const whatsappUrl = `https://wa.me/${provider.phone.replace(/\D/g, "")}?text=${encodeURIComponent(
-    `Olá ${provider.name}, encontrei o seu perfil no Nó Tarbadja e gostaria de saber mais sobre os seus serviços.`
+    `Olá ${provider.name}, encontrei o seu perfil no BissauService e gostaria de saber mais sobre os seus serviços.`
   )}`;
 
   return (

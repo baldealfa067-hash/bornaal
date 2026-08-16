@@ -7,6 +7,7 @@ import { ProviderCard } from "@/components/ProviderCard";
 import { useProviders, useCategories } from "@/hooks/useProviders";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import logo from "@/assets/logo.png";
 
 const Index = () => {
   const [search, setSearch] = useState("");
@@ -38,8 +39,8 @@ const Index = () => {
     <div className="max-w-lg mx-auto px-4">
       {/* Header */}
       <div className="pt-8 pb-4">
-        <Link to="/" className="text-2xl font-bold text-foreground hover:opacity-80 transition-opacity">
-          Nó <span className="text-primary">Tarbadja</span>
+        <Link to="/" className="inline-block">
+          <img src={logo} alt="BissauService" className="h-10 w-auto" />
         </Link>
         <p className="text-sm text-muted-foreground mt-1">
           Encontre serviços locais na Guiné-Bissau

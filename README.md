@@ -1,6 +1,6 @@
-# Remix of Remix of Nó Tarbadja Connect
+# BissauService
 
-Create a marketplace web app called Nó Tarbadja.
+Marketplace web app that connects clients with local service providers in Guinea-Bissau.
 
 The platform connects clients with local service providers in Guinea-Bissau.
 

@@ -17,6 +17,9 @@ dist-ssr
 .env.*
 !.env.example
 
+# Source logo files (processed logo at src/assets/logo.png)
+imagem.png/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

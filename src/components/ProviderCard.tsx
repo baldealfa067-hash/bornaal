@@ -26,7 +26,7 @@ export const ProviderCard = ({
 }: ProviderCardProps) => {
   const cleanPhone = phone.replace(/\D/g, "");
   const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(
-    `Olá ${name}, encontrei o seu perfil no Nó Tarbadja e gostaria de saber mais sobre os seus serviços.`
+    `Olá ${name}, encontrei o seu perfil no BissauService e gostaria de saber mais sobre os seus serviços.`
   )}`;
   const telUrl = `tel:${phone.replace(/\s/g, "")}`;
 

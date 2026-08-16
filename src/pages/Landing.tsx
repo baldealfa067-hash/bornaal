@@ -4,6 +4,7 @@ import { Search, Star, Phone, ArrowRight, CheckCircle2, Shield, Clock, Users } f
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import heroBg from "@/assets/hero-bg.jpg";
+import logo from "@/assets/logo.png";
 
 const Landing = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -56,9 +57,7 @@ const Landing = () => {
             <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
             <span className="text-white/80 text-xs font-medium tracking-wide uppercase">Plataforma de serviços</span>
           </div>
-          <h1 className="text-5xl md:text-6xl font-bold text-white mb-4 tracking-tight leading-[1.1]">
-            Nó <span className="text-secondary">Tarbadja</span>
-          </h1>
+          <img src={logo} alt="BissauService" className="h-24 md:h-28 w-auto mx-auto mb-5 rounded-2xl shadow-2xl" />
           <p className="text-white/70 text-lg md:text-xl mb-8 max-w-md mx-auto leading-relaxed">
             A forma mais simples de encontrar prestadores de serviços de confiança na Guiné-Bissau.
           </p>
@@ -162,7 +161,7 @@ const Landing = () => {
         <div className="max-w-2xl mx-auto px-6 py-20">
           <div className="text-center mb-12">
             <span className="text-xs font-semibold text-primary tracking-widest uppercase">Vantagens</span>
-            <h2 className="text-3xl font-bold text-foreground mt-2">Porquê Nó Tarbadja?</h2>
+            <h2 className="text-3xl font-bold text-foreground mt-2">Porquê BissauService?</h2>
           </div>
           <div className="grid gap-4">
             {[
@@ -203,9 +202,7 @@ const Landing = () => {
       <footer className="border-t border-border py-8">
         <div className="max-w-2xl mx-auto px-6">
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-4">
-            <p className="text-sm font-semibold text-foreground">
-              Nó <span className="text-primary">Tarbadja</span>
-            </p>
+            <img src={logo} alt="BissauService" className="h-8 w-auto" />
             <div className="flex gap-4 text-xs">
               <Link to="/sobre" className="text-muted-foreground hover:text-foreground transition-colors">Sobre</Link>
               <Link to="/termos" className="text-muted-foreground hover:text-foreground transition-colors">Termos de Uso</Link>

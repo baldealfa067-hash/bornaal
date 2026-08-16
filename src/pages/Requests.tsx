@@ -158,7 +158,7 @@ const Requests = () => {
                 const phone = (p.provider?.phone ?? "").replace(/\D/g, "");
                 const wa = phone
                   ? `https://wa.me/${phone}?text=${encodeURIComponent(
-                      `Olá ${p.provider?.name ?? ""}, vi a sua proposta "${p.title}" no Nó Tarbadja e tenho interesse.`,
+                      `Olá ${p.provider?.name ?? ""}, vi a sua proposta "${p.title}" no BissauService e tenho interesse.`,
                     )}`
                   : null;
                 return (
@@ -225,7 +225,7 @@ const Requests = () => {
             const phone = (r.requester_phone ?? "").replace(/\D/g, "");
             const whatsappUrl = phone
               ? `https://wa.me/${phone}?text=${encodeURIComponent(
-                  `Olá ${r.requester_name ?? ""}, vi o seu pedido (${r.category}) no Nó Tarbadja e posso ajudar.`,
+                  `Olá ${r.requester_name ?? ""}, vi o seu pedido (${r.category}) no BissauService e posso ajudar.`,
                 )}`
               : null;
             return (
