@@ -169,6 +169,11 @@ export type Database = {
           starting_price: number | null
           updated_at: string
           user_id: string
+          verification_doc_url: string | null
+          verification_reason: string | null
+          verification_selfie_url: string | null
+          verification_status: string
+          verification_submitted_at: string | null
         }
         Insert: {
           category: string
@@ -185,6 +190,11 @@ export type Database = {
           starting_price?: number | null
           updated_at?: string
           user_id: string
+          verification_doc_url?: string | null
+          verification_reason?: string | null
+          verification_selfie_url?: string | null
+          verification_status?: string
+          verification_submitted_at?: string | null
         }
         Update: {
           category?: string
@@ -201,6 +211,11 @@ export type Database = {
           starting_price?: number | null
           updated_at?: string
           user_id?: string
+          verification_doc_url?: string | null
+          verification_reason?: string | null
+          verification_selfie_url?: string | null
+          verification_status?: string
+          verification_submitted_at?: string | null
         }
         Relationships: []
       }

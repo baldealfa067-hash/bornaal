@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { MapPin, MessageCircle, Plus, Tag, Clock, ChevronDown, ChevronUp, Users, CheckCircle2, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,7 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
+import { Pagination } from "@/components/Pagination";
 import { useAuth } from "@/hooks/useAuth";
 import { useMyProvider } from "@/hooks/useMyProvider";
 import { useCategories } from "@/hooks/useProviders";
@@ -26,6 +27,8 @@ import {
   type ServiceRequest, type RequestBidWithProvider,
 } from "@/hooks/useRequests";
 import { toast } from "sonner";
+
+const PAGE_SIZE = 10;
 
 const DEADLINE_OPTIONS = [
   { value: "urgente", label: "Urgente" },
@@ -56,6 +59,7 @@ const Requests = () => {
   const [filterCategory, setFilterCategory] = useState("all");
   const [filterLocation, setFilterLocation] = useState("all");
   const [expandedRequest, setExpandedRequest] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
 
   const [form, setForm] = useState({
     requester_name: "",
@@ -78,6 +82,13 @@ const Requests = () => {
     if (filterLocation !== "all" && !r.location.toLowerCase().includes(filterLocation.toLowerCase())) return false;
     return true;
   });
+
+  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const paginatedRequests = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  useEffect(() => {
+    setPage(1);
+  }, [filterCategory, filterLocation]);
 
   const handlePublish = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -183,8 +194,9 @@ const Requests = () => {
                 : "Nenhum pedido para estes filtros."}
             </p>
           ) : (
+            <>
             <div className="flex flex-col gap-3">
-              {filtered.map((r) => (
+              {paginatedRequests.map((r) => (
                 <RequestCard
                   key={r.id}
                   request={r}
@@ -196,6 +208,8 @@ const Requests = () => {
                 />
               ))}
             </div>
+            <Pagination page={page} pageCount={pageCount} total={filtered.length} onPageChange={setPage} />
+            </>
           )}
         </TabsContent>
 

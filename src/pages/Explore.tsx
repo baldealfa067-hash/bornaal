@@ -5,9 +5,12 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, MapPin, Loader2 } from "lucide-react";
 import { ProviderCard } from "@/components/ProviderCard";
+import { Pagination } from "@/components/Pagination";
 import { useProviders, useCategories } from "@/hooks/useProviders";
 import { useBairros } from "@/hooks/useBairros";
 import { BAIRROS_FILTER } from "@/lib/locations";
+
+const PAGE_SIZE = 10;
 
 const Explore = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -15,6 +18,7 @@ const Explore = () => {
   const qParam = searchParams.get("q") || "";
   const [search, setSearch] = useState(qParam);
   const [location, setLocation] = useState(BAIRROS_FILTER[0]);
+  const [page, setPage] = useState(1);
   const { data: providers = [], isLoading: loadingProviders, error: providersError } = useProviders();
   const { data: categories = [] } = useCategories();
   const { data: bairros = [] } = useBairros();
@@ -24,6 +28,11 @@ const Explore = () => {
   useEffect(() => {
     if (qParam) setSearch(qParam);
   }, [qParam]);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setPage(1);
+  }, [search, location, activeCategory]);
 
   const filtered = providers.filter((p) => {
     const matchCat = !activeCategory || p.category === activeCategory;
@@ -37,6 +46,9 @@ const Explore = () => {
       p.location.toLowerCase().includes(location.toLowerCase());
     return matchCat && matchSearch && matchLocation;
   });
+
+  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   return (
     <div className="max-w-lg mx-auto px-4 pt-6">
@@ -100,11 +112,14 @@ const Explore = () => {
           Nenhum prestador encontrado.
         </p>
       ) : (
-        <div className="flex flex-col gap-3">
-          {filtered.map((p) => (
-            <ProviderCard key={p.id} {...p} />
-          ))}
-        </div>
+        <>
+          <div className="flex flex-col gap-3">
+            {paginated.map((p) => (
+              <ProviderCard key={p.id} {...p} />
+            ))}
+          </div>
+          <Pagination page={page} pageCount={pageCount} total={filtered.length} onPageChange={setPage} />
+        </>
       )}
     </div>
   );
