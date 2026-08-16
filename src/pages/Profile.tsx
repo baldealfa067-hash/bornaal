@@ -117,7 +117,7 @@ const Profile = () => {
             </Button>
           )}
           {!isProvider && !isAdmin && (
-            <Button variant="outline" onClick={() => navigate("/login?tab=registar")} className="w-full justify-start gap-2">
+            <Button variant="outline" onClick={() => navigate("/painel")} className="w-full justify-start gap-2">
               <Briefcase className="h-4 w-4" />
               Tornar-me prestador
             </Button>

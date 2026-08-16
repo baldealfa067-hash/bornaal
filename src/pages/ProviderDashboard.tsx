@@ -58,7 +58,6 @@ const ProviderDashboard = () => {
   useEffect(() => {
     if (loading) return;
     if (!user) return navigate("/login", { replace: true });
-    if (!isProvider && !isAdmin) return navigate("/login", { replace: true });
     (async () => {
       const { data } = await supabase.from("profiles").select("*").eq("user_id", user.id).maybeSingle();
       if (data) {
@@ -76,7 +75,7 @@ const ProviderDashboard = () => {
       }
       setFetching(false);
     })();
-  }, [user, isProvider, isAdmin, loading, navigate]);
+  }, [user, loading, navigate]);
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -146,7 +145,11 @@ const ProviderDashboard = () => {
     setSaving(false);
     if (error) return toast.error(error.message);
     if (data) setProfileId(data.id);
-    toast.success("Perfil guardado");
+    // If this is a new profile, assign provider role
+    if (!profileId) {
+      await supabase.rpc("register_as_provider");
+    }
+    toast.success("Perfil guardado!");
     if (data?.id) loadGallery(data.id);
   };
 
