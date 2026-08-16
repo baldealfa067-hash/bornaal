@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Search, MapPin } from "lucide-react";
 import { ProviderCard } from "@/components/ProviderCard";
 import { useProviders, useCategories } from "@/hooks/useProviders";
+import { useBairros } from "@/hooks/useBairros";
 import { BAIRROS_FILTER } from "@/lib/locations";
 
 const Explore = () => {
@@ -16,6 +17,8 @@ const Explore = () => {
   const [location, setLocation] = useState(BAIRROS_FILTER[0]);
   const { data: providers = [] } = useProviders();
   const { data: categories = [] } = useCategories();
+  const { data: bairros = [] } = useBairros();
+  const bairroOptions = bairros.length ? ["Todos os Bairros", ...bairros] : BAIRROS_FILTER;
 
   // Sync q param to search state on mount
   useEffect(() => {
@@ -57,7 +60,7 @@ const Explore = () => {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {BAIRROS_FILTER.map((loc) => (
+            {bairroOptions.map((loc) => (
               <SelectItem key={loc} value={loc}>{loc}</SelectItem>
             ))}
           </SelectContent>

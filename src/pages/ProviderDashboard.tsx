@@ -8,13 +8,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import { LOCATIONS } from "@/lib/locations";
+import { LOCATION_OPTIONS } from "@/lib/locations";
 import { useCategories } from "@/hooks/useProviders";
+import { useBairros } from "@/hooks/useBairros";
 
 type Form = {
   name: string;
@@ -42,6 +43,8 @@ const ProviderDashboard = () => {
   const [galleryUploading, setGalleryUploading] = useState(false);
   const MAX_GALLERY = 4;
   const { data: categories = [] } = useCategories();
+  const { data: bairros = [] } = useBairros();
+  const locationOptions = bairros.length ? bairros : LOCATION_OPTIONS;
 
   const loadGallery = async (pid: string) => {
     const { data } = await supabase
@@ -229,13 +232,8 @@ const ProviderDashboard = () => {
                   <Select value={form.location} onValueChange={(v) => setForm({ ...form, location: v })}>
                     <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                     <SelectContent>
-                      {LOCATIONS.map((g) => (
-                        <SelectGroup key={g.group}>
-                          <SelectLabel>{g.group}</SelectLabel>
-                          {g.options.map((opt) => (
-                            <SelectItem key={opt} value={opt}>{opt}</SelectItem>
-                          ))}
-                        </SelectGroup>
+                      {locationOptions.map((opt) => (
+                        <SelectItem key={opt} value={opt}>{opt}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>

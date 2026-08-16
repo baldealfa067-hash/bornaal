@@ -1,20 +1,21 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { LogOut, ArrowLeft, Trash2, BadgeCheck, Check, X, Plus } from "lucide-react";
+import { LogOut, ArrowLeft, Trash2, BadgeCheck, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { formatCFA } from "@/lib/format";
+import ManageList from "@/components/ManageList";
 
 type Provider = { id: string; name: string; category: string; phone: string; location: string; starting_price: number | null; is_verified: boolean };
 type Request = { id: string; requester_name: string | null; category: string; location: string; description: string; status: string; created_at: string };
 type Review = { id: string; provider_id: string; reviewer_name: string | null; rating: number; comment: string | null; created_at: string; status: string };
 type Category = { id: string; name: string };
+type Bairro = { id: string; name: string };
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -23,7 +24,7 @@ const AdminDashboard = () => {
   const [requests, setRequests] = useState<Request[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [newCategory, setNewCategory] = useState("");
+  const [bairros, setBairros] = useState<Bairro[]>([]);
 
   useEffect(() => {
     if (loading) return;
@@ -32,16 +33,18 @@ const AdminDashboard = () => {
   }, [user, isAdmin, loading, navigate]);
 
   const loadAll = async () => {
-    const [{ data: p }, { data: r }, { data: rv }, { data: c }] = await Promise.all([
+    const [{ data: p }, { data: r }, { data: rv }, { data: c }, { data: b }] = await Promise.all([
       supabase.from("profiles").select("id, name, category, phone, location, starting_price, is_verified").order("name"),
       supabase.from("service_requests").select("id, requester_name, category, location, description, status, created_at").order("created_at", { ascending: false }),
       supabase.from("reviews").select("id, provider_id, reviewer_name, rating, comment, created_at, status").order("created_at", { ascending: false }),
       supabase.from("categories").select("id, name").order("name"),
+      supabase.from("bairros").select("id, name").order("name"),
     ]);
     setProviders((p ?? []) as Provider[]);
     setRequests((r ?? []) as Request[]);
     setReviews((rv ?? []) as Review[]);
     setCategories((c ?? []) as Category[]);
+    setBairros((b ?? []) as Bairro[]);
   };
 
   const remove = async (table: "profiles" | "service_requests" | "reviews", id: string) => {
@@ -66,13 +69,17 @@ const AdminDashboard = () => {
     loadAll();
   };
 
-  const addCategory = async () => {
-    const name = newCategory.trim();
-    if (!name) return;
+  const addCategory = async (name: string) => {
     const { error } = await supabase.from("categories").insert({ name });
     if (error) return toast.error(error.message);
-    setNewCategory("");
     toast.success("Categoria adicionada");
+    loadAll();
+  };
+
+  const renameCategory = async (id: string, name: string) => {
+    const { error } = await supabase.from("categories").update({ name }).eq("id", id);
+    if (error) return toast.error(error.message);
+    toast.success("Categoria atualizada");
     loadAll();
   };
 
@@ -81,6 +88,28 @@ const AdminDashboard = () => {
     const { error } = await supabase.from("categories").delete().eq("id", id);
     if (error) return toast.error(error.message);
     toast.success("Categoria eliminada");
+    loadAll();
+  };
+
+  const addBairro = async (name: string) => {
+    const { error } = await supabase.from("bairros").insert({ name });
+    if (error) return toast.error(error.message);
+    toast.success("Bairro adicionado");
+    loadAll();
+  };
+
+  const renameBairro = async (id: string, name: string) => {
+    const { error } = await supabase.from("bairros").update({ name }).eq("id", id);
+    if (error) return toast.error(error.message);
+    toast.success("Bairro atualizado");
+    loadAll();
+  };
+
+  const removeBairro = async (id: string) => {
+    if (!confirm("Eliminar este bairro?")) return;
+    const { error } = await supabase.from("bairros").delete().eq("id", id);
+    if (error) return toast.error(error.message);
+    toast.success("Bairro eliminado");
     loadAll();
   };
 
@@ -116,6 +145,7 @@ const AdminDashboard = () => {
               <TabsTrigger value="pending" className="whitespace-nowrap">Pendentes ({pendingReviews.length})</TabsTrigger>
               <TabsTrigger value="reviews" className="whitespace-nowrap">Aprovadas ({approvedReviews.length})</TabsTrigger>
               <TabsTrigger value="categories" className="whitespace-nowrap">Categorias ({categories.length})</TabsTrigger>
+              <TabsTrigger value="bairros" className="whitespace-nowrap">Bairros ({bairros.length})</TabsTrigger>
             </TabsList>
           </div>
 
@@ -217,29 +247,26 @@ const AdminDashboard = () => {
             {!approvedReviews.length && <p className="text-sm text-muted-foreground text-center py-6">Sem avaliações aprovadas.</p>}
           </TabsContent>
 
-          <TabsContent value="categories" className="flex flex-col gap-2">
-            <div className="flex gap-2 mb-2">
-              <Input
-                placeholder="Nova categoria (ex: Jardinagem)"
-                value={newCategory}
-                onChange={(e) => setNewCategory(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && addCategory()}
-              />
-              <Button onClick={addCategory} className="gap-1 shrink-0">
-                <Plus className="h-4 w-4" /> Adicionar
-              </Button>
-            </div>
-            {categories.map((c) => (
-              <Card key={c.id}>
-                <CardContent className="p-3 flex items-center justify-between gap-2">
-                  <span className="font-medium text-sm">{c.name}</span>
-                  <Button variant="ghost" size="icon" onClick={() => removeCategory(c.id)}>
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
-            {!categories.length && <p className="text-sm text-muted-foreground text-center py-6">Sem categorias.</p>}
+          <TabsContent value="categories">
+            <ManageList
+              placeholder="Nova categoria (ex: Jardinagem)"
+              items={categories}
+              onAdd={addCategory}
+              onRename={renameCategory}
+              onDelete={removeCategory}
+              emptyText="Sem categorias."
+            />
+          </TabsContent>
+
+          <TabsContent value="bairros">
+            <ManageList
+              placeholder="Novo bairro (ex: Quelele)"
+              items={bairros}
+              onAdd={addBairro}
+              onRename={renameBairro}
+              onDelete={removeBairro}
+              emptyText="Sem bairros."
+            />
           </TabsContent>
         </Tabs>
       </main>
