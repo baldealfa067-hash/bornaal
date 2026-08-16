@@ -8,6 +8,7 @@ import { useProviders, useCategories } from "@/hooks/useProviders";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import logo from "@/assets/logo.png";
+import { NotificationBell } from "@/components/NotificationBell";
 
 const Index = () => {
   const [search, setSearch] = useState("");
@@ -38,13 +39,16 @@ const Index = () => {
   return (
     <div className="max-w-lg mx-auto px-4">
       {/* Header */}
-      <div className="pt-8 pb-5">
-        <Link to="/" className="inline-flex items-center gap-3">
-          <img src={logo} alt="BissauService" className="h-14 md:h-16 w-auto" />
-        </Link>
-        <p className="text-sm text-muted-foreground mt-2">
-          Encontre serviços locais na Guiné-Bissau
-        </p>
+      <div className="pt-8 pb-5 flex items-center justify-between">
+        <div>
+          <Link to="/" className="inline-flex items-center gap-3">
+            <img src={logo} alt="BissauService" className="h-14 md:h-16 w-auto" />
+          </Link>
+          <p className="text-sm text-muted-foreground mt-2">
+            Encontre serviços locais na Guiné-Bissau
+          </p>
+        </div>
+        <NotificationBell />
       </div>
 
       {/* Search */}
