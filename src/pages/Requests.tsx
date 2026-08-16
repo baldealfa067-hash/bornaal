@@ -487,9 +487,14 @@ function MyRequestCard({
               )}
             </div>
           </div>
-          <Badge variant="secondary" className="text-[10px]">
-            {bids.length} {bids.length === 1 ? "candidatura" : "candidaturas"}
-          </Badge>
+          <div className="flex gap-2 shrink-0">
+            {r.status === "closed" && (
+              <Badge variant="destructive" className="text-[10px]">Fechado</Badge>
+            )}
+            <Badge variant="secondary" className="text-[10px]">
+              {bids.length} {bids.length === 1 ? "candidatura" : "candidaturas"}
+            </Badge>
+          </div>
         </div>
 
         <p className="text-sm text-foreground/90 mb-2 whitespace-pre-wrap">{r.description}</p>

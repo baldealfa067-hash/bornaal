@@ -109,8 +109,24 @@ export const useBidOnRequest = () => {
         message: payload.message ?? null,
       });
       if (error) throw error;
+
+      // Count bids and close request if >= 5
+      const { count } = await supabase
+        .from("request_bids")
+        .select("id", { count: "exact", head: true })
+        .eq("request_id", payload.request_id);
+
+      if (count && count >= 5) {
+        await supabase
+          .from("service_requests")
+          .update({ status: "closed" })
+          .eq("id", payload.request_id);
+      }
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["request_bids"] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["request_bids"] });
+      qc.invalidateQueries({ queryKey: ["service_requests"] });
+    },
   });
 };
 
