@@ -58,7 +58,7 @@ const AdminDashboard = () => {
   useEffect(() => {
     if (loading || !user || !isAdmin) return;
     const channel = supabase
-      .channel("admin-live")
+      .channel(`admin-live-${crypto.randomUUID()}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "provider_stats" },

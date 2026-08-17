@@ -23,7 +23,7 @@ export const useProviderStatsRealtime = (
   useEffect(() => {
     if (!providerId) return;
     const channel = supabase
-      .channel(`provider-stats-${providerId}`)
+      .channel(`provider-stats-${providerId}-${crypto.randomUUID()}`)
       .on(
         "postgres_changes",
         {
@@ -78,7 +78,7 @@ export const useProviderActivityRealtime = (providerId: string | null) => {
   useEffect(() => {
     if (!providerId) return;
     const channel = supabase
-      .channel(`provider-activity-${providerId}`)
+      .channel(`provider-activity-${providerId}-${crypto.randomUUID()}`)
       .on(
         "postgres_changes",
         {
