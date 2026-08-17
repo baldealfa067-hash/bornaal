@@ -16,10 +16,28 @@ export interface ProviderActivity {
 }
 
 // Atualiza os contadores (vistas/WhatsApp/ligações) em tempo real
+// + polling de 15s como seguro caso o Realtime não entregue eventos
 export const useProviderStatsRealtime = (
   providerId: string | null,
   onStats: (stats: ProviderStats) => void
 ) => {
+  const fetchStats = async () => {
+    if (!providerId) return;
+    const { data } = await supabase
+      .from("provider_stats")
+      .select("profile_views, whatsapp_clicks, call_clicks")
+      .eq("provider_id", providerId)
+      .maybeSingle();
+    if (data) {
+      onStats({
+        profile_views: data.profile_views ?? 0,
+        whatsapp_clicks: data.whatsapp_clicks ?? 0,
+        call_clicks: data.call_clicks ?? 0,
+      });
+    }
+  };
+
+  // Realtime subscription
   useEffect(() => {
     if (!providerId) return;
     const channel = supabase
@@ -32,26 +50,20 @@ export const useProviderStatsRealtime = (
           table: "provider_stats",
           filter: `provider_id=eq.${providerId}`,
         },
-        async () => {
-          const { data } = await supabase
-            .from("provider_stats")
-            .select("profile_views, whatsapp_clicks, call_clicks")
-            .eq("provider_id", providerId)
-            .maybeSingle();
-          if (data) {
-            onStats({
-              profile_views: data.profile_views ?? 0,
-              whatsapp_clicks: data.whatsapp_clicks ?? 0,
-              call_clicks: data.call_clicks ?? 0,
-            });
-          }
-        }
+        () => { fetchStats(); }
       )
       .subscribe();
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [providerId, onStats]);
+  }, [providerId]);
+
+  // Polling fallback: refetch a cada 15s
+  useEffect(() => {
+    if (!providerId) return;
+    const interval = setInterval(fetchStats, 15000);
+    return () => clearInterval(interval);
+  }, [providerId]);
 };
 
 // Consulta o histórico recente de atividade do prestador

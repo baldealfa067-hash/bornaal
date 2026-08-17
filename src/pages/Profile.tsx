@@ -27,6 +27,7 @@ const Profile = () => {
   const [profileId, setProfileId] = useState<string | null>(null);
   const [stats, setStats] = useState<{ profile_views: number; whatsapp_clicks: number; call_clicks: number }>({ profile_views: 0, whatsapp_clicks: 0, call_clicks: 0 });
   const [commentCount, setCommentCount] = useState(0);
+  const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
 
   useEffect(() => {
     if (loading) return;
@@ -76,7 +77,10 @@ const Profile = () => {
       .then(({ count }) => setCommentCount(count ?? 0));
   }, [profileId]);
 
-  useProviderStatsRealtime(profileId, setStats);
+  useProviderStatsRealtime(profileId, (newStats) => {
+    setStats(newStats);
+    setLastUpdate(new Date());
+  });
 
   const handleLogout = async () => {
     await signOut();
@@ -176,6 +180,11 @@ const Profile = () => {
                   <span><span className="font-bold">{commentCount}</span> <span className="text-muted-foreground">comentários</span></span>
                 </div>
               </div>
+              {lastUpdate && (
+                <p className="text-xs text-muted-foreground mt-2">
+                  Última atualização: {lastUpdate.toLocaleTimeString('pt-BW')} (polling 15s + realtime)
+                </p>
+              )}
             </div>
           )}
           {isProvider && (
