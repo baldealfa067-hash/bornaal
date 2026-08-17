@@ -29,6 +29,7 @@ export const useNotifications = (userId: string | null) =>
       return (data ?? []) as Notification[];
     },
     enabled: !!userId,
+    refetchInterval: 10000,
   });
 
 export const useUnreadCount = (userId: string | null) =>
@@ -45,6 +46,7 @@ export const useUnreadCount = (userId: string | null) =>
       return count ?? 0;
     },
     enabled: !!userId,
+    refetchInterval: 10000,
   });
 
 export const useNotificationsRealtime = (userId: string | null) => {
