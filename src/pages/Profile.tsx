@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { useProviderStatsRealtime } from "@/hooks/useProviderStats";
 import { toast } from "sonner";
 
 type ProviderProfile = {
@@ -74,6 +75,8 @@ const Profile = () => {
       .eq("provider_id", profileId)
       .then(({ count }) => setCommentCount(count ?? 0));
   }, [profileId]);
+
+  useProviderStatsRealtime(profileId, setStats);
 
   const handleLogout = async () => {
     await signOut();

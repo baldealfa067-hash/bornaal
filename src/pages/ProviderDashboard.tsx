@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useProviderStatsRealtime } from "@/hooks/useProviderStats";
 import { toast } from "sonner";
 import { LOCATION_OPTIONS } from "@/lib/locations";
 import { useCategories } from "@/hooks/useProviders";
@@ -88,6 +89,8 @@ const ProviderDashboard = () => {
       .eq("provider_id", profileId)
       .then(({ count }) => setCommentCount(count ?? 0));
   }, [profileId]);
+
+  useProviderStatsRealtime(profileId, setStats);
 
   useEffect(() => {
     if (loading) return;
