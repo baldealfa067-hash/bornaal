@@ -2,8 +2,15 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+// Os valores públicos do Supabase são embutidos diretamente para garantir que
+// o build funciona mesmo sem variáveis de ambiente (ex: Vercel sem env vars).
+// São chaves "publishable/anon", feitas para estar expostas no cliente.
+const SUPABASE_URL =
+  import.meta.env.VITE_SUPABASE_URL ||
+  'https://pfvuqehchkamhgjlugqn.supabase.co';
+const SUPABASE_PUBLISHABLE_KEY =
+  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBmdnVxZWhjaGthbWhnamx1Z3FuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY4OTM2MjgsImV4cCI6MjEwMjQ2OTYyOH0.cGAHjlkhF89jpMBEiX9YujcUqYYBYXeQncn0oFLw5fs';
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
