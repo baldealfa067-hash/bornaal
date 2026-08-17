@@ -461,6 +461,35 @@ export type Database = {
           },
         ]
       }
+      provider_activity: {
+        Row: {
+          activity_type: string
+          created_at: string
+          id: string
+          provider_id: string
+        }
+        Insert: {
+          activity_type: string
+          created_at?: string
+          id?: string
+          provider_id: string
+        }
+        Update: {
+          activity_type?: string
+          created_at?: string
+          id?: string
+          provider_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "provider_activity_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

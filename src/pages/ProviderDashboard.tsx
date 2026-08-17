@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { useProviderStatsRealtime } from "@/hooks/useProviderStats";
+import { useProviderStatsRealtime, useProviderActivity, useProviderActivityRealtime } from "@/hooks/useProviderStats";
 import { toast } from "sonner";
 import { LOCATION_OPTIONS } from "@/lib/locations";
 import { useCategories } from "@/hooks/useProviders";
@@ -91,6 +91,8 @@ const ProviderDashboard = () => {
   }, [profileId]);
 
   useProviderStatsRealtime(profileId, setStats);
+  useProviderActivityRealtime(profileId);
+  const { data: activity = [] } = useProviderActivity(profileId);
 
   useEffect(() => {
     if (loading) return;
@@ -502,6 +504,42 @@ const ProviderDashboard = () => {
                   <span className="text-[11px] text-muted-foreground text-center">Comentários</span>
                 </div>
               </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {profileId && (
+          <Card className="mt-4">
+            <CardHeader>
+              <CardTitle className="text-base">Atividade recente</CardTitle>
+              <p className="text-xs text-muted-foreground">Últimas visitas e contactos, em tempo real.</p>
+            </CardHeader>
+            <CardContent>
+              {activity.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  Ainda sem atividade. Quando alguém visitar o seu perfil ou entrar em contacto, aparece aqui em tempo real.
+                </p>
+              ) : (
+                <ul className="divide-y">
+                  {activity.map((a) => (
+                    <li key={a.id} className="py-2 flex items-center justify-between gap-2">
+                      <span className="flex items-center gap-2 text-sm">
+                        {a.activity_type === "vista" && <Eye className="h-4 w-4 text-primary" />}
+                        {a.activity_type === "whatsapp" && <MessageCircle className="h-4 w-4 text-[#25D366]" />}
+                        {a.activity_type === "call" && <Phone className="h-4 w-4 text-secondary-foreground" />}
+                        <span>
+                          {a.activity_type === "vista" && "Vista do perfil"}
+                          {a.activity_type === "whatsapp" && "Contacto via WhatsApp"}
+                          {a.activity_type === "call" && "Ligação telefónica"}
+                        </span>
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {new Date(a.created_at).toLocaleString("pt-PT")}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </CardContent>
           </Card>
         )}

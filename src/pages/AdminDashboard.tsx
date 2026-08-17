@@ -55,6 +55,26 @@ const AdminDashboard = () => {
     setLoadingData(false);
   };
 
+  useEffect(() => {
+    if (loading || !user || !isAdmin) return;
+    const channel = supabase
+      .channel("admin-live")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "provider_stats" },
+        () => loadAll()
+      )
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "provider_activity" },
+        () => loadAll()
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user, isAdmin, loading]);
+
   const remove = async (table: "profiles" | "service_requests" | "reviews", id: string) => {
     if (!confirm("Tem a certeza que pretende eliminar?")) return;
     const { error } = await supabase.from(table).delete().eq("id", id);
