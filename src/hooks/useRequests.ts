@@ -160,3 +160,46 @@ export const useMyBidOnRequest = (requestId: string, providerId: string | null) 
     },
     enabled: !!requestId && !!providerId,
   });
+
+export const useMarkRequestCompleted = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (requestId: string) => {
+      const { error } = await supabase.rpc("mark_request_completed", {
+        p_request_id: requestId,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["service_requests"] });
+    },
+  });
+};
+
+export const useSubmitReview = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: {
+      provider_id: string;
+      request_id: string;
+      rating: number;
+      comment?: string | null;
+      reviewer_name: string;
+      user_id: string;
+    }) => {
+      const { error } = await supabase.from("reviews").insert({
+        provider_id: payload.provider_id,
+        request_id: payload.request_id,
+        rating: payload.rating,
+        comment: payload.comment ?? null,
+        reviewer_name: payload.reviewer_name,
+        user_id: payload.user_id,
+      } as never);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["service_requests"] });
+      qc.invalidateQueries({ queryKey: ["providers"] });
+    },
+  });
+};

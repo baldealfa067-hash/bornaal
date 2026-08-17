@@ -276,6 +276,7 @@ export type Database = {
           id: string
           provider_id: string
           rating: number
+          request_id: string | null
           reviewer_name: string | null
           status: string
           user_id: string | null
@@ -286,6 +287,7 @@ export type Database = {
           id?: string
           provider_id: string
           rating: number
+          request_id?: string | null
           reviewer_name?: string | null
           status?: string
           user_id?: string | null
@@ -296,6 +298,7 @@ export type Database = {
           id?: string
           provider_id?: string
           rating?: number
+          request_id?: string | null
           reviewer_name?: string | null
           status?: string
           user_id?: string | null
@@ -306,6 +309,13 @@ export type Database = {
             columns: ["provider_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reviews_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "service_requests"
             referencedColumns: ["id"]
           },
         ]

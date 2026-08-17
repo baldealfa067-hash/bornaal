@@ -12,6 +12,8 @@ import About from "./pages/About";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import Login from "./pages/Login";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import AdminDashboard from "./pages/AdminDashboard";
 import ProviderDashboard from "./pages/ProviderDashboard";
 import Requests from "./pages/Requests";
@@ -35,6 +37,8 @@ const App = () => (
           <Route path="/termos" element={<Terms />} />
           <Route path="/privacidade" element={<Privacy />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/esqueci-senha" element={<ForgotPassword />} />
+          <Route path="/redefinir-senha" element={<ResetPassword />} />
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/admin-moderacao" element={<AdminDashboard />} />
           <Route path="/models" element={<Models />} />

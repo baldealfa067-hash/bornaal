@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { MapPin, MessageCircle, Plus, Tag, Clock, ChevronDown, ChevronUp, Users, CheckCircle2, XCircle } from "lucide-react";
+import { MapPin, MessageCircle, Plus, Tag, Clock, ChevronDown, ChevronUp, Users, CheckCircle2, XCircle, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -24,8 +24,10 @@ import { formatCFA } from "@/lib/format";
 import {
   useRequests, useCreateRequest,
   useBidsForRequest, useBidOnRequest, useUpdateBidStatus, useMyBidOnRequest,
+  useMarkRequestCompleted, useSubmitReview,
   type ServiceRequest, type RequestBidWithProvider,
 } from "@/hooks/useRequests";
+import { StarRating } from "@/components/StarRating";
 import { toast } from "sonner";
 
 const PAGE_SIZE = 10;
@@ -73,6 +75,13 @@ const Requests = () => {
   });
 
   const [bidForm, setBidForm] = useState<{ requestId: string; message: string; requesterPhone: string | null; requesterName: string | null; category: string } | null>(null);
+
+  const markCompleted = useMarkRequestCompleted();
+  const submitReview = useSubmitReview();
+  const [reviewDialog, setReviewDialog] = useState<{ requestId: string; providerId: string; providerName: string } | null>(null);
+  const [reviewRating, setReviewRating] = useState(0);
+  const [reviewComment, setReviewComment] = useState("");
+  const [reviewName, setReviewName] = useState("");
 
   const openRequests = requests.filter((r) => r.status === "open");
   const myRequests = user ? requests.filter((r) => r.user_id === user.id) : [];
@@ -143,6 +152,46 @@ const Requests = () => {
       toast.success(status === "aceite" ? "Candidatura aceite!" : "Candidatura recusada");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Erro";
+      toast.error(msg);
+    }
+  };
+
+  const handleMarkCompleted = async (requestId: string) => {
+    try {
+      await markCompleted.mutateAsync(requestId);
+      toast.success("Serviço marcado como concluído! Agora pode avaliar o prestador.");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Erro ao marcar como concluído";
+      toast.error(msg);
+    }
+  };
+
+  const handleSubmitReview = async () => {
+    if (!reviewDialog || !user) return;
+    if (reviewRating < 1) {
+      toast.error("Selecione uma avaliação em estrelas");
+      return;
+    }
+    if (!reviewName.trim()) {
+      toast.error("Indique o seu nome");
+      return;
+    }
+    try {
+      await submitReview.mutateAsync({
+        provider_id: reviewDialog.providerId,
+        request_id: reviewDialog.requestId,
+        rating: reviewRating,
+        comment: reviewComment.trim() || null,
+        reviewer_name: reviewName.trim(),
+        user_id: user.id,
+      });
+      toast.success("Avaliação enviada com sucesso e será exibida após validação.");
+      setReviewDialog(null);
+      setReviewRating(0);
+      setReviewComment("");
+      setReviewName("");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Erro ao enviar avaliação";
       toast.error(msg);
     }
   };
@@ -326,6 +375,10 @@ const Requests = () => {
                   expanded={expandedRequest === r.id}
                   onToggle={() => setExpandedRequest(expandedRequest === r.id ? null : r.id)}
                   onBidStatus={handleBidStatus}
+                  onMarkCompleted={handleMarkCompleted}
+                  onReview={(requestId, providerId, providerName) =>
+                    setReviewDialog({ requestId, providerId, providerName })
+                  }
                 />
               ))}
             </div>
@@ -348,6 +401,37 @@ const Requests = () => {
           <DialogFooter>
             <Button onClick={handleBid} disabled={bidOnRequest.isPending} className="w-full">
               {bidOnRequest.isPending ? "A enviar..." : "Enviar candidatura"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ─── Dialog: Avaliar prestador ─── */}
+      <Dialog open={!!reviewDialog} onOpenChange={(open) => { if (!open) setReviewDialog(null); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Avaliar {reviewDialog?.providerName}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">A sua avaliação será publicada após validação pela nossa equipa.</p>
+            <div className="flex items-center gap-2">
+              <StarRating rating={reviewRating} onChange={setReviewRating} size="md" />
+            </div>
+            <Input
+              placeholder="O seu nome"
+              value={reviewName}
+              onChange={(e) => setReviewName(e.target.value)}
+            />
+            <Textarea
+              placeholder="Comentário (opcional)"
+              value={reviewComment}
+              onChange={(e) => setReviewComment(e.target.value)}
+              rows={3}
+            />
+          </div>
+          <DialogFooter>
+            <Button onClick={handleSubmitReview} disabled={submitReview.isPending} className="w-full">
+              {submitReview.isPending ? "A enviar..." : "Enviar avaliação"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -479,14 +563,21 @@ function MyRequestCard({
   expanded,
   onToggle,
   onBidStatus,
+  onMarkCompleted,
+  onReview,
 }: {
   request: ServiceRequest;
   expanded: boolean;
   onToggle: () => void;
   onBidStatus: (bidId: string, status: "aceite" | "recusado") => void;
+  onMarkCompleted: (requestId: string) => void;
+  onReview: (requestId: string, providerId: string, providerName: string) => void;
 }) {
   const { data: bids = [], isLoading: loadingBids } = useBidsForRequest(r.id);
   const deadlineLabel = DEADLINE_OPTIONS.find((d) => d.value === r.deadline)?.label;
+  const acceptedBid = bids.find((b) => b.status === "aceite");
+  const isConcluded = r.status === "concluido";
+  const isClosed = r.status === "closed";
 
   return (
     <Card className="border-border/60">
@@ -502,7 +593,10 @@ function MyRequestCard({
             </div>
           </div>
           <div className="flex gap-2 shrink-0">
-            {r.status === "closed" && (
+            {isConcluded && (
+              <Badge variant="default" className="text-[10px] bg-green-600">Concluído</Badge>
+            )}
+            {isClosed && !isConcluded && (
               <Badge variant="destructive" className="text-[10px]">Fechado</Badge>
             )}
             <Badge variant="secondary" className="text-[10px]">
@@ -548,7 +642,7 @@ function MyRequestCard({
                         {bid.message && <p className="text-xs text-muted-foreground mt-0.5 italic">"{bid.message}"</p>}
                       </div>
                       <div className="flex flex-col gap-1 shrink-0">
-                        {bid.status === "pendente" ? (
+                        {bid.status === "pendente" && !isConcluded ? (
                           <>
                             <Button
                               size="sm"
@@ -583,6 +677,28 @@ function MyRequestCard({
                   );
                 })}
               </div>
+            )}
+
+            {/* Botões de ação pós-aceite */}
+            {acceptedBid && !isConcluded && (
+              <Button
+                onClick={() => onMarkCompleted(r.id)}
+                className="w-full mt-3 bg-green-600 hover:bg-green-700 text-white gap-2"
+                size="sm"
+              >
+                <CheckCircle2 className="h-4 w-4" /> Marcar como concluído
+              </Button>
+            )}
+
+            {isConcluded && acceptedBid && (
+              <Button
+                onClick={() => onReview(r.id, acceptedBid.provider_id, acceptedBid.provider?.name ?? "Prestador")}
+                className="w-full mt-3 gap-2"
+                size="sm"
+                variant="outline"
+              >
+                <Star className="h-4 w-4" /> Avaliar prestador
+              </Button>
             )}
           </div>
         )}

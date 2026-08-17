@@ -88,6 +88,11 @@ const Login = () => {
                   <Label htmlFor="password">Palavra-passe</Label>
                   <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
                 </div>
+                <div className="text-right">
+                  <Link to="/esqueci-senha" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+                    Esqueceu a senha?
+                  </Link>
+                </div>
                 <Button type="submit" disabled={submitting} className="w-full">
                   {submitting ? "A entrar..." : "Entrar"}
                 </Button>

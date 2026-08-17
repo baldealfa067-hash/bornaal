@@ -1,26 +1,16 @@
 import { useParams } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
 import { MapPin, Phone, MessageCircle, Wallet, BadgeCheck } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { StarRating } from "@/components/StarRating";
 import { useProvider } from "@/hooks/useProviders";
 import { formatCFA } from "@/lib/format";
 import { supabase } from "@/integrations/supabase/client";
-import { useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
 
 const ProviderDetail = () => {
   const { id } = useParams<{ id: string }>();
   const { data: provider, isLoading } = useProvider(id!);
-  const queryClient = useQueryClient();
-  const [rating, setRating] = useState(0);
-  const [reviewerName, setReviewerName] = useState("");
-  const [comment, setComment] = useState("");
-  const [submitting, setSubmitting] = useState(false);
   const [portfolio, setPortfolio] = useState<{ id: string; image_url: string }[]>([]);
   const viewLogged = useRef(false);
 
@@ -37,38 +27,6 @@ const ProviderDetail = () => {
       .order("created_at", { ascending: false })
       .then(({ data }) => setPortfolio((data ?? []) as { id: string; image_url: string }[]));
   }, [id]);
-
-  const submitReview = async () => {
-    if (!id) return;
-    if (rating < 1) {
-      toast.error("Selecione uma avaliação em estrelas");
-      return;
-    }
-    if (!reviewerName.trim()) {
-      toast.error("Indique o seu nome");
-      return;
-    }
-    setSubmitting(true);
-    const { error } = await supabase.from("reviews").insert({
-      provider_id: id,
-      rating,
-      comment: comment.trim() || null,
-      reviewer_name: reviewerName.trim(),
-    } as never);
-    setSubmitting(false);
-    if (error) {
-      toast.error("Erro ao enviar avaliação");
-      return;
-    }
-    toast.success(
-      "Obrigado! A sua avaliação foi enviada com sucesso e será exibida no perfil assim que for validada pela nossa equipa."
-    );
-    setRating(0);
-    setReviewerName("");
-    setComment("");
-    queryClient.invalidateQueries({ queryKey: ["provider", id] });
-    queryClient.invalidateQueries({ queryKey: ["providers"] });
-  };
 
   if (isLoading) {
     return <div className="flex items-center justify-center min-h-screen text-muted-foreground">A carregar...</div>;
@@ -200,27 +158,6 @@ const ProviderDetail = () => {
 
       <section>
         <h2 className="font-semibold mb-3">Avaliações ({provider.reviewCount})</h2>
-
-        <div className="p-4 rounded-lg border bg-card mb-4 space-y-3">
-          <p className="text-sm font-medium">Deixe a sua avaliação</p>
-          <div className="flex items-center gap-2">
-            <StarRating rating={rating} onChange={setRating} size="md" />
-          </div>
-          <Input
-            placeholder="O seu nome"
-            value={reviewerName}
-            onChange={(e) => setReviewerName(e.target.value)}
-          />
-          <Textarea
-            placeholder="Comentário (opcional)"
-            value={comment}
-            onChange={(e) => setComment(e.target.value)}
-            rows={3}
-          />
-          <Button onClick={submitReview} disabled={submitting} className="w-full">
-            {submitting ? "A enviar..." : "Enviar avaliação"}
-          </Button>
-        </div>
 
         {provider.reviews && provider.reviews.length > 0 ? (
           <div className="flex flex-col gap-3">
