@@ -8,7 +8,7 @@ import {
   Popover, PopoverContent, PopoverTrigger,
 } from "@/components/ui/popover";
 import { useAuth } from "@/hooks/useAuth";
-import { useNotifications, useUnreadCount, useMarkAsRead, useMarkAllAsRead, type Notification } from "@/hooks/useNotifications";
+import { useNotifications, useUnreadCount, useMarkAsRead, useMarkAllAsRead, useNotificationsRealtime, type Notification } from "@/hooks/useNotifications";
 
 export function NotificationBell() {
   const { user } = useAuth();
@@ -17,6 +17,7 @@ export function NotificationBell() {
   const { data: unread = 0 } = useUnreadCount(user?.id ?? null);
   const markRead = useMarkAsRead();
   const markAllRead = useMarkAllAsRead();
+  useNotificationsRealtime(user?.id ?? null);
 
   if (!user) return null;
 

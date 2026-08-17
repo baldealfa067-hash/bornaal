@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -45,6 +46,35 @@ export const useUnreadCount = (userId: string | null) =>
     },
     enabled: !!userId,
   });
+
+export const useNotificationsRealtime = (userId: string | null) => {
+  const qc = useQueryClient();
+  useEffect(() => {
+    if (!userId) return;
+    const channel = supabase
+      .channel(`notifications-${userId}`)
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "notifications", filter: `user_id=eq.${userId}` },
+        () => {
+          qc.invalidateQueries({ queryKey: ["notifications", userId] });
+          qc.invalidateQueries({ queryKey: ["notifications-unread", userId] });
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "notifications", filter: `user_id=eq.${userId}` },
+        () => {
+          qc.invalidateQueries({ queryKey: ["notifications", userId] });
+          qc.invalidateQueries({ queryKey: ["notifications-unread", userId] });
+        }
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [userId, qc]);
+};
 
 export const useMarkAsRead = () => {
   const qc = useQueryClient();

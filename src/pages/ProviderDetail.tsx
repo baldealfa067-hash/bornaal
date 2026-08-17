@@ -1,5 +1,5 @@
 import { useParams } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { MapPin, Phone, MessageCircle, Wallet, BadgeCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,9 +22,14 @@ const ProviderDetail = () => {
   const [comment, setComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [portfolio, setPortfolio] = useState<{ id: string; image_url: string }[]>([]);
+  const viewLogged = useRef(false);
 
   useEffect(() => {
     if (!id) return;
+    if (!viewLogged.current) {
+      viewLogged.current = true;
+      supabase.rpc("increment_provider_view", { p_provider_id: id });
+    }
     supabase
       .from("portfolio_images")
       .select("id, image_url")
@@ -76,6 +81,16 @@ const ProviderDetail = () => {
   const whatsappUrl = `https://wa.me/${provider.phone.replace(/\D/g, "")}?text=${encodeURIComponent(
     `Olá ${provider.name}, encontrei o seu perfil no BissauService e gostaria de saber mais sobre os seus serviços.`
   )}`;
+
+  const trackWhatsapp = () => {
+    if (!id) return;
+    supabase.rpc("record_provider_contact", { p_provider_id: id, contact_type: "whatsapp" });
+  };
+
+  const trackCall = () => {
+    if (!id) return;
+    supabase.rpc("record_provider_contact", { p_provider_id: id, contact_type: "call" });
+  };
 
   return (
     <div className="max-w-lg mx-auto px-4 pt-6">
@@ -169,13 +184,13 @@ const ProviderDetail = () => {
 
       {/* Contact buttons */}
       <div className="mb-8 grid grid-cols-2 gap-2">
-        <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="block">
+        <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="block" onClick={trackWhatsapp}>
           <Button className="w-full bg-[#25D366] hover:bg-[#1ebe57] text-white gap-2">
             <MessageCircle className="h-5 w-5" />
             WhatsApp
           </Button>
         </a>
-        <a href={`tel:${provider.phone.replace(/\s/g, "")}`} className="block">
+        <a href={`tel:${provider.phone.replace(/\s/g, "")}`} className="block" onClick={trackCall}>
           <Button variant="secondary" className="w-full gap-2">
             <Phone className="h-5 w-5" />
             Ligar

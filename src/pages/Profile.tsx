@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { LogOut, Settings, Briefcase, Loader2 } from "lucide-react";
+import { LogOut, Settings, Briefcase, Loader2, Eye, MessageCircle, Phone, MessageSquareText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -23,6 +23,9 @@ const Profile = () => {
   const navigate = useNavigate();
   const { user, isProvider, isAdmin, roles, loading, signOut } = useAuth();
   const [profile, setProfile] = useState<ProviderProfile | null>(null);
+  const [profileId, setProfileId] = useState<string | null>(null);
+  const [stats, setStats] = useState<{ profile_views: number; whatsapp_clicks: number; call_clicks: number }>({ profile_views: 0, whatsapp_clicks: 0, call_clicks: 0 });
+  const [commentCount, setCommentCount] = useState(0);
 
   useEffect(() => {
     if (loading) return;
@@ -37,14 +40,40 @@ const Profile = () => {
     if (isProvider) {
       supabase
         .from("profiles")
-        .select("name, category, phone, location, description, photo_url, price_type, starting_price")
+        .select("id, name, category, phone, location, description, photo_url, price_type, starting_price")
         .eq("user_id", user.id)
         .maybeSingle()
         .then(({ data }) => {
-          if (data) setProfile(data as ProviderProfile);
+          if (data) {
+            setProfile(data as ProviderProfile);
+            setProfileId((data as { id?: string }).id ?? null);
+          }
         });
     }
   }, [user, isAdmin, isProvider, loading, navigate]);
+
+  useEffect(() => {
+    if (!profileId) return;
+    supabase
+      .from("provider_stats")
+      .select("profile_views, whatsapp_clicks, call_clicks")
+      .eq("provider_id", profileId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data) {
+          setStats({
+            profile_views: data.profile_views ?? 0,
+            whatsapp_clicks: data.whatsapp_clicks ?? 0,
+            call_clicks: data.call_clicks ?? 0,
+          });
+        }
+      });
+    supabase
+      .from("reviews")
+      .select("id", { count: "exact", head: true })
+      .eq("provider_id", profileId)
+      .then(({ count }) => setCommentCount(count ?? 0));
+  }, [profileId]);
 
   const handleLogout = async () => {
     await signOut();
@@ -121,6 +150,29 @@ const Profile = () => {
                   <p className="mt-1">{profile.description}</p>
                 </div>
               )}
+            </div>
+          )}
+          {isProvider && (
+            <div className="rounded-lg border p-4">
+              <p className="text-sm font-semibold mb-3">Estatísticas do perfil</p>
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div className="flex items-center gap-2">
+                  <Eye className="h-4 w-4 text-primary" />
+                  <span><span className="font-bold">{stats.profile_views}</span> <span className="text-muted-foreground">vistas</span></span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <MessageCircle className="h-4 w-4 text-[#25D366]" />
+                  <span><span className="font-bold">{stats.whatsapp_clicks}</span> <span className="text-muted-foreground">WhatsApp</span></span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Phone className="h-4 w-4 text-secondary-foreground" />
+                  <span><span className="font-bold">{stats.call_clicks}</span> <span className="text-muted-foreground">ligações</span></span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <MessageSquareText className="h-4 w-4 text-muted-foreground" />
+                  <span><span className="font-bold">{commentCount}</span> <span className="text-muted-foreground">comentários</span></span>
+                </div>
+              </div>
             </div>
           )}
           {isProvider && (

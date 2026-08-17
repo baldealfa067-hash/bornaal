@@ -6,6 +6,7 @@ import { StarRating } from "./StarRating";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { formatCFA } from "@/lib/format";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ProviderCardProps {
   id: string;
@@ -30,6 +31,10 @@ export const ProviderCard = ({
     `Olá ${name}, encontrei o seu perfil no BissauService e gostaria de saber mais sobre os seus serviços.`
   )}`;
   const telUrl = `tel:${phone.replace(/\s/g, "")}`;
+
+  const trackContact = (type: "whatsapp" | "call") => {
+    supabase.rpc("record_provider_contact", { p_provider_id: id, contact_type: type });
+  };
 
   return (
     <Card className="overflow-hidden hover:shadow-md transition-shadow border-border/60">
@@ -97,12 +102,13 @@ export const ProviderCard = ({
           target="_blank"
           rel="noopener noreferrer"
           aria-label={`Contactar ${name} via WhatsApp`}
+          onClick={() => trackContact("whatsapp")}
           >
             <Button size="icon" className="h-10 w-10 bg-[#25D366] hover:bg-[#1ebe57] text-white">
               <MessageCircle className="h-5 w-5" />
             </Button>
           </a>
-          <a href={telUrl} aria-label={`Ligar para ${name}`}>
+          <a href={telUrl} aria-label={`Ligar para ${name}`} onClick={() => trackContact("call")}>
             <Button size="icon" variant="secondary" className="h-10 w-10">
               <Phone className="h-5 w-5" />
             </Button>

@@ -11,7 +11,7 @@ import { toast } from "sonner";
 import { formatCFA } from "@/lib/format";
 import ManageList from "@/components/ManageList";
 
-type Provider = { id: string; name: string; category: string; phone: string; location: string; price_type: string; starting_price: number | null; is_verified: boolean; verification_status: string; verification_reason: string | null; verification_doc_url: string | null; verification_selfie_url: string | null };
+type Provider = { id: string; name: string; category: string; phone: string; location: string; price_type: string; starting_price: number | null; is_verified: boolean; verification_status: string; verification_reason: string | null; verification_doc_url: string | null; verification_selfie_url: string | null; stats?: { profile_views: number; whatsapp_clicks: number; call_clicks: number } };
 type Request = { id: string; requester_name: string | null; category: string; location: string; description: string; status: string; created_at: string };
 type Review = { id: string; provider_id: string; reviewer_name: string | null; rating: number; comment: string | null; created_at: string; status: string };
 type Category = { id: string; name: string };
@@ -35,14 +35,19 @@ const AdminDashboard = () => {
 
   const loadAll = async () => {
     setLoadingData(true);
-    const [{ data: p }, { data: r }, { data: rv }, { data: c }, { data: b }] = await Promise.all([
+    const [{ data: p }, { data: r }, { data: rv }, { data: c }, { data: b }, { data: st }] = await Promise.all([
       supabase.from("profiles").select("id, name, category, phone, location, price_type, starting_price, is_verified, verification_status, verification_reason, verification_doc_url, verification_selfie_url").order("name"),
       supabase.from("service_requests").select("id, requester_name, category, location, description, status, created_at").order("created_at", { ascending: false }),
       supabase.from("reviews").select("id, provider_id, reviewer_name, rating, comment, created_at, status").order("created_at", { ascending: false }),
       supabase.from("categories").select("id, name").order("name"),
       supabase.from("bairros").select("id, name").order("name"),
+      supabase.from("provider_stats").select("provider_id, profile_views, whatsapp_clicks, call_clicks"),
     ]);
-    setProviders((p ?? []) as Provider[]);
+    const statsMap: Record<string, { profile_views: number; whatsapp_clicks: number; call_clicks: number }> = {};
+    (st ?? []).forEach((s) => {
+      statsMap[s.provider_id] = { profile_views: s.profile_views ?? 0, whatsapp_clicks: s.whatsapp_clicks ?? 0, call_clicks: s.call_clicks ?? 0 };
+    });
+    setProviders(((p ?? []) as Provider[]).map((prov) => ({ ...prov, stats: statsMap[prov.id] ?? { profile_views: 0, whatsapp_clicks: 0, call_clicks: 0 } })));
     setRequests((r ?? []) as Request[]);
     setReviews((rv ?? []) as Review[]);
     setCategories((c ?? []) as Category[]);
@@ -199,6 +204,11 @@ const AdminDashboard = () => {
                       {p.price_type === "fixo" && p.starting_price != null && ` · ${formatCFA(p.starting_price)}`}
                       {p.price_type === "negociavel" && " · Negociável"}
                       {p.price_type === "combinar" && " · A combinar"}
+                    </div>
+                    <div className="flex flex-wrap gap-2 mt-1.5 text-[11px]">
+                      <Badge variant="outline" className="gap-1">👁 {p.stats?.profile_views ?? 0} vistas</Badge>
+                      <Badge variant="outline" className="gap-1">💬 {p.stats?.whatsapp_clicks ?? 0} WhatsApp</Badge>
+                      <Badge variant="outline" className="gap-1">📞 {p.stats?.call_clicks ?? 0} ligações</Badge>
                     </div>
                   </div>
                   <div className="flex gap-1 shrink-0">

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { LogOut, ArrowLeft, Upload, Loader2, Trash2, ImagePlus, ShieldCheck, ShieldAlert, ShieldX, FileCheck2 } from "lucide-react";
+import { LogOut, ArrowLeft, Upload, Loader2, Trash2, ImagePlus, ShieldCheck, ShieldAlert, ShieldX, FileCheck2, Eye, MessageCircle, Phone, MessageSquareText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -54,6 +54,8 @@ const ProviderDashboard = () => {
   const [verifying, setVerifying] = useState(false);
   const verifyDocRef = useRef<HTMLInputElement>(null);
   const verifySelfieRef = useRef<HTMLInputElement>(null);
+  const [stats, setStats] = useState<{ profile_views: number; whatsapp_clicks: number; call_clicks: number }>({ profile_views: 0, whatsapp_clicks: 0, call_clicks: 0 });
+  const [commentCount, setCommentCount] = useState(0);
 
   const loadGallery = async (pid: string) => {
     const { data } = await supabase
@@ -63,6 +65,29 @@ const ProviderDashboard = () => {
       .order("created_at", { ascending: false });
     setGallery((data ?? []) as { id: string; image_url: string }[]);
   };
+
+  useEffect(() => {
+    if (!profileId) return;
+    supabase
+      .from("provider_stats")
+      .select("profile_views, whatsapp_clicks, call_clicks")
+      .eq("provider_id", profileId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data) {
+          setStats({
+            profile_views: data.profile_views ?? 0,
+            whatsapp_clicks: data.whatsapp_clicks ?? 0,
+            call_clicks: data.call_clicks ?? 0,
+          });
+        }
+      });
+    supabase
+      .from("reviews")
+      .select("id", { count: "exact", head: true })
+      .eq("provider_id", profileId)
+      .then(({ count }) => setCommentCount(count ?? 0));
+  }, [profileId]);
 
   useEffect(() => {
     if (loading) return;
@@ -441,6 +466,39 @@ const ProviderDashboard = () => {
                   </Button>
                 </form>
               )}
+            </CardContent>
+          </Card>
+        )}
+
+        {profileId && (
+          <Card className="mt-4">
+            <CardHeader>
+              <CardTitle className="text-base">Estatísticas do perfil</CardTitle>
+              <p className="text-xs text-muted-foreground">Como os clientes interagem com o seu perfil.</p>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="rounded-lg border p-3 flex flex-col items-center gap-1">
+                  <Eye className="h-5 w-5 text-primary" />
+                  <span className="text-2xl font-bold">{stats.profile_views}</span>
+                  <span className="text-[11px] text-muted-foreground text-center">Vistas do perfil</span>
+                </div>
+                <div className="rounded-lg border p-3 flex flex-col items-center gap-1">
+                  <MessageCircle className="h-5 w-5 text-[#25D366]" />
+                  <span className="text-2xl font-bold">{stats.whatsapp_clicks}</span>
+                  <span className="text-[11px] text-muted-foreground text-center">Contactos WhatsApp</span>
+                </div>
+                <div className="rounded-lg border p-3 flex flex-col items-center gap-1">
+                  <Phone className="h-5 w-5 text-secondary-foreground" />
+                  <span className="text-2xl font-bold">{stats.call_clicks}</span>
+                  <span className="text-[11px] text-muted-foreground text-center">Ligações</span>
+                </div>
+                <div className="rounded-lg border p-3 flex flex-col items-center gap-1">
+                  <MessageSquareText className="h-5 w-5 text-muted-foreground" />
+                  <span className="text-2xl font-bold">{commentCount}</span>
+                  <span className="text-[11px] text-muted-foreground text-center">Comentários</span>
+                </div>
+              </div>
             </CardContent>
           </Card>
         )}

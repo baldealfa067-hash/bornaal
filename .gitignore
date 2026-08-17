@@ -30,3 +30,7 @@ imagem.png/
 *.njsproj
 *.sln
 *.sw?
+
+# Supabase CLI link temp files
+supabase/.temp/
+.supabase/

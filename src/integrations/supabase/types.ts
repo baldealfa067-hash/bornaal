@@ -429,6 +429,38 @@ export type Database = {
         }
         Relationships: []
       }
+      provider_stats: {
+        Row: {
+          call_clicks: number
+          profile_views: number
+          provider_id: string
+          updated_at: string
+          whatsapp_clicks: number
+        }
+        Insert: {
+          call_clicks?: number
+          profile_views?: number
+          provider_id: string
+          updated_at?: string
+          whatsapp_clicks?: number
+        }
+        Update: {
+          call_clicks?: number
+          profile_views?: number
+          provider_id?: string
+          updated_at?: string
+          whatsapp_clicks?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "provider_stats_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -440,6 +472,14 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      increment_provider_view: {
+        Args: { provider_id: string }
+        Returns: undefined
+      }
+      record_provider_contact: {
+        Args: { provider_id: string; contact_type: string }
+        Returns: undefined
       }
       register_as_provider: { Args: never; Returns: undefined }
     }
