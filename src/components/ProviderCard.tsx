@@ -33,7 +33,9 @@ export const ProviderCard = ({
   const telUrl = `tel:${phone.replace(/\s/g, "")}`;
 
   const trackContact = (type: "whatsapp" | "call") => {
-    supabase.rpc("record_provider_contact", { p_provider_id: id, contact_type: type });
+    supabase.rpc("record_provider_contact", { p_provider_id: id, contact_type: type }).then(({ error }) => {
+      if (error) console.error(`[stats] record ${type} error:`, error.message);
+    });
   };
 
   return (

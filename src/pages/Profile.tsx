@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { LogOut, Settings, Briefcase, Loader2, Eye, MessageCircle, Phone, MessageSquareText, FlaskConical } from "lucide-react";
+import { LogOut, Settings, Briefcase, Loader2, Eye, MessageCircle, Phone, MessageSquareText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -8,7 +8,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useProviderStatsQuery } from "@/hooks/useProviderStats";
 import { useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
 
 type ProviderProfile = {
   id: string;
@@ -29,7 +28,6 @@ const Profile = () => {
   const [profile, setProfile] = useState<ProviderProfile | null>(null);
   const [profileId, setProfileId] = useState<string | null>(null);
   const [commentCount, setCommentCount] = useState(0);
-  const [testing, setTesting] = useState(false);
 
   const { data: stats } = useProviderStatsQuery(profileId);
 
@@ -84,24 +82,6 @@ const Profile = () => {
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [profileId, qc]);
-
-  const handleTestStats = async () => {
-    if (!profileId) return;
-    setTesting(true);
-    try {
-      const { error: statsErr } = await supabase.rpc("increment_provider_view", { p_provider_id: profileId });
-      if (statsErr) {
-        toast.error("Erro no RPC: " + statsErr.message);
-        return;
-      }
-      qc.invalidateQueries({ queryKey: ["provider-stats", profileId] });
-      toast.success("RPC executado! Vista registada.");
-    } catch (e: any) {
-      toast.error("Erro: " + e.message);
-    } finally {
-      setTesting(false);
-    }
-  };
 
   const handleLogout = async () => {
     await signOut();
@@ -201,16 +181,6 @@ const Profile = () => {
                   <span><span className="font-bold">{commentCount}</span> <span className="text-muted-foreground">comentários</span></span>
                 </div>
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleTestStats}
-                disabled={testing}
-                className="mt-3 w-full gap-2"
-              >
-                <FlaskConical className="h-3 w-3" />
-                {testing ? "A testar..." : "Testar RPC (incrementar vista)"}
-              </Button>
             </div>
           )}
           {isProvider && (

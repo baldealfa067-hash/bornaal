@@ -19,7 +19,9 @@ const ProviderDetail = () => {
     if (!id) return;
     if (!viewLogged.current) {
       viewLogged.current = true;
-      supabase.rpc("increment_provider_view", { p_provider_id: id });
+      supabase.rpc("increment_provider_view", { p_provider_id: id }).then(({ error }) => {
+        if (error) console.error("[stats] increment_provider_view error:", error.message);
+      });
     }
     supabase
       .from("portfolio_images")
@@ -43,12 +45,16 @@ const ProviderDetail = () => {
 
   const trackWhatsapp = () => {
     if (!id) return;
-    supabase.rpc("record_provider_contact", { p_provider_id: id, contact_type: "whatsapp" });
+    supabase.rpc("record_provider_contact", { p_provider_id: id, contact_type: "whatsapp" }).then(({ error }) => {
+      if (error) console.error("[stats] record whatsapp error:", error.message);
+    });
   };
 
   const trackCall = () => {
     if (!id) return;
-    supabase.rpc("record_provider_contact", { p_provider_id: id, contact_type: "call" });
+    supabase.rpc("record_provider_contact", { p_provider_id: id, contact_type: "call" }).then(({ error }) => {
+      if (error) console.error("[stats] record call error:", error.message);
+    });
   };
 
   return (
