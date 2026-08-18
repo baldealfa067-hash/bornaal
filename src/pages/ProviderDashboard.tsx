@@ -204,10 +204,8 @@ const ProviderDashboard = () => {
     setSaving(false);
     if (error) return toast.error(error.message);
     if (data) setProfileId(data.id);
-    // If this is a new profile, assign provider role
-    if (!profileId) {
-      await supabase.rpc("register_as_provider");
-    }
+    // Garantir role de prestador (também quando o perfil já existe)
+    await supabase.rpc("register_as_provider");
     toast.success("Perfil guardado!");
     if (data?.id) loadGallery(data.id);
   };

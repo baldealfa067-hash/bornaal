@@ -43,20 +43,18 @@ const Profile = () => {
       navigate("/admin", { replace: true });
       return;
     }
-    if (isProvider) {
-      supabase
-        .from("profiles")
-        .select("id, name, category, phone, location, description, photo_url, price_type, starting_price")
-        .eq("user_id", user.id)
-        .maybeSingle()
-        .then(({ data }) => {
-          if (data) {
-            setProfile(data as ProviderProfile);
-            setProfileId((data as { id?: string }).id ?? null);
-          }
-        });
-    }
-  }, [user, isAdmin, isProvider, loading, navigate]);
+    supabase
+      .from("profiles")
+      .select("id, name, category, phone, location, description, photo_url, price_type, starting_price")
+      .eq("user_id", user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data) {
+          setProfile(data as ProviderProfile);
+          setProfileId((data as { id?: string }).id ?? null);
+        }
+      });
+  }, [user, isAdmin, loading, navigate]);
 
   useEffect(() => {
     if (!profileId) return;
