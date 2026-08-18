@@ -1,7 +1,7 @@
 import { useParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useRef, useState } from "react";
-import { MapPin, Phone, MessageCircle, Wallet, BadgeCheck } from "lucide-react";
+import { AlertCircle, MapPin, Phone, MessageCircle, Wallet, BadgeCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
