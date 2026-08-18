@@ -1,4 +1,5 @@
 import { useParams } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useRef, useState } from "react";
 import { MapPin, Phone, MessageCircle, Wallet, BadgeCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -15,6 +16,7 @@ const ProviderDetail = () => {
   const [portfolio, setPortfolio] = useState<{ id: string; image_url: string }[]>([]);
   const viewLogged = useRef(false);
   const [complaining, setComplaining] = useState(false);
+  const { user, isProvider, isAdmin, roles, loading, signOut } = useAuth();
 
   useEffect(() => {
     if (!id) return;

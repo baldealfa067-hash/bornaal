@@ -97,10 +97,10 @@ const Profile = () => {
     );
   }
 
-  if (!user || isAdmin) return null;
+  if (!user || isAdmin || !profile) return null;
 
-  const email = user.email ?? "";
-  const initials = (profile?.name ?? email).slice(0, 2).toUpperCase();
+  const email = user?.email ?? user?.name?.split(' ')[0] ?? "";
+  const initials = (profile?.name ?? (user?.email ?? user?.name ?? 'Utilizador').split(' ')[0] ?? 'U').slice(0, 2).toUpperCase();
 
   return (
     <div className="max-w-lg mx-auto px-4 py-8">
