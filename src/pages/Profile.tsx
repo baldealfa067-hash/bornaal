@@ -111,7 +111,21 @@ const Profile = () => {
     );
   }
 
-  if (!user || isAdmin || !profile) return null;
+  if (!user || isAdmin) return null;
+
+  if (!profile || !profile.name) {
+    return (
+      <div className="max-w-lg mx-auto px-4 py-8">
+        <h1 className="text-2xl font-bold mb-4">Meu Perfil</h1>
+        <Card>
+          <CardContent className="flex flex-col items-center gap-3 py-8 text-center">
+            <p className="text-muted-foreground">Ainda não criaste o teu perfil de prestador.</p>
+            <Button onClick={() => navigate("/painel")}>Criar perfil de prestador</Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   const email = user?.email ?? user?.name?.split(' ')[0] ?? "";
   const initials = (profile?.name ?? (user?.email ?? user?.name ?? 'Utilizador').split(' ')[0] ?? 'U').slice(0, 2).toUpperCase();

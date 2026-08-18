@@ -22,7 +22,7 @@ export const useProviders = (category?: string) =>
   useQuery({
     queryKey: ["providers", category],
     queryFn: async (): Promise<ProviderWithRating[]> => {
-      let q = supabase.from("profiles").select("*");
+      let q = supabase.from("profiles").select("*").neq("category", "");
       if (category) q = q.eq("category", category);
       const { data: profiles, error } = await q;
       if (error) throw error;
