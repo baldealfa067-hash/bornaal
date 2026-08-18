@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { useProviderStatsRealtime, useProviderActivity, useProviderActivityRealtime } from "@/hooks/useProviderStats";
+import { useProviderStatsQuery, useProviderActivity, useProviderActivityRealtime } from "@/hooks/useProviderStats";
 import { toast } from "sonner";
 import { LOCATION_OPTIONS } from "@/lib/locations";
 import { useCategories } from "@/hooks/useProviders";
@@ -55,8 +55,8 @@ const ProviderDashboard = () => {
   const [verifying, setVerifying] = useState(false);
   const verifyDocRef = useRef<HTMLInputElement>(null);
   const verifySelfieRef = useRef<HTMLInputElement>(null);
-  const [stats, setStats] = useState<{ profile_views: number; whatsapp_clicks: number; call_clicks: number }>({ profile_views: 0, whatsapp_clicks: 0, call_clicks: 0 });
   const [commentCount, setCommentCount] = useState(0);
+  const { data: stats = { profile_views: 0, whatsapp_clicks: 0, call_clicks: 0 } } = useProviderStatsQuery(profileId);
 
   const loadGallery = async (pid: string) => {
     const { data } = await supabase
@@ -70,27 +70,12 @@ const ProviderDashboard = () => {
   useEffect(() => {
     if (!profileId) return;
     supabase
-      .from("provider_stats")
-      .select("profile_views, whatsapp_clicks, call_clicks")
-      .eq("provider_id", profileId)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (data) {
-          setStats({
-            profile_views: data.profile_views ?? 0,
-            whatsapp_clicks: data.whatsapp_clicks ?? 0,
-            call_clicks: data.call_clicks ?? 0,
-          });
-        }
-      });
-    supabase
       .from("reviews")
       .select("id", { count: "exact", head: true })
       .eq("provider_id", profileId)
       .then(({ count }) => setCommentCount(count ?? 0));
   }, [profileId]);
 
-  useProviderStatsRealtime(profileId, setStats);
   useProviderActivityRealtime(profileId);
   const { data: activity = [] } = useProviderActivity(profileId);
 

@@ -1,15 +1,16 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { LogOut, Settings, Briefcase, Loader2, Eye, MessageCircle, Phone, MessageSquareText } from "lucide-react";
+import { LogOut, Settings, Briefcase, Loader2, Eye, MessageCircle, Phone, MessageSquareText, FlaskConical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { useProviderStatsRealtime } from "@/hooks/useProviderStats";
+import { useProviderStatsQuery } from "@/hooks/useProviderStats";
 import { toast } from "sonner";
 
 type ProviderProfile = {
+  id: string;
   name: string;
   category: string;
   phone: string;
@@ -25,9 +26,10 @@ const Profile = () => {
   const { user, isProvider, isAdmin, roles, loading, signOut } = useAuth();
   const [profile, setProfile] = useState<ProviderProfile | null>(null);
   const [profileId, setProfileId] = useState<string | null>(null);
-  const [stats, setStats] = useState<{ profile_views: number; whatsapp_clicks: number; call_clicks: number }>({ profile_views: 0, whatsapp_clicks: 0, call_clicks: 0 });
   const [commentCount, setCommentCount] = useState(0);
-  const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
+  const [testing, setTesting] = useState(false);
+
+  const { data: stats } = useProviderStatsQuery(profileId);
 
   useEffect(() => {
     if (loading) return;
@@ -57,30 +59,28 @@ const Profile = () => {
   useEffect(() => {
     if (!profileId) return;
     supabase
-      .from("provider_stats")
-      .select("profile_views, whatsapp_clicks, call_clicks")
-      .eq("provider_id", profileId)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (data) {
-          setStats({
-            profile_views: data.profile_views ?? 0,
-            whatsapp_clicks: data.whatsapp_clicks ?? 0,
-            call_clicks: data.call_clicks ?? 0,
-          });
-        }
-      });
-    supabase
       .from("reviews")
       .select("id", { count: "exact", head: true })
       .eq("provider_id", profileId)
       .then(({ count }) => setCommentCount(count ?? 0));
   }, [profileId]);
 
-  useProviderStatsRealtime(profileId, (newStats) => {
-    setStats(newStats);
-    setLastUpdate(new Date());
-  });
+  const handleTestStats = async () => {
+    if (!profileId) return;
+    setTesting(true);
+    try {
+      const { error: statsErr } = await supabase.rpc("increment_provider_view", { p_provider_id: profileId });
+      if (statsErr) {
+        toast.error("Erro no RPC: " + statsErr.message);
+        return;
+      }
+      toast.success("RPC executado! Vista registada.");
+    } catch (e: any) {
+      toast.error("Erro: " + e.message);
+    } finally {
+      setTesting(false);
+    }
+  };
 
   const handleLogout = async () => {
     await signOut();
@@ -165,26 +165,31 @@ const Profile = () => {
               <div className="grid grid-cols-2 gap-2 text-sm">
                 <div className="flex items-center gap-2">
                   <Eye className="h-4 w-4 text-primary" />
-                  <span><span className="font-bold">{stats.profile_views}</span> <span className="text-muted-foreground">vistas</span></span>
+                  <span><span className="font-bold">{stats?.profile_views ?? 0}</span> <span className="text-muted-foreground">vistas</span></span>
                 </div>
                 <div className="flex items-center gap-2">
                   <MessageCircle className="h-4 w-4 text-[#25D366]" />
-                  <span><span className="font-bold">{stats.whatsapp_clicks}</span> <span className="text-muted-foreground">WhatsApp</span></span>
+                  <span><span className="font-bold">{stats?.whatsapp_clicks ?? 0}</span> <span className="text-muted-foreground">WhatsApp</span></span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Phone className="h-4 w-4 text-secondary-foreground" />
-                  <span><span className="font-bold">{stats.call_clicks}</span> <span className="text-muted-foreground">ligações</span></span>
+                  <span><span className="font-bold">{stats?.call_clicks ?? 0}</span> <span className="text-muted-foreground">ligações</span></span>
                 </div>
                 <div className="flex items-center gap-2">
                   <MessageSquareText className="h-4 w-4 text-muted-foreground" />
                   <span><span className="font-bold">{commentCount}</span> <span className="text-muted-foreground">comentários</span></span>
                 </div>
               </div>
-              {lastUpdate && (
-                <p className="text-xs text-muted-foreground mt-2">
-                  Última atualização: {lastUpdate.toLocaleTimeString('pt-BW')} (polling 15s + realtime)
-                </p>
-              )}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleTestStats}
+                disabled={testing}
+                className="mt-3 w-full gap-2"
+              >
+                <FlaskConical className="h-3 w-3" />
+                {testing ? "A testar..." : "Testar RPC (incrementar vista)"}
+              </Button>
             </div>
           )}
           {isProvider && (
