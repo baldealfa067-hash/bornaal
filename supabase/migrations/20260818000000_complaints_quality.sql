@@ -57,32 +57,56 @@ DROP POLICY IF EXISTS "Providers can view own quality level" ON public.quality_l
 CREATE POLICY "Providers can view own quality level" ON public.quality_levels
   FOR SELECT TO authenticated USING (provider_id = auth.uid());
 
--- 3. Função para calcular atualizar o nível de qualidade
-CREATE OR REPLACE FUNCTION public.update_quality_level(p_provider_id uuid)
-RETURNS void
+-- 3. Função para calcular e atualizar o nível de qualidade
+CREATE OR REPLACE FUNCTION public.calculate_quality_score(p_provider_id uuid)
+RETURNS integer
 LANGUAGE plpgsql SECURITY DEFINER SET search_path = public
 AS $$
 DECLARE
-  score integer;
+  v_score integer;
+  v_reviews_positive integer;
+  v_complaints integer;
 BEGIN
-  -- Calcula o score: avaliações >= 4 = +1, reclamações = -1
-  -- Note: precisamos contar avaliações e reclamações
-  -- Para simplificar, vamos atualizar baseado no que temos
-  
+  -- Avaliações >= 4 contam +1; reclamações contam -1
+  SELECT count(*) INTO v_reviews_positive
+  FROM public.reviews
+  WHERE provider_id = p_provider_id AND rating >= 4;
+
+  SELECT count(*) INTO v_complaints
+  FROM public.complaints
+  WHERE provider_id = p_provider_id AND status <> 'resolvida';
+
+  v_score := v_reviews_positive - v_complaints;
+  RETURN v_score;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.update_quality_level()
+RETURNS trigger
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public
+AS $$
+DECLARE
+  v_score integer;
+BEGIN
+  v_score := public.calculate_quality_score(NEW.provider_id);
+
   UPDATE public.quality_levels
   SET level = CASE 
-    WHEN score > 0 THEN 'alta'
-    WHEN score < 0 THEN 'baixa'
+    WHEN v_score > 0 THEN 'alta'
+    WHEN v_score < 0 THEN 'baixa'
     ELSE 'media'
   END,
+    score = v_score,
     calculated_at = now()
-  WHERE provider_id = p_provider_id;
+  WHERE provider_id = NEW.provider_id;
   
   IF NOT FOUND THEN
-    -- Inserir novo registro se não existir
+    -- Inserir novo registo se não existir
     INSERT INTO public.quality_levels (provider_id, level, score, calculated_at)
-    VALUES (p_provider_id, 'media', 0, now());
+    VALUES (NEW.provider_id, 'media', v_score, now());
   END IF;
+  
+  RETURN NEW;
 END;
 $$;
 
@@ -90,7 +114,7 @@ $$;
 DROP TRIGGER IF EXISTS update_quality_after_complaint ON public.complaints;
 CREATE TRIGGER update_quality_after_complaint
   AFTER INSERT ON public.complaints
-  FOR EACH ROW EXECUTE FUNCTION public.update_quality_level(p_provider_id);
+  FOR EACH ROW EXECUTE FUNCTION public.update_quality_level();
 
 -- 5. Inicializar níveis de qualidade para todos os prestadores existentes
 DO $$

@@ -62,13 +62,28 @@ const ProviderDetail = () => {
 
   const handleComplain = async () => {
     if (!id) return;
+    if (!user) {
+      alert("Inicia sessão para poderes denunciar um prestador.");
+      return;
+    }
+    if (!window.confirm(`Tens a certeza que queres denunciar ${provider.name}?`)) return;
     setComplaining(true);
     try {
-      const { error } = await supabase.from("complaints").insert({ provider_id: id, client_id: user?.id ?? "", reason: "Denúncia de serviço insatisfatório" });
-      if (error) console.error("[complaints] error:", error.message);
-      setComplaining(false);
-    } catch (e: any) {
-      console.error("[complaints] exception:", e.message);
+      const { error } = await supabase.from("complaints").insert({
+        provider_id: id,
+        client_id: user.id,
+        reason: "Denúncia de serviço insatisfatório",
+      });
+      if (error) {
+        console.error("[complaints] error:", error.message);
+        alert("Erro ao denunciar. Tenta novamente.");
+      } else {
+        alert("Denúncia registada. Obrigado pelo teu feedback.");
+      }
+    } catch (e) {
+      console.error("[complaints] exception:", e);
+      alert("Erro ao denunciar. Tenta novamente.");
+    } finally {
       setComplaining(false);
     }
   };
@@ -137,9 +152,9 @@ const ProviderDetail = () => {
         {/* Botão de denunciar */}
         {provider.id !== user?.id && (
           <a href="javascript:void(0)" className="block" onClick={handleComplain}>
-            <Button variant="outline" className="w-full gap-2">
+            <Button variant="outline" className="w-full gap-2" disabled={complaining}>
               <AlertCircle className="h-5 w-5" />
-              Denunciar
+              {complaining ? "A enviar..." : "Denunciar"}
             </Button>
           </a>
         )}
