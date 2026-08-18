@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useProviderStatsQuery } from "@/hooks/useProviderStats";
 import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 type ProviderProfile = {
   id: string;
@@ -28,6 +29,7 @@ const Profile = () => {
   const [profile, setProfile] = useState<ProviderProfile | null>(null);
   const [profileId, setProfileId] = useState<string | null>(null);
   const [commentCount, setCommentCount] = useState(0);
+  const [qualityLevel, setQualityLevel] = useState<string>("média");
 
   const { data: stats } = useProviderStatsQuery(profileId);
 
@@ -63,6 +65,18 @@ const Profile = () => {
       .select("id", { count: "exact", head: true })
       .eq("provider_id", profileId)
       .then(({ count }) => setCommentCount(count ?? 0));
+  }, [profileId]);
+
+  useEffect(() => {
+    if (!profileId) return;
+    supabase
+      .from("quality_levels")
+      .select("level")
+      .eq("provider_id", profileId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data?.level) setQualityLevel(data.level);
+      });
   }, [profileId]);
 
   useEffect(() => {
