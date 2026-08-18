@@ -14,6 +14,7 @@ const ProviderDetail = () => {
   const { data: provider, isLoading } = useProvider(id!);
   const [portfolio, setPortfolio] = useState<{ id: string; image_url: string }[]>([]);
   const viewLogged = useRef(false);
+  const [complaining, setComplaining] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -57,6 +58,18 @@ const ProviderDetail = () => {
     });
   };
 
+  const handleComplain = async () => {
+    if (!id) return;
+    setComplaining(true);
+    try {
+      const { error } = await supabase.from("complaints").insert({ provider_id: id, client_id: user?.id ?? "", reason: "Denúncia de serviço insatisfatório" });
+      if (error) console.error("[complaints] error:", error.message);
+      setComplaining(false);
+    } catch (e: any) {
+      console.error("[complaints] exception:", e.message);
+      setComplaining(false);
+    }
+  };
   return (
     <div className="max-w-lg mx-auto px-4 pt-6">
       <div className="flex items-start gap-4 mb-6">
@@ -118,6 +131,15 @@ const ProviderDetail = () => {
             <Wallet className="h-4 w-4 text-primary" />
             <span className="font-semibold">A combinar</span>
           </div>
+        )}
+        {/* Botão de denunciar */}
+        {provider.id !== user?.id && (
+          <a href="javascript:void(0)" className="block" onClick={handleComplain}>
+            <Button variant="outline" className="w-full gap-2">
+              <AlertCircle className="h-5 w-5" />
+              Denunciar
+            </Button>
+          </a>
         )}
       </div>
 

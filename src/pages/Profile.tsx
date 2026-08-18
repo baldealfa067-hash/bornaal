@@ -180,6 +180,10 @@ const Profile = () => {
                   <MessageSquareText className="h-4 w-4 text-muted-foreground" />
                   <span><span className="font-bold">{commentCount}</span> <span className="text-muted-foreground">comentários</span></span>
                 </div>
+                <div className="flex items-center gap-2">
+                  <Star className="h-4 w-4 text-yellow-500" />
+                  <span><span className="font-bold">{qualityLevel}</span> <span className="text-muted-foreground">qualidade</span></span>
+                </div>
               </div>
             </div>
           )}
