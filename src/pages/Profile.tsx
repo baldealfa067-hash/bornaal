@@ -7,6 +7,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useProviderStatsQuery } from "@/hooks/useProviderStats";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 type ProviderProfile = {
@@ -24,6 +25,7 @@ type ProviderProfile = {
 const Profile = () => {
   const navigate = useNavigate();
   const { user, isProvider, isAdmin, roles, loading, signOut } = useAuth();
+  const qc = useQueryClient();
   const [profile, setProfile] = useState<ProviderProfile | null>(null);
   const [profileId, setProfileId] = useState<string | null>(null);
   const [commentCount, setCommentCount] = useState(0);
@@ -65,6 +67,24 @@ const Profile = () => {
       .then(({ count }) => setCommentCount(count ?? 0));
   }, [profileId]);
 
+  useEffect(() => {
+    if (!profileId) return;
+    const channel = supabase
+      .channel(`profile-stats-${profileId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "provider_stats", filter: `provider_id=eq.${profileId}` },
+        () => { qc.invalidateQueries({ queryKey: ["provider-stats", profileId] }); }
+      )
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "notifications" },
+        () => { qc.invalidateQueries({ queryKey: ["notifications"] }); qc.invalidateQueries({ queryKey: ["notifications-unread"] }); }
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [profileId, qc]);
+
   const handleTestStats = async () => {
     if (!profileId) return;
     setTesting(true);
@@ -74,6 +94,7 @@ const Profile = () => {
         toast.error("Erro no RPC: " + statsErr.message);
         return;
       }
+      qc.invalidateQueries({ queryKey: ["provider-stats", profileId] });
       toast.success("RPC executado! Vista registada.");
     } catch (e: any) {
       toast.error("Erro: " + e.message);

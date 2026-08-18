@@ -60,6 +60,8 @@ export const useProviderStatsQuery = (providerId: string | null) =>
     },
     enabled: !!providerId,
     refetchInterval: 10000,
+    refetchIntervalInBackground: true,
+    staleTime: 0,
   });
 
 export const useProviderActivity = (providerId: string | null) =>
