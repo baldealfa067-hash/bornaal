@@ -21,6 +21,7 @@ import { useCategories } from "@/hooks/useProviders";
 import { useBairros } from "@/hooks/useBairros";
 import { BAIRROS_FILTER } from "@/lib/locations";
 import { formatCFA } from "@/lib/format";
+import { getPageCount, paginateArray } from "@/lib/pagination";
 import {
   useRequests, useCreateRequest,
   useBidsForRequest, useBidOnRequest, useUpdateBidStatus, useMyBidOnRequest,
@@ -92,8 +93,8 @@ const Requests = () => {
     return true;
   });
 
-  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const paginatedRequests = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const pageCount = getPageCount(filtered.length, PAGE_SIZE);
+  const paginatedRequests = paginateArray(filtered, page, PAGE_SIZE);
 
   useEffect(() => {
     setPage(1);

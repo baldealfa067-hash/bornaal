@@ -38,7 +38,9 @@ export const useProposals = (category?: string) =>
       if (category) q = q.eq("category", category);
       const { data, error } = await q;
       if (error) throw error;
-      const items = (data ?? []) as any[];
+      const items = (data ?? []) as (Proposal & {
+        provider: ProposalWithProvider["provider"];
+      })[];
       const providerIds = items.map((i) => i.provider_id);
       const { data: reviews } = await supabase
         .from("reviews")
@@ -80,7 +82,7 @@ export const useSaveProposal = () => {
         const { error } = await supabase.from("proposals").update(rest).eq("id", id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("proposals").insert(payload as any);
+        const { error } = await supabase.from("proposals").insert(payload as never);
         if (error) throw error;
       }
     },

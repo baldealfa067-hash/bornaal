@@ -9,6 +9,7 @@ import { Pagination } from "@/components/Pagination";
 import { useProviders, useCategories } from "@/hooks/useProviders";
 import { useBairros } from "@/hooks/useBairros";
 import { BAIRROS_FILTER } from "@/lib/locations";
+import { getPageCount, paginateArray } from "@/lib/pagination";
 
 const PAGE_SIZE = 10;
 
@@ -47,8 +48,8 @@ const Explore = () => {
     return matchCat && matchSearch && matchLocation;
   });
 
-  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const pageCount = getPageCount(filtered.length, PAGE_SIZE);
+  const paginated = paginateArray(filtered, page, PAGE_SIZE);
 
   return (
     <div className="max-w-lg mx-auto px-4 pt-6">

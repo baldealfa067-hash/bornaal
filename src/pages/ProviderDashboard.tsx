@@ -16,6 +16,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useProviderStatsQuery, useProviderActivity, useProviderActivityRealtime } from "@/hooks/useProviderStats";
 import { toast } from "sonner";
 import { LOCATION_OPTIONS } from "@/lib/locations";
+import { canSubmitVerification, isVerifiedStatus, verificationDescription } from "@/lib/verification";
 import { useCategories } from "@/hooks/useProviders";
 import { useBairros } from "@/hooks/useBairros";
 
@@ -408,24 +409,24 @@ const ProviderDashboard = () => {
               {verificationStatus === "aprovado" && (
                 <div className="flex items-center gap-2 text-green-700">
                   <ShieldCheck className="h-5 w-5" />
-                  <span className="text-sm font-medium">Perfil verificado!</span>
+                  <span className="text-sm font-medium">{verificationDescription(verificationStatus)}</span>
                 </div>
               )}
 
               {verificationStatus === "pendente" && (
                 <p className="text-sm text-yellow-700">
-                  A sua verificação está em análise. Voltaremos a dar-lhe resposta em breve.
+                  {verificationDescription(verificationStatus)}
                 </p>
               )}
 
               {verificationStatus === "rejeitado" && (
                 <div className="mb-3 rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-                  <p className="font-medium">A verificação foi rejeitada.</p>
+                  <p className="font-medium">{verificationDescription(verificationStatus)}</p>
                   {verificationReason && <p className="mt-1">Motivo: {verificationReason}</p>}
                 </div>
               )}
 
-              {(verificationStatus === "none" || verificationStatus === "rejeitado") && (
+              {canSubmitVerification(verificationStatus) && (
                 <form onSubmit={submitVerification} className="grid gap-4">
                   <div className="grid sm:grid-cols-2 gap-3">
                     <div>
