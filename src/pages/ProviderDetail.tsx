@@ -1,7 +1,7 @@
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useRef, useState } from "react";
-import { AlertCircle, MapPin, Phone, MessageCircle, Wallet, BadgeCheck } from "lucide-react";
+import { AlertCircle, MapPin, Phone, MessageCircle, Wallet, BadgeCheck, CheckCircle2, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -9,14 +9,32 @@ import { StarRating } from "@/components/StarRating";
 import { useProvider } from "@/hooks/useProviders";
 import { formatCFA } from "@/lib/format";
 import { supabase } from "@/integrations/supabase/client";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
+
+const REPORT_REASONS = [
+  "Serviço não foi realizado",
+  "Cobrança indevida",
+  "Comportamento inadequado",
+  "Perfil falso/enganoso",
+  "Outro",
+] as const;
 
 const ProviderDetail = () => {
+  const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const { data: provider, isLoading } = useProvider(id!);
   const [portfolio, setPortfolio] = useState<{ id: string; image_url: string }[]>([]);
   const viewLogged = useRef(false);
   const [complaining, setComplaining] = useState(false);
   const { user, isProvider, isAdmin, roles, loading, signOut } = useAuth();
+  const [reportOpen, setReportOpen] = useState(false);
+  const [reportStep, setReportStep] = useState<"login" | "form" | "success">("form");
+  const [reportReason, setReportReason] = useState("");
+  const [reportDescription, setReportDescription] = useState("");
 
   useEffect(() => {
     if (!id) return;
@@ -60,29 +78,37 @@ const ProviderDetail = () => {
     });
   };
 
-  const handleComplain = async () => {
-    if (!id) return;
-    if (!user) {
-      alert("Inicia sessão para poderes denunciar um prestador.");
+  const openReport = () => {
+    setReportReason("");
+    setReportDescription("");
+    setReportStep(user ? "form" : "login");
+    setReportOpen(true);
+  };
+
+  const submitReport = async () => {
+    if (!id || !user) return;
+    if (!reportReason.trim() || !reportDescription.trim()) {
+      toast.error("Escolhe um motivo e escreve uma descrição.");
       return;
     }
-    if (!window.confirm(`Tens a certeza que queres denunciar ${provider.name}?`)) return;
     setComplaining(true);
     try {
       const { error } = await supabase.from("complaints").insert({
         provider_id: id,
         client_id: user.id,
-        reason: "Denúncia de serviço insatisfatório",
+        reason: reportReason.trim(),
+        description: reportDescription.trim(),
+        status: "pendente",
       });
       if (error) {
         console.error("[complaints] error:", error.message);
-        alert("Erro ao denunciar. Tenta novamente.");
+        toast.error("Erro ao enviar a denúncia. Tenta novamente.");
       } else {
-        alert("Denúncia registada. Obrigado pelo teu feedback.");
+        setReportStep("success");
       }
     } catch (e) {
       console.error("[complaints] exception:", e);
-      alert("Erro ao denunciar. Tenta novamente.");
+      toast.error("Erro ao enviar a denúncia. Tenta novamente.");
     } finally {
       setComplaining(false);
     }
@@ -149,14 +175,12 @@ const ProviderDetail = () => {
             <span className="font-semibold">A combinar</span>
           </div>
         )}
-        {/* Botão de denunciar */}
-        {provider.id !== user?.id && (
-          <a href="javascript:void(0)" className="block" onClick={handleComplain}>
-            <Button variant="outline" className="w-full gap-2" disabled={complaining}>
-              <AlertCircle className="h-5 w-5" />
-              {complaining ? "A enviar..." : "Denunciar"}
-            </Button>
-          </a>
+        {/* Botão de denunciar (só clientes) */}
+        {provider.id !== user?.id && (!user || roles.includes("client")) && (
+          <Button variant="outline" className="w-full gap-2" onClick={openReport}>
+            <AlertCircle className="h-5 w-5" />
+            Denunciar
+          </Button>
         )}
       </div>
 
@@ -226,6 +250,95 @@ const ProviderDetail = () => {
           <p className="text-sm text-muted-foreground">Ainda sem avaliações.</p>
         )}
       </section>
+
+      <Dialog open={reportOpen} onOpenChange={setReportOpen}>
+        <DialogContent>
+          {reportStep === "login" && (
+            <>
+              <DialogHeader>
+                <DialogTitle>Denunciar {provider.name}</DialogTitle>
+                <DialogDescription>
+                  Para denunciar um prestador, tens de ter uma conta de cliente no Bornaal.
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setReportOpen(false)}>
+                  Cancelar
+                </Button>
+                <Button onClick={() => { setReportOpen(false); navigate("/login"); }}>
+                  Entrar
+                </Button>
+              </DialogFooter>
+            </>
+          )}
+
+          {reportStep === "form" && (
+            <>
+              <DialogHeader>
+                <DialogTitle>Denunciar {provider.name}</DialogTitle>
+                <DialogDescription>
+                  As denúncias são analisadas pela nossa equipa antes de qualquer ação. O prestador não vê esta denúncia.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-2">
+                <div className="grid gap-2">
+                  <Label htmlFor="report-reason">Motivo</Label>
+                  <Select value={reportReason} onValueChange={setReportReason}>
+                    <SelectTrigger id="report-reason">
+                      <SelectValue placeholder="Seleciona o motivo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {REPORT_REASONS.map((r) => (
+                        <SelectItem key={r} value={r}>{r}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="report-description">Descrição</Label>
+                  <Textarea
+                    id="report-description"
+                    placeholder="Explica o que aconteceu (obrigatório)"
+                    value={reportDescription}
+                    onChange={(e) => setReportDescription(e.target.value)}
+                    rows={4}
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setReportOpen(false)}>
+                  Cancelar
+                </Button>
+                <Button
+                  onClick={submitReport}
+                  disabled={complaining || !reportReason || !reportDescription.trim()}
+                  className="gap-2"
+                >
+                  <ShieldAlert className="h-4 w-4" />
+                  {complaining ? "A enviar..." : "Submeter denúncia"}
+                </Button>
+              </DialogFooter>
+            </>
+          )}
+
+          {reportStep === "success" && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <CheckCircle2 className="h-5 w-5 text-green-600" />
+                  Denúncia enviada
+                </DialogTitle>
+                <DialogDescription>
+                  A tua denúncia foi enviada e será analisada pela nossa equipa.
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter>
+                <Button onClick={() => setReportOpen(false)}>Fechar</Button>
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

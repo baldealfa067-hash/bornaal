@@ -121,7 +121,12 @@ DO $$
 DECLARE
   prov record;
 BEGIN
-  FOR prov IN SELECT id FROM public.profiles WHERE is_provider = true LOOP
+  FOR prov IN
+    SELECT DISTINCT p.id
+    FROM public.profiles p
+    JOIN public.user_roles ur ON ur.user_id = p.user_id
+    WHERE ur.role = 'provider'
+  LOOP
     INSERT INTO public.quality_levels (provider_id, level, score, calculated_at)
     VALUES (prov.id, 'media', 0, now())
     ON CONFLICT (provider_id) DO NOTHING;

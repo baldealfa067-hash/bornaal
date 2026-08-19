@@ -14,6 +14,7 @@ import ManageList from "@/components/ManageList";
 type Provider = { id: string; name: string; category: string; phone: string; location: string; price_type: string; starting_price: number | null; is_verified: boolean; verification_status: string; verification_reason: string | null; verification_doc_url: string | null; verification_selfie_url: string | null; stats?: { profile_views: number; whatsapp_clicks: number; call_clicks: number } };
 type Request = { id: string; requester_name: string | null; category: string; location: string; description: string; status: string; created_at: string };
 type Review = { id: string; provider_id: string; reviewer_name: string | null; rating: number; comment: string | null; created_at: string; status: string };
+type Complaint = { id: string; provider_id: string; client_id: string; reason: string; description: string | null; status: string; created_at: string };
 type Category = { id: string; name: string };
 type Bairro = { id: string; name: string };
 
@@ -23,6 +24,7 @@ const AdminDashboard = () => {
   const [providers, setProviders] = useState<Provider[]>([]);
   const [requests, setRequests] = useState<Request[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
+  const [complaints, setComplaints] = useState<Complaint[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [bairros, setBairros] = useState<Bairro[]>([]);
   const [loadingData, setLoadingData] = useState(true);
@@ -35,13 +37,14 @@ const AdminDashboard = () => {
 
   const loadAll = async () => {
     setLoadingData(true);
-    const [{ data: p }, { data: r }, { data: rv }, { data: c }, { data: b }, { data: st }] = await Promise.all([
+    const [{ data: p }, { data: r }, { data: rv }, { data: c }, { data: b }, { data: st }, { data: cp }] = await Promise.all([
       supabase.from("profiles").select("id, name, category, phone, location, price_type, starting_price, is_verified, verification_status, verification_reason, verification_doc_url, verification_selfie_url").order("name"),
       supabase.from("service_requests").select("id, requester_name, category, location, description, status, created_at").order("created_at", { ascending: false }),
       supabase.from("reviews").select("id, provider_id, reviewer_name, rating, comment, created_at, status").order("created_at", { ascending: false }),
       supabase.from("categories").select("id, name").order("name"),
       supabase.from("bairros").select("id, name").order("name"),
       supabase.from("provider_stats").select("provider_id, profile_views, whatsapp_clicks, call_clicks"),
+      supabase.from("complaints").select("id, provider_id, client_id, reason, description, status, created_at").order("created_at", { ascending: false }),
     ]);
     const statsMap: Record<string, { profile_views: number; whatsapp_clicks: number; call_clicks: number }> = {};
     (st ?? []).forEach((s) => {
@@ -50,6 +53,7 @@ const AdminDashboard = () => {
     setProviders(((p ?? []) as Provider[]).map((prov) => ({ ...prov, stats: statsMap[prov.id] ?? { profile_views: 0, whatsapp_clicks: 0, call_clicks: 0 } })));
     setRequests((r ?? []) as Request[]);
     setReviews((rv ?? []) as Review[]);
+    setComplaints((cp ?? []) as Complaint[]);
     setCategories((c ?? []) as Category[]);
     setBairros((b ?? []) as Bairro[]);
     setLoadingData(false);
@@ -67,6 +71,11 @@ const AdminDashboard = () => {
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "provider_activity" },
+        () => loadAll()
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "complaints" },
         () => loadAll()
       )
       .subscribe();
@@ -128,6 +137,13 @@ const AdminDashboard = () => {
     loadAll();
   };
 
+  const setComplaintStatus = async (c: Complaint, status: "validada" | "rejeitada") => {
+    const { error } = await supabase.from("complaints").update({ status }).eq("id", c.id);
+    if (error) return toast.error(error.message);
+    toast.success(status === "validada" ? "Denúncia validada — penaliza o prestador" : "Denúncia rejeitada — sem penalização");
+    loadAll();
+  };
+
   const addCategory = async (name: string) => {
     const { error } = await supabase.from("categories").insert({ name });
     if (error) return toast.error(error.message);
@@ -176,6 +192,9 @@ const AdminDashboard = () => {
   const pendingReviews = reviews.filter((r) => r.status === "pendente");
   const approvedReviews = reviews.filter((r) => r.status === "aprovado");
   const pendingVerifications = providers.filter((p) => p.verification_status === "pendente");
+  const pendingComplaints = complaints.filter((c) => c.status === "pendente");
+  const reviewedComplaints = complaints.filter((c) => c.status !== "pendente");
+  const clientName = (cid: string) => providers.find((p) => p.id === cid)?.name ?? "Cliente";
 
   if (loading || loadingData) return <div className="min-h-screen flex items-center justify-center text-muted-foreground">A carregar...</div>;
 
@@ -204,6 +223,7 @@ const AdminDashboard = () => {
               <TabsTrigger value="verifications" className="whitespace-nowrap">Verificações ({pendingVerifications.length})</TabsTrigger>
               <TabsTrigger value="requests" className="whitespace-nowrap">Pedidos ({requests.length})</TabsTrigger>
               <TabsTrigger value="pending" className="whitespace-nowrap">Pendentes ({pendingReviews.length})</TabsTrigger>
+              <TabsTrigger value="complaints" className="whitespace-nowrap">Denúncias ({pendingComplaints.length})</TabsTrigger>
               <TabsTrigger value="reviews" className="whitespace-nowrap">Aprovadas ({approvedReviews.length})</TabsTrigger>
               <TabsTrigger value="categories" className="whitespace-nowrap">Categorias ({categories.length})</TabsTrigger>
               <TabsTrigger value="bairros" className="whitespace-nowrap">Bairros ({bairros.length})</TabsTrigger>
@@ -327,6 +347,68 @@ const AdminDashboard = () => {
               </Card>
             ))}
             {!pendingReviews.length && <p className="text-sm text-muted-foreground text-center py-6">Sem avaliações pendentes.</p>}
+          </TabsContent>
+
+          <TabsContent value="complaints" className="flex flex-col gap-2">
+            {pendingComplaints.map((c) => (
+              <Card key={c.id} className="border-red-500/40">
+                <CardContent className="p-3 flex items-start justify-between gap-2">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge variant="destructive" className="gap-1">⚠ Pendente</Badge>
+                      <span className="text-xs text-muted-foreground">{new Date(c.created_at).toLocaleString("pt")}</span>
+                    </div>
+                    <div className="mt-1.5 text-sm">
+                      <span className="text-muted-foreground">Prestador:</span>{" "}
+                      <Link to={`/prestador/${c.provider_id}`} className="font-semibold hover:underline">
+                        {providerName(c.provider_id)}
+                      </Link>
+                    </div>
+                    <div className="text-sm text-muted-foreground">Denunciante: {clientName(c.client_id)}</div>
+                    <div className="text-sm mt-1">
+                      <Badge variant="secondary">{c.reason}</Badge>
+                    </div>
+                    {c.description && <p className="text-sm mt-2 bg-muted rounded-lg p-2">{c.description}</p>}
+                  </div>
+                  <div className="flex flex-col gap-1 shrink-0">
+                    <Button size="sm" onClick={() => setComplaintStatus(c, "validada")} className="gap-1 bg-green-600 hover:bg-green-700 text-white">
+                      <Check className="h-3.5 w-3.5" /> Validar
+                    </Button>
+                    <Button size="sm" variant="destructive" onClick={() => setComplaintStatus(c, "rejeitada")} className="gap-1">
+                      <X className="h-3.5 w-3.5" /> Rejeitar
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+            {!pendingComplaints.length && <p className="text-sm text-muted-foreground text-center py-6">Sem denúncias pendentes.</p>}
+
+            {reviewedComplaints.length > 0 && (
+              <div className="mt-4">
+                <h3 className="text-sm font-semibold mb-2 text-muted-foreground">Analisadas ({reviewedComplaints.length})</h3>
+                {reviewedComplaints.map((c) => (
+                  <Card key={c.id} className={c.status === "validada" ? "border-green-500/40" : "border-muted"}>
+                    <CardContent className="p-3">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Badge variant={c.status === "validada" ? "default" : "secondary"}>
+                          {c.status === "validada" ? "✓ Validada" : "✕ Rejeitada"}
+                        </Badge>
+                        <span className="text-xs text-muted-foreground">{new Date(c.created_at).toLocaleString("pt")}</span>
+                      </div>
+                      <div className="mt-1.5 text-sm">
+                        <span className="text-muted-foreground">Prestador:</span>{" "}
+                        <Link to={`/prestador/${c.provider_id}`} className="font-semibold hover:underline">
+                          {providerName(c.provider_id)}
+                        </Link>{" "}
+                        <span className="text-muted-foreground">· Denunciante: {clientName(c.client_id)}</span>
+                      </div>
+                      <div className="text-sm mt-1"><Badge variant="secondary">{c.reason}</Badge></div>
+                      {c.description && <p className="text-sm mt-2 bg-muted rounded-lg p-2">{c.description}</p>}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
           </TabsContent>
 
           <TabsContent value="reviews" className="flex flex-col gap-2">
