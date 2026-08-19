@@ -272,6 +272,7 @@ export type Database = {
       complaints: {
         Row: {
           client_id: string | null
+          contact: string | null
           created_at: string
           description: string | null
           id: string
@@ -282,6 +283,7 @@ export type Database = {
         }
         Insert: {
           client_id?: string | null
+          contact?: string | null
           created_at?: string
           description?: string | null
           id?: string
@@ -292,6 +294,7 @@ export type Database = {
         }
         Update: {
           client_id?: string | null
+          contact?: string | null
           created_at?: string
           description?: string | null
           id?: string

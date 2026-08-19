@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 
@@ -34,6 +35,7 @@ const ProviderDetail = () => {
   const [reportStep, setReportStep] = useState<"form" | "success">("form");
   const [reportReason, setReportReason] = useState("");
   const [reportDescription, setReportDescription] = useState("");
+  const [reportContact, setReportContact] = useState("");
 
   useEffect(() => {
     if (!id) return;
@@ -80,6 +82,7 @@ const ProviderDetail = () => {
   const openReport = () => {
     setReportReason("");
     setReportDescription("");
+    setReportContact("");
     setReportStep("form");
     setReportOpen(true);
   };
@@ -97,6 +100,7 @@ const ProviderDetail = () => {
         client_id: user?.id ?? null,
         reason: reportReason.trim(),
         description: reportDescription.trim(),
+        contact: reportContact.trim() || null,
         status: "pendente",
       });
       if (error) {
@@ -283,6 +287,19 @@ const ProviderDetail = () => {
                     onChange={(e) => setReportDescription(e.target.value)}
                     rows={4}
                   />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="report-contact">Contacto (opcional)</Label>
+                  <Input
+                    id="report-contact"
+                    type="tel"
+                    placeholder="Telemóvel/WhatsApp para confirmarmos a denúncia"
+                    value={reportContact}
+                    onChange={(e) => setReportContact(e.target.value)}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Deixa o teu contacto se quiseres que a nossa equipa te ligue para confirmar a denúncia.
+                  </p>
                 </div>
               </div>
               <DialogFooter>

@@ -14,7 +14,7 @@ import ManageList from "@/components/ManageList";
 type Provider = { id: string; name: string; category: string; phone: string; location: string; price_type: string; starting_price: number | null; is_verified: boolean; verification_status: string; verification_reason: string | null; verification_doc_url: string | null; verification_selfie_url: string | null; stats?: { profile_views: number; whatsapp_clicks: number; call_clicks: number } };
 type Request = { id: string; requester_name: string | null; category: string; location: string; description: string; status: string; created_at: string };
 type Review = { id: string; provider_id: string; reviewer_name: string | null; rating: number; comment: string | null; created_at: string; status: string };
-type Complaint = { id: string; provider_id: string; client_id: string | null; reason: string; description: string | null; status: string; created_at: string };
+type Complaint = { id: string; provider_id: string; client_id: string | null; reason: string; description: string | null; contact: string | null; status: string; created_at: string };
 type Category = { id: string; name: string };
 type Bairro = { id: string; name: string };
 
@@ -44,7 +44,7 @@ const AdminDashboard = () => {
       supabase.from("categories").select("id, name").order("name"),
       supabase.from("bairros").select("id, name").order("name"),
       supabase.from("provider_stats").select("provider_id, profile_views, whatsapp_clicks, call_clicks"),
-      supabase.from("complaints").select("id, provider_id, client_id, reason, description, status, created_at").order("created_at", { ascending: false }),
+      supabase.from("complaints").select("id, provider_id, client_id, reason, description, contact, status, created_at").order("created_at", { ascending: false }),
     ]);
     const statsMap: Record<string, { profile_views: number; whatsapp_clicks: number; call_clicks: number }> = {};
     (st ?? []).forEach((s) => {
@@ -365,6 +365,12 @@ const AdminDashboard = () => {
                       </Link>
                     </div>
                     <div className="text-sm text-muted-foreground">Denunciante: {clientName(c.client_id)}</div>
+                    {c.contact && (
+                      <div className="text-sm mt-1">
+                        <span className="text-muted-foreground">Contacto do denunciante:</span>{" "}
+                        <a href={`tel:${c.contact}`} className="font-semibold text-primary hover:underline">{c.contact}</a>
+                      </div>
+                    )}
                     <div className="text-sm mt-1">
                       <Badge variant="secondary">{c.reason}</Badge>
                     </div>
@@ -403,6 +409,12 @@ const AdminDashboard = () => {
                         <span className="text-muted-foreground">· Denunciante: {clientName(c.client_id)}</span>
                       </div>
                       <div className="text-sm mt-1"><Badge variant="secondary">{c.reason}</Badge></div>
+                      {c.contact && (
+                        <div className="text-sm mt-1">
+                          <span className="text-muted-foreground">Contacto do denunciante:</span>{" "}
+                          <a href={`tel:${c.contact}`} className="font-semibold text-primary hover:underline">{c.contact}</a>
+                        </div>
+                      )}
                       {c.description && <p className="text-sm mt-2 bg-muted rounded-lg p-2">{c.description}</p>}
                     </CardContent>
                   </Card>
