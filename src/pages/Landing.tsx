@@ -58,7 +58,7 @@ const Landing = () => {
             <span className="text-white/80 text-xs font-medium tracking-wide uppercase">Plataforma de serviços</span>
           </div>
           <h1 className="text-5xl md:text-6xl font-extrabold text-white mb-5 tracking-tight drop-shadow-lg">
-            Bissau<span className="text-primary">Service</span>
+            Born<span className="text-primary">aal</span>
           </h1>
           <p className="text-white/70 text-lg md:text-xl mb-8 max-w-md mx-auto leading-relaxed">
             A forma mais simples de encontrar prestadores de serviços de confiança na Guiné-Bissau.
@@ -163,7 +163,7 @@ const Landing = () => {
         <div className="max-w-2xl mx-auto px-6 py-20">
           <div className="text-center mb-12">
             <span className="text-xs font-semibold text-primary tracking-widest uppercase">Vantagens</span>
-            <h2 className="text-3xl font-bold text-foreground mt-2">Porquê BissauService?</h2>
+            <h2 className="text-3xl font-bold text-foreground mt-2">Porquê Bornaal?</h2>
           </div>
           <div className="grid gap-4">
             {[
@@ -204,7 +204,7 @@ const Landing = () => {
       <footer className="border-t border-border py-8">
         <div className="max-w-2xl mx-auto px-6">
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-4">
-            <img src={logo} alt="BissauService" className="h-8 w-auto" />
+            <img src={logo} alt="Bornaal" className="h-8 w-auto" />
             <div className="flex gap-4 text-xs">
               <Link to="/sobre" className="text-muted-foreground hover:text-foreground transition-colors">Sobre</Link>
               <Link to="/termos" className="text-muted-foreground hover:text-foreground transition-colors">Termos de Uso</Link>

@@ -14,12 +14,12 @@ const Terms = () => (
       <div className="space-y-6 text-sm text-muted-foreground leading-relaxed">
         <section>
           <h2 className="text-base font-semibold text-foreground mb-2">1. Aceitação dos Termos</h2>
-          <p>Ao utilizar a plataforma BissauService, o utilizador aceita estes termos de uso na sua totalidade. Se não concordar com algum dos termos, deve cessar a utilização da plataforma.</p>
+          <p>Ao utilizar a plataforma Bornaal, o utilizador aceita estes termos de uso na sua totalidade. Se não concordar com algum dos termos, deve cessar a utilização da plataforma.</p>
         </section>
 
         <section>
           <h2 className="text-base font-semibold text-foreground mb-2">2. Descrição do Serviço</h2>
-          <p>O BissauService é uma plataforma que conecta clientes com prestadores de serviços na Guiné-Bissau. Não somos parte em nenhuma transacção entre clientes e prestadores, servindo apenas como intermediário digital.</p>
+          <p>O Bornaal é uma plataforma que conecta clientes com prestadores de serviços na Guiné-Bissau. Não somos parte em nenhuma transacção entre clientes e prestadores, servindo apenas como intermediário digital.</p>
         </section>
 
         <section>
@@ -34,12 +34,12 @@ const Terms = () => (
 
         <section>
           <h2 className="text-base font-semibold text-foreground mb-2">5. Responsabilidade</h2>
-          <p>O BissauService não se responsabiliza pela qualidade dos serviços prestados, por disputas entre utilizadores, ou por qualquer dano resultante da utilização da plataforma. Os prestadores são profissionais independentes.</p>
+          <p>O Bornaal não se responsabiliza pela qualidade dos serviços prestados, por disputas entre utilizadores, ou por qualquer dano resultante da utilização da plataforma. Os prestadores são profissionais independentes.</p>
         </section>
 
         <section>
           <h2 className="text-base font-semibold text-foreground mb-2">6. Propriedade Intelectual</h2>
-          <p>Todo o conteúdo da plataforma, incluindo design, logótipos e textos, é propriedade do BissauService. Os utilizadores mantêm os direitos sobre o conteúdo que publicam.</p>
+          <p>Todo o conteúdo da plataforma, incluindo design, logótipos e textos, é propriedade do Bornaal. Os utilizadores mantêm os direitos sobre o conteúdo que publicam.</p>
         </section>
 
         <section>
@@ -49,7 +49,7 @@ const Terms = () => (
 
         <section>
           <h2 className="text-base font-semibold text-foreground mb-2">8. Contacto</h2>
-          <p>Para questões sobre estes termos, contacte-nos em contacto@bissauservice.gw.</p>
+          <p>Para questões sobre estes termos, contacte-nos em contacto@bornaal.gw.</p>
         </section>
       </div>
     </div>

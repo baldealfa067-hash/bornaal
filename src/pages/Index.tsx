@@ -42,7 +42,7 @@ const Index = () => {
       <div className="pt-8 pb-5 flex items-center justify-between">
         <div>
           <Link to="/" className="inline-flex items-center gap-3">
-            <img src={logo} alt="BissauService" className="h-14 md:h-16 w-auto" />
+            <img src={logo} alt="Bornaal" className="h-14 md:h-16 w-auto" />
           </Link>
           <p className="text-sm text-muted-foreground mt-2">
             Encontre serviços locais na Guiné-Bissau

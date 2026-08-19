@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { ArrowLeft, Mail, Phone, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import logo from "@/assets/logotipo.png";
 
 const About = () => (
   <div className="min-h-screen bg-background">
@@ -9,12 +10,16 @@ const About = () => (
         <ArrowLeft className="h-4 w-4" /> Voltar
       </Link>
 
-      <h1 className="text-2xl font-bold mb-6">Sobre o BissauService</h1>
+      <div className="flex justify-center mb-8">
+        <img src={logo} alt="Bornaal" className="w-72 md:w-80 h-auto" />
+      </div>
+
+      <h1 className="text-2xl font-bold mb-6">Sobre o Bornaal</h1>
 
       <section className="space-y-4 mb-10">
         <h2 className="text-lg font-semibold">A nossa missão</h2>
         <p className="text-sm text-muted-foreground leading-relaxed">
-          O <strong className="text-foreground">BissauService</strong> nasceu com uma missão simples: conectar pessoas que precisam de serviços com prestadores de confiança na Guiné-Bissau. Acreditamos que todos merecem acesso fácil a profissionais qualificados, sem intermediários e sem complicações.
+          O <strong className="text-foreground">Bornaal</strong> nasceu com uma missão simples: conectar pessoas que precisam de serviços com prestadores de confiança na Guiné-Bissau. Acreditamos que todos merecem acesso fácil a profissionais qualificados, sem intermediários e sem complicações.
         </p>
       </section>
 
@@ -48,7 +53,7 @@ const About = () => (
         <div className="space-y-3 text-sm">
           <div className="flex items-center gap-3 text-muted-foreground">
             <Mail className="h-4 w-4 text-primary" />
-            <span>contacto@bissauservice.gw</span>
+            <span>contacto@bornaal.gw</span>
           </div>
           <div className="flex items-center gap-3 text-muted-foreground">
             <Phone className="h-4 w-4 text-primary" />

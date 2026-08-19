@@ -1,4 +1,4 @@
-# BissauService
+# Bornaal
 
 Marketplace web app that connects clients with local service providers in Guinea-Bissau.
 

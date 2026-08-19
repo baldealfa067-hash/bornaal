@@ -137,7 +137,7 @@ const Requests = () => {
       // Open WhatsApp to client
       if (bidForm.requesterPhone) {
         const phone = bidForm.requesterPhone.replace(/[^\d+]/g, "");
-        const msg = `Ola ${bidForm.requesterName ?? "Cliente"}, sou ${providerProfile.name ?? "um prestador"}, vi o seu pedido "${bidForm.category}" no BissauService e tenho interesse! ${bidForm.message ? "\n\nMensagem: " + bidForm.message : ""}`;
+        const msg = `Ola ${bidForm.requesterName ?? "Cliente"}, sou ${providerProfile.name ?? "um prestador"}, vi o seu pedido "${bidForm.category}" no Bornaal e tenho interesse! ${bidForm.message ? "\n\nMensagem: " + bidForm.message : ""}`;
         window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, "_blank");
       }
       setBidForm(null);
@@ -500,7 +500,7 @@ function RequestCard({
               {myBid.status === "pendente" ? "Candidatura enviada — aguarde resposta" : myBid.status === "aceite" ? "Candidatura aceite!" : "Candidatura recusada"}
               {myBid.status === "aceite" && r.requester_phone && (
                 <a
-                  href={`https://wa.me/${r.requester_phone.replace(/[^\d+]/g, "")}?text=${encodeURIComponent(`Ola ${r.requester_name ?? "Cliente"}, sou ${providerProfile.name ?? "um prestador"}, o seu pedido "${r.category}" foi aceite no BissauService!`)}`}
+                  href={`https://wa.me/${r.requester_phone.replace(/[^\d+]/g, "")}?text=${encodeURIComponent(`Ola ${r.requester_name ?? "Cliente"}, sou ${providerProfile.name ?? "um prestador"}, o seu pedido "${r.category}" foi aceite no Bornaal!`)}`}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
@@ -522,7 +522,7 @@ function RequestCard({
               </Button>
               {r.requester_phone && (
                 <a
-                  href={`https://wa.me/${r.requester_phone.replace(/[^\d+]/g, "")}?text=${encodeURIComponent(`Ola ${r.requester_name ?? "Cliente"}, sou um prestador de ${r.category}, vi o seu pedido no BissauService e tenho interesse!`)}`}
+                  href={`https://wa.me/${r.requester_phone.replace(/[^\d+]/g, "")}?text=${encodeURIComponent(`Ola ${r.requester_name ?? "Cliente"}, sou um prestador de ${r.category}, vi o seu pedido no Bornaal e tenho interesse!`)}`}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
@@ -623,7 +623,7 @@ function MyRequestCard({
               <div className="flex flex-col gap-2">
                 {bids.map((bid) => {
                   const phone = (bid.provider?.phone ?? "").replace(/[^\d+]/g, "");
-                  const waMsg = `Ola ${bid.provider?.name ?? ""}, o seu pedido "${r.category}" foi aceite no BissauService!`;
+                  const waMsg = `Ola ${bid.provider?.name ?? ""}, o seu pedido "${r.category}" foi aceite no Bornaal!`;
                   const wa = phone
                     ? `https://wa.me/${phone}?text=${encodeURIComponent(waMsg)}`
                     : null;
