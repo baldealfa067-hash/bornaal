@@ -14,7 +14,7 @@ import ManageList from "@/components/ManageList";
 type Provider = { id: string; name: string; category: string; phone: string; location: string; price_type: string; starting_price: number | null; is_verified: boolean; verification_status: string; verification_reason: string | null; verification_doc_url: string | null; verification_selfie_url: string | null; stats?: { profile_views: number; whatsapp_clicks: number; call_clicks: number } };
 type Request = { id: string; requester_name: string | null; category: string; location: string; description: string; status: string; created_at: string };
 type Review = { id: string; provider_id: string; reviewer_name: string | null; rating: number; comment: string | null; created_at: string; status: string };
-type Complaint = { id: string; provider_id: string; client_id: string; reason: string; description: string | null; status: string; created_at: string };
+type Complaint = { id: string; provider_id: string; client_id: string | null; reason: string; description: string | null; status: string; created_at: string };
 type Category = { id: string; name: string };
 type Bairro = { id: string; name: string };
 
@@ -194,7 +194,7 @@ const AdminDashboard = () => {
   const pendingVerifications = providers.filter((p) => p.verification_status === "pendente");
   const pendingComplaints = complaints.filter((c) => c.status === "pendente");
   const reviewedComplaints = complaints.filter((c) => c.status !== "pendente");
-  const clientName = (cid: string) => providers.find((p) => p.id === cid)?.name ?? "Cliente";
+  const clientName = (cid: string | null) => cid ? (providers.find((p) => p.id === cid)?.name ?? "Cliente") : "Anónimo";
 
   if (loading || loadingData) return <div className="min-h-screen flex items-center justify-center text-muted-foreground">A carregar...</div>;
 

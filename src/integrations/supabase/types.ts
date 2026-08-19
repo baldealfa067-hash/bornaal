@@ -271,7 +271,7 @@ export type Database = {
       }
       complaints: {
         Row: {
-          client_id: string
+          client_id: string | null
           created_at: string
           description: string | null
           id: string
@@ -281,7 +281,7 @@ export type Database = {
           status: string
         }
         Insert: {
-          client_id: string
+          client_id?: string | null
           created_at?: string
           description?: string | null
           id?: string
@@ -291,7 +291,7 @@ export type Database = {
           status?: string
         }
         Update: {
-          client_id?: string
+          client_id?: string | null
           created_at?: string
           description?: string | null
           id?: string

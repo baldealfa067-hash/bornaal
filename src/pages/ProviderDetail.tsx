@@ -1,4 +1,4 @@
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useRef, useState } from "react";
 import { AlertCircle, MapPin, Phone, MessageCircle, Wallet, BadgeCheck, CheckCircle2, ShieldAlert } from "lucide-react";
@@ -24,15 +24,14 @@ const REPORT_REASONS = [
 ] as const;
 
 const ProviderDetail = () => {
-  const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const { data: provider, isLoading } = useProvider(id!);
   const [portfolio, setPortfolio] = useState<{ id: string; image_url: string }[]>([]);
   const viewLogged = useRef(false);
   const [complaining, setComplaining] = useState(false);
-  const { user, isProvider, isAdmin, roles, loading, signOut } = useAuth();
+  const { user } = useAuth();
   const [reportOpen, setReportOpen] = useState(false);
-  const [reportStep, setReportStep] = useState<"login" | "form" | "success">("form");
+  const [reportStep, setReportStep] = useState<"form" | "success">("form");
   const [reportReason, setReportReason] = useState("");
   const [reportDescription, setReportDescription] = useState("");
 
@@ -81,12 +80,12 @@ const ProviderDetail = () => {
   const openReport = () => {
     setReportReason("");
     setReportDescription("");
-    setReportStep(user ? "form" : "login");
+    setReportStep("form");
     setReportOpen(true);
   };
 
   const submitReport = async () => {
-    if (!id || !user) return;
+    if (!id) return;
     if (!reportReason.trim() || !reportDescription.trim()) {
       toast.error("Escolhe um motivo e escreve uma descrição.");
       return;
@@ -95,7 +94,7 @@ const ProviderDetail = () => {
     try {
       const { error } = await supabase.from("complaints").insert({
         provider_id: id,
-        client_id: user.id,
+        client_id: user?.id ?? null,
         reason: reportReason.trim(),
         description: reportDescription.trim(),
         status: "pendente",
@@ -175,8 +174,8 @@ const ProviderDetail = () => {
             <span className="font-semibold">A combinar</span>
           </div>
         )}
-        {/* Botão de denunciar (só clientes) */}
-        {provider.id !== user?.id && (!user || roles.includes("client")) && (
+        {/* Botão de denunciar (qualquer visitante) */}
+        {provider.id !== user?.id && (
           <Button variant="outline" className="w-full gap-2" onClick={openReport}>
             <AlertCircle className="h-5 w-5" />
             Denunciar
@@ -253,25 +252,6 @@ const ProviderDetail = () => {
 
       <Dialog open={reportOpen} onOpenChange={setReportOpen}>
         <DialogContent>
-          {reportStep === "login" && (
-            <>
-              <DialogHeader>
-                <DialogTitle>Denunciar {provider.name}</DialogTitle>
-                <DialogDescription>
-                  Para denunciar um prestador, tens de ter uma conta de cliente no Bornaal.
-                </DialogDescription>
-              </DialogHeader>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setReportOpen(false)}>
-                  Cancelar
-                </Button>
-                <Button onClick={() => { setReportOpen(false); navigate("/login"); }}>
-                  Entrar
-                </Button>
-              </DialogFooter>
-            </>
-          )}
-
           {reportStep === "form" && (
             <>
               <DialogHeader>
