@@ -11,4 +11,14 @@ clearChunkRetry();
 // também disparam recarga automática única.
 installGlobalChunkErrorHandler();
 
+// PWA: regista o service worker após o carregamento inicial da página.
+// Estrutura pronta para notificações push; sem cache de assets.
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/sw.js").catch((err) => {
+      console.warn("Falha ao registar o service worker:", err);
+    });
+  });
+}
+
 createRoot(document.getElementById("root")!).render(<App />);
