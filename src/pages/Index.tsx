@@ -4,7 +4,7 @@ import { Search, ArrowRight, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ProviderCard } from "@/components/ProviderCard";
-import { useProviders, useCategories } from "@/hooks/useProviders";
+import { useProviders, useCategories, useBusinessCategories } from "@/hooks/useProviders";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import logo from "@/assets/logo.png";
@@ -12,8 +12,10 @@ import { NotificationBell } from "@/components/NotificationBell";
 
 const Index = () => {
   const [search, setSearch] = useState("");
-  const { data: providers = [], isLoading: loadingProviders, error: providersError } = useProviders();
+  const { data: providers = [], isLoading: loadingProviders, error: providersError } = useProviders("provider");
+  const { data: businesses = [], isLoading: loadingBusinesses, error: businessesError } = useProviders("business");
   const { data: categories = [] } = useCategories();
+  const { data: businessCategories = [] } = useBusinessCategories();
   const { data: requests = [], isLoading: loadingRequests } = useQuery({
     queryKey: ["recent-requests"],
     queryFn: async () => {
@@ -28,13 +30,12 @@ const Index = () => {
     },
   });
 
-  const filtered = search
-    ? providers.filter(
-        (p) =>
-          p.name.toLowerCase().includes(search.toLowerCase()) ||
-          p.category.toLowerCase().includes(search.toLowerCase())
-      )
-    : providers.slice(0, 6);
+  const matchSearch = (p: { name: string; category: string }) =>
+    p.name.toLowerCase().includes(search.toLowerCase()) ||
+    p.category.toLowerCase().includes(search.toLowerCase());
+
+  const filteredProviders = search ? providers.filter(matchSearch) : providers.slice(0, 6);
+  const filteredBusinesses = search ? businesses.filter(matchSearch) : businesses.slice(0, 6);
 
   return (
     <div className="max-w-lg mx-auto px-4">
@@ -63,7 +64,7 @@ const Index = () => {
       </div>
 
       {/* Categories */}
-      {!search && categories.length > 0 && (
+      {!search && (categories.length > 0 || businessCategories.length > 0) && (
         <section className="mb-6">
           <div className="flex justify-between items-center mb-3">
             <h2 className="text-lg font-semibold">Categorias</h2>
@@ -71,22 +72,43 @@ const Index = () => {
               Ver todas <ArrowRight className="h-3 w-3" />
             </Link>
           </div>
-          <div className="flex gap-2 flex-wrap">
-            {categories.slice(0, 8).map((cat) => (
-              <Link key={cat} to={`/explorar?categoria=${encodeURIComponent(cat)}`}>
-                <Badge variant="outline" className="px-3 py-1.5 text-sm cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors">
-                  {cat}
-                </Badge>
-              </Link>
-            ))}
-          </div>
+
+          {categories.length > 0 && (
+            <div className="mb-3">
+              <p className="text-xs font-medium text-muted-foreground mb-1.5">Serviços</p>
+              <div className="flex gap-2 flex-wrap">
+                {categories.slice(0, 8).map((cat) => (
+                  <Link key={cat} to={`/explorar?tipo=servicos&categoria=${encodeURIComponent(cat)}`}>
+                    <Badge variant="outline" className="px-3 py-1.5 text-sm cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors">
+                      {cat}
+                    </Badge>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {businessCategories.length > 0 && (
+            <div>
+              <p className="text-xs font-medium text-muted-foreground mb-1.5">Restaurantes / Lojas</p>
+              <div className="flex gap-2 flex-wrap">
+                {businessCategories.slice(0, 8).map((cat) => (
+                  <Link key={cat} to={`/explorar?tipo=lojas&categoria=${encodeURIComponent(cat)}`}>
+                    <Badge variant="outline" className="px-3 py-1.5 text-sm cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors">
+                      {cat}
+                    </Badge>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
         </section>
       )}
 
-      {/* Providers */}
+      {/* Service providers */}
       <section className="mb-6">
         <h2 className="text-lg font-semibold mb-3">
-          {search ? "Resultados" : "Prestadores em destaque"}
+          {search ? "Resultados — Prestadores" : "Prestadores em destaque"}
         </h2>
         {loadingProviders ? (
           <div className="flex justify-center py-8">
@@ -94,14 +116,38 @@ const Index = () => {
           </div>
         ) : providersError ? (
           <p className="text-sm text-destructive py-8 text-center">Erro ao carregar prestadores.</p>
-        ) : filtered.length === 0 ? (
+        ) : filteredProviders.length === 0 ? (
           <p className="text-sm text-muted-foreground py-8 text-center">
-            {search ? "Nenhum resultado encontrado." : "Ainda não há prestadores registados."}
+            {search ? "Nenhum prestador encontrado." : "Ainda não há prestadores registados."}
           </p>
         ) : (
           <div className="flex flex-col gap-3">
-            {filtered.map((p) => (
+            {filteredProviders.map((p) => (
               <ProviderCard key={p.id} {...p} />
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* Restaurants / Stores */}
+      <section className="mb-6">
+        <h2 className="text-lg font-semibold mb-3">
+          {search ? "Resultados — Restaurantes / Lojas" : "Restaurantes / Lojas em destaque"}
+        </h2>
+        {loadingBusinesses ? (
+          <div className="flex justify-center py-8">
+            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+          </div>
+        ) : businessesError ? (
+          <p className="text-sm text-destructive py-8 text-center">Erro ao carregar restaurantes.</p>
+        ) : filteredBusinesses.length === 0 ? (
+          <p className="text-sm text-muted-foreground py-8 text-center">
+            {search ? "Nenhum restaurante ou loja encontrado." : "Ainda não há restaurantes ou lojas registados."}
+          </p>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {filteredBusinesses.map((b) => (
+              <ProviderCard key={b.id} {...b} />
             ))}
           </div>
         )}
