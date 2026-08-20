@@ -727,6 +727,7 @@ export type Database = {
       }
       register_as_business: { Args: never; Returns: undefined }
       register_as_provider: { Args: never; Returns: undefined }
+      admin_delete_user: { Args: { p_profile_id: string }; Returns: undefined }
       record_business_order: {
         Args: {
           p_address: string | null

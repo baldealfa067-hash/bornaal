@@ -236,7 +236,9 @@ const AdminDashboard = () => {
   }, [user, isAdmin, loading]);
 
   const remove = async (table: "profiles" | "service_requests" | "reviews", id: string) => {
-    const { error } = await supabase.from(table).delete().eq("id", id);
+    const { error } = table === "profiles"
+      ? await supabase.rpc("admin_delete_user", { p_profile_id: id })
+      : await supabase.from(table).delete().eq("id", id);
     if (error) return toast.error(error.message);
     toast.success("Eliminado");
     loadAll();
