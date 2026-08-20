@@ -44,15 +44,21 @@ const urlBase64ToUint8Array = (base64: string): Uint8Array => {
   return arr;
 };
 
+const withTimeout = <T,>(p: Promise<T>, ms: number): Promise<T> =>
+  Promise.race([
+    p,
+    new Promise<T>((_, reject) => setTimeout(() => reject(new Error("timeout")), ms)),
+  ]);
+
 export const getExistingSubscription = async (): Promise<PushSubscription | null> => {
   if (!isPushSupported()) return null;
-  const reg = await navigator.serviceWorker.ready;
+  const reg = await withTimeout(navigator.serviceWorker.ready, 15000);
   return reg.pushManager.getSubscription();
 };
 
 export const subscribeToPush = async (): Promise<PushSubscription | null> => {
   if (!isPushSupported()) return null;
-  const reg = await navigator.serviceWorker.ready;
+  const reg = await withTimeout(navigator.serviceWorker.ready, 15000);
   return reg.pushManager.subscribe({
     userVisibleOnly: true,
     applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
