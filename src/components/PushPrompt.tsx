@@ -29,10 +29,12 @@ const PushPrompt = () => {
     const justSignedUp = sessionStorage.getItem(JUST_SIGNED_UP_KEY) === "1";
     const hasActivity = unread > 0;
 
-    if (justSignedUp || hasActivity) {
-      const t = setTimeout(() => setOpen(true), 800);
-      return () => clearTimeout(t);
-    }
+    // Mostra discretamente quando o utilizador já está a usar a plataforma:
+    // logo após o registo, quando já tem notificações por ler, ou após ~15s
+    // numa página da app. Nunca ao abrir o site pela primeira vez na landing.
+    const delay = justSignedUp ? 800 : hasActivity ? 1500 : 15000;
+    const t = setTimeout(() => setOpen(true), delay);
+    return () => clearTimeout(t);
   }, [user, unread]);
 
   const handleEnable = async () => {

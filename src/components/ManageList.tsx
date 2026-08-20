@@ -52,13 +52,13 @@ const ManageList = ({ placeholder, items, onAdd, onRename, onDelete, emptyText }
                   value={editing.name}
                   onChange={(e) => setEditing({ ...editing, name: e.target.value })}
                   onKeyDown={(e) => e.key === "Enter" && submitRename()}
-                  className="h-8 flex-1"
+                  className="h-10 flex-1"
                   autoFocus
                 />
-                <Button size="icon" variant="ghost" className="h-8 w-8 shrink-0" onClick={submitRename}>
+                <Button size="icon" variant="ghost" className="h-10 w-10 shrink-0" onClick={submitRename}>
                   <Check className="h-4 w-4 text-green-600" />
                 </Button>
-                <Button size="icon" variant="ghost" className="h-8 w-8 shrink-0" onClick={() => setEditing(null)}>
+                <Button size="icon" variant="ghost" className="h-10 w-10 shrink-0" onClick={() => setEditing(null)}>
                   <X className="h-4 w-4 text-muted-foreground" />
                 </Button>
               </div>

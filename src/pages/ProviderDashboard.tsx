@@ -234,7 +234,7 @@ const ProviderDashboard = () => {
         </div>
       </header>
 
-      <main className="max-w-2xl mx-auto px-4 py-6">
+      <main className="max-w-2xl mx-auto px-4 py-6 pb-[calc(env(safe-area-inset-bottom))]">
         <h1 className="text-2xl font-bold mb-1">Meu perfil profissional</h1>
         <p className="text-sm text-muted-foreground mb-6">
           {profileId ? "Atualize os seus dados." : "Complete o perfil para aparecer no diretório."}
@@ -262,10 +262,9 @@ const ProviderDashboard = () => {
                   <Button
                     type="button"
                     variant="outline"
-                    size="sm"
                     disabled={uploading}
                     onClick={() => fileInputRef.current?.click()}
-                    className="gap-2"
+                    className="gap-2 min-h-11"
                   >
                     {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
                     Carregar Foto de Perfil / Trabalho
@@ -286,7 +285,7 @@ const ProviderDashboard = () => {
                   </SelectContent>
                 </Select>
               </Field>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <Field label="Telefone (WhatsApp) *">
                   <Input placeholder="+245 955 000 000" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
                 </Field>
@@ -353,7 +352,7 @@ const ProviderDashboard = () => {
                     <button
                       type="button"
                       onClick={() => setGalleryDeleteId(img.id)}
-                      className="absolute top-1 right-1 p-1 rounded-md bg-background/90 hover:bg-destructive hover:text-destructive-foreground transition-colors"
+                      className="absolute top-1 right-1 p-2 rounded-md bg-background/90 hover:bg-destructive hover:text-destructive-foreground transition-colors"
                       aria-label="Remover foto"
                     >
                       <Trash2 className="h-3.5 w-3.5" />

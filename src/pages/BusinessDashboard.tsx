@@ -322,7 +322,7 @@ const BusinessDashboard = () => {
         </div>
       </header>
 
-      <main className="max-w-2xl mx-auto px-4 py-6">
+      <main className="max-w-2xl mx-auto px-4 py-6 pb-[calc(env(safe-area-inset-bottom))]">
         <h1 className="text-2xl font-bold mb-1 flex items-center gap-2">
           <Store className="h-6 w-6 text-primary" /> Meu estabelecimento
         </h1>
@@ -352,10 +352,9 @@ const BusinessDashboard = () => {
                   <Button
                     type="button"
                     variant="outline"
-                    size="sm"
                     disabled={uploading}
                     onClick={() => fileInputRef.current?.click()}
-                    className="gap-2"
+                    className="gap-2 min-h-11"
                   >
                     {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
                     Carregar Foto do Estabelecimento
@@ -376,7 +375,7 @@ const BusinessDashboard = () => {
                   </SelectContent>
                 </Select>
               </Field>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <Field label="Telefone (WhatsApp) *">
                   <Input placeholder="+245 955 000 000" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
                 </Field>
@@ -492,7 +491,7 @@ const BusinessDashboard = () => {
                       className="hidden"
                       onChange={handleItemPhotoUpload}
                     />
-                    <Button type="button" variant="outline" size="sm" disabled={itemUploading} onClick={() => itemFileRef.current?.click()} className="gap-2">
+                    <Button type="button" variant="outline" disabled={itemUploading} onClick={() => itemFileRef.current?.click()} className="gap-2 min-h-11">
                       {itemUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
                       {itemForm.photo_url ? "Foto escolhida (trocar)" : "Foto (opcional)"}
                     </Button>
