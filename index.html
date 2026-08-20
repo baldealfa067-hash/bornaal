@@ -29,6 +29,37 @@
 
   <body>
     <div id="root"></div>
+    <script>
+      (function () {
+        var key = "bornaal:chunk-retry";
+        var patterns = [
+          "Failed to fetch dynamically imported module",
+          "Importing a module script failed",
+          "dynamically imported module",
+          "Loading chunk",
+        ];
+        function isChunk(err) {
+          var m = err && (err.message || String(err));
+          return !!m && patterns.some(function (p) { return m.indexOf(p) >= 0; });
+        }
+        function reloadOnce() {
+          try {
+            if (sessionStorage.getItem(key) === "1") {
+              sessionStorage.removeItem(key);
+              return;
+            }
+            sessionStorage.setItem(key, "1");
+          } catch (e) { /* modo privado — permite recarregar */ }
+          window.location.reload();
+        }
+        window.addEventListener("error", function (e) {
+          if (isChunk(e.error || e.message)) reloadOnce();
+        }, true);
+        window.addEventListener("unhandledrejection", function (e) {
+          if (isChunk(e.reason)) reloadOnce();
+        }, true);
+      })();
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
