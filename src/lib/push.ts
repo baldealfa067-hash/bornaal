@@ -2,7 +2,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 export const VAPID_PUBLIC_KEY =
   import.meta.env.VITE_VAPID_PUBLIC_KEY ??
-  "BCwM6omhrHEB-FbaML4IoPk89UmbNTSFoRufh2e4_JxPwHBwNzRj1Rk-c_FkjC5iz6hfv5VZzIVLrMTWpo7BgUs";
+  "BMfnEZU0xnlB8nBXxrIODMPgr1WZD9kpehlwQViOCTOzBh6uZZGXHIxuFMYSS5sXhu3NiBqe5MQPVtbuB_2qJO4";
 
 const ASKED_KEY = "bornaal:push-asked";
 export const JUST_SIGNED_UP_KEY = "bornaal:just-signed-up";
