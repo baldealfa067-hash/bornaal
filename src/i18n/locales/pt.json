@@ -1,0 +1,52 @@
+{
+  "common": {
+    "searchPlaceholder": "Pesquisar por nome, categoria ou localização...",
+    "all": "Todas",
+    "allNeighborhoods": "Todos os Bairros",
+    "loading": "A carregar...",
+    "errorLoading": "Erro ao carregar.",
+    "noResults": "Nenhum resultado encontrado nesta secção.",
+    "language": "Idioma"
+  },
+  "header": {
+    "language": "Idioma"
+  },
+  "home": {
+    "providersTitle": "Prestadores de Serviço",
+    "shopsTitle": "Restaurantes / Lojas",
+    "providersShort": "Prestadores",
+    "shopsShort": "Restaurantes"
+  },
+  "explore": {
+    "providersTitle": "Prestadores de Serviço",
+    "shopsTitle": "Restaurantes / Lojas",
+    "providersShort": "Prestadores",
+    "shopsShort": "Restaurantes"
+  },
+  "auth": {
+    "accessTitle": "Acesso",
+    "accessSubtitle": "Para administradores, prestadores de serviços e restaurantes/lojas.",
+    "loginTab": "Entrar",
+    "signupTab": "Registar",
+    "email": "Email",
+    "password": "Palavra-passe",
+    "forgotPassword": "Esqueceu a senha?",
+    "loggingIn": "A entrar...",
+    "loginButton": "Entrar",
+    "profileType": "Tipo de perfil",
+    "providerProfile": "Prestador de Serviço",
+    "businessProfile": "Restaurante / Loja",
+    "name": "Nome",
+    "businessName": "Nome do estabelecimento",
+    "creatingAccount": "A criar conta...",
+    "createProviderAccount": "Criar conta de prestador",
+    "createBusinessAccount": "Criar conta de restaurante/loja",
+    "afterProvider": "Depois de entrar, complete o seu perfil para aparecer no diretório.",
+    "afterBusiness": "Depois de entrar, complete o perfil do seu estabelecimento e adicione o menu.",
+    "passwordMin": "Palavra-passe mínima de 6 caracteres",
+    "enterName": "Indique o seu nome",
+    "registerError": "Erro no registo",
+    "loginSuccess": "Sessão iniciada",
+    "accountCreated": "Conta criada. A entrar..."
+  }
+}

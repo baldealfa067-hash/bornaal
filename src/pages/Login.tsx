@@ -10,11 +10,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { JUST_SIGNED_UP_KEY } from "@/lib/push";
+import { useTranslation } from "react-i18next";
+import { LanguageSelector } from "@/components/LanguageSelector";
 import logo from "@/assets/logo.png";
 
 type ProfileType = "provider" | "business";
 
 const Login = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user, isAdmin, isProvider, isBusiness, loading } = useAuth();
@@ -42,13 +45,13 @@ const Login = () => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setSubmitting(false);
     if (error) return toast.error(error.message);
-    toast.success("Sessão iniciada");
+    toast.success(t("auth.loginSuccess"));
   };
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password.length < 6) return toast.error("Palavra-passe mínima de 6 caracteres");
-    if (!name.trim()) return toast.error("Indique o seu nome");
+    if (password.length < 6) return toast.error(t("auth.passwordMin"));
+    if (!name.trim()) return toast.error(t("auth.enterName"));
     setSubmitting(true);
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -57,7 +60,7 @@ const Login = () => {
     });
     if (error || !data.user) {
       setSubmitting(false);
-      return toast.error(error?.message ?? "Erro no registo");
+      return toast.error(error?.message ?? t("auth.registerError"));
     }
     // Wait for session, then assign role
     if (data.session) {
@@ -67,50 +70,53 @@ const Login = () => {
       if (roleErr) console.error("Role error:", roleErr);
     }
     setSubmitting(false);
-    toast.success("Conta criada. A entrar...");
+    toast.success(t("auth.accountCreated"));
     sessionStorage.setItem(JUST_SIGNED_UP_KEY, "1");
   };
 
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center px-4">
+      <div className="absolute top-4 right-4">
+        <LanguageSelector />
+      </div>
       <Link to="/" className="mb-6 inline-block">
         <img src={logo} alt="Bornaal" className="h-14 md:h-16 w-auto" />
       </Link>
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle className="text-xl">Acesso</CardTitle>
-          <p className="text-xs text-muted-foreground">Para administradores, prestadores de serviços e restaurantes/lojas.</p>
+          <CardTitle className="text-xl">{t("auth.accessTitle")}</CardTitle>
+          <p className="text-xs text-muted-foreground">{t("auth.accessSubtitle")}</p>
         </CardHeader>
         <CardContent>
           <Tabs value={mode} onValueChange={(v) => setMode(v as "login" | "signup")}>
             <TabsList className="grid grid-cols-2 w-full mb-4 h-11">
-              <TabsTrigger value="login" className="min-h-10">Entrar</TabsTrigger>
-              <TabsTrigger value="signup" className="min-h-10">Registar</TabsTrigger>
+              <TabsTrigger value="login" className="min-h-10">{t("auth.loginTab")}</TabsTrigger>
+              <TabsTrigger value="signup" className="min-h-10">{t("auth.signupTab")}</TabsTrigger>
             </TabsList>
             <TabsContent value="login">
               <form onSubmit={handleLogin} className="flex flex-col gap-3">
                 <div className="space-y-1">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="email">{t("auth.email")}</Label>
                   <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
                 </div>
                 <div className="space-y-1">
-                  <Label htmlFor="password">Palavra-passe</Label>
+                  <Label htmlFor="password">{t("auth.password")}</Label>
                   <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
                 </div>
                 <div className="text-right">
                   <Link to="/esqueci-senha" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
-                    Esqueceu a senha?
+                    {t("auth.forgotPassword")}
                   </Link>
                 </div>
                 <Button type="submit" disabled={submitting} className="w-full">
-                  {submitting ? "A entrar..." : "Entrar"}
+                  {submitting ? t("auth.loggingIn") : t("auth.loginButton")}
                 </Button>
               </form>
             </TabsContent>
             <TabsContent value="signup">
               <form onSubmit={handleSignup} className="flex flex-col gap-3">
                 <div className="space-y-2">
-                  <Label>Tipo de perfil</Label>
+                  <Label>{t("auth.profileType")}</Label>
                   <div className="grid grid-cols-2 gap-2">
                     <button
                       type="button"
@@ -123,7 +129,7 @@ const Login = () => {
                       }
                     >
                       <Wrench className="h-5 w-5" />
-                      <span className="text-xs font-medium">Prestador de Serviço</span>
+                      <span className="text-xs font-medium">{t("auth.providerProfile")}</span>
                     </button>
                     <button
                       type="button"
@@ -136,29 +142,27 @@ const Login = () => {
                       }
                     >
                       <Store className="h-5 w-5" />
-                      <span className="text-xs font-medium">Restaurante / Loja</span>
+                      <span className="text-xs font-medium">{t("auth.businessProfile")}</span>
                     </button>
                   </div>
                 </div>
                 <div className="space-y-1">
-                  <Label htmlFor="name">{profileType === "business" ? "Nome do estabelecimento" : "Nome"}</Label>
+                  <Label htmlFor="name">{profileType === "business" ? t("auth.businessName") : t("auth.name")}</Label>
                   <Input id="name" value={name} onChange={(e) => setName(e.target.value)} required />
                 </div>
                 <div className="space-y-1">
-                  <Label htmlFor="email-s">Email</Label>
+                  <Label htmlFor="email-s">{t("auth.email")}</Label>
                   <Input id="email-s" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
                 </div>
                 <div className="space-y-1">
-                  <Label htmlFor="password-s">Palavra-passe</Label>
+                  <Label htmlFor="password-s">{t("auth.password")}</Label>
                   <Input id="password-s" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
                 </div>
                 <Button type="submit" disabled={submitting} className="w-full">
-                  {submitting ? "A criar conta..." : profileType === "business" ? "Criar conta de restaurante/loja" : "Criar conta de prestador"}
+                  {submitting ? t("auth.creatingAccount") : profileType === "business" ? t("auth.createBusinessAccount") : t("auth.createProviderAccount")}
                 </Button>
                 <p className="text-[11px] text-muted-foreground text-center">
-                  {profileType === "business"
-                    ? "Depois de entrar, complete o perfil do seu estabelecimento e adicione o menu."
-                    : "Depois de entrar, complete o seu perfil para aparecer no diretório."}
+                  {profileType === "business" ? t("auth.afterBusiness") : t("auth.afterProvider")}
                 </p>
               </form>
             </TabsContent>

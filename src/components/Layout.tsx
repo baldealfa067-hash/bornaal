@@ -2,6 +2,7 @@ import { Outlet } from "react-router-dom";
 import { Link } from "react-router-dom";
 import { BottomNav } from "./BottomNav";
 import { NotificationBell } from "./NotificationBell";
+import { LanguageSelector } from "./LanguageSelector";
 import logo from "@/assets/logo.png";
 
 export const Layout = () => (
@@ -11,7 +12,10 @@ export const Layout = () => (
         <Link to="/inicio" className="inline-flex items-center gap-2">
           <img src={logo} alt="Bornaal" className="h-8 w-auto" />
         </Link>
-        <NotificationBell />
+        <div className="flex items-center gap-1">
+          <LanguageSelector />
+          <NotificationBell />
+        </div>
       </div>
     </header>
     <Outlet />

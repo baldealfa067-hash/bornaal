@@ -1,0 +1,52 @@
+{
+  "common": {
+    "searchPlaceholder": "Rechercher par nom, catégorie ou localisation...",
+    "all": "Toutes",
+    "allNeighborhoods": "Tous les quartiers",
+    "loading": "Chargement...",
+    "errorLoading": "Erreur lors du chargement.",
+    "noResults": "Aucun résultat trouvé dans cette section.",
+    "language": "Langue"
+  },
+  "header": {
+    "language": "Langue"
+  },
+  "home": {
+    "providersTitle": "Prestataires de services",
+    "shopsTitle": "Restaurants / Boutiques",
+    "providersShort": "Prestataires",
+    "shopsShort": "Restaurants"
+  },
+  "explore": {
+    "providersTitle": "Prestataires de services",
+    "shopsTitle": "Restaurants / Boutiques",
+    "providersShort": "Prestataires",
+    "shopsShort": "Restaurants"
+  },
+  "auth": {
+    "accessTitle": "Accès",
+    "accessSubtitle": "Pour les administrateurs, prestataires et restaurants/boutiques.",
+    "loginTab": "Connexion",
+    "signupTab": "S'inscrire",
+    "email": "Email",
+    "password": "Mot de passe",
+    "forgotPassword": "Mot de passe oublié ?",
+    "loggingIn": "Connexion...",
+    "loginButton": "Se connecter",
+    "profileType": "Type de profil",
+    "providerProfile": "Prestataire de services",
+    "businessProfile": "Restaurant / Boutique",
+    "name": "Nom",
+    "businessName": "Nom de l'établissement",
+    "creatingAccount": "Création du compte...",
+    "createProviderAccount": "Créer un compte prestataire",
+    "createBusinessAccount": "Créer un compte restaurant/boutique",
+    "afterProvider": "Après connexion, complétez votre profil pour apparaître dans l'annuaire.",
+    "afterBusiness": "Après connexion, complétez le profil de votre établissement et ajoutez le menu.",
+    "passwordMin": "Mot de passe minimum 6 caractères",
+    "enterName": "Veuillez indiquer votre nom",
+    "registerError": "Erreur lors de l'inscription",
+    "loginSuccess": "Session ouverte",
+    "accountCreated": "Compte créé. Connexion..."
+  }
+}

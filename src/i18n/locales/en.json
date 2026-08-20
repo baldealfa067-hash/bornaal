@@ -1,0 +1,52 @@
+{
+  "common": {
+    "searchPlaceholder": "Search by name, category or location...",
+    "all": "All",
+    "allNeighborhoods": "All neighborhoods",
+    "loading": "Loading...",
+    "errorLoading": "Error loading data.",
+    "noResults": "No results found in this section.",
+    "language": "Language"
+  },
+  "header": {
+    "language": "Language"
+  },
+  "home": {
+    "providersTitle": "Service Providers",
+    "shopsTitle": "Restaurants / Shops",
+    "providersShort": "Providers",
+    "shopsShort": "Restaurants"
+  },
+  "explore": {
+    "providersTitle": "Service Providers",
+    "shopsTitle": "Restaurants / Shops",
+    "providersShort": "Providers",
+    "shopsShort": "Restaurants"
+  },
+  "auth": {
+    "accessTitle": "Access",
+    "accessSubtitle": "For administrators, service providers and restaurants/shops.",
+    "loginTab": "Log in",
+    "signupTab": "Sign up",
+    "email": "Email",
+    "password": "Password",
+    "forgotPassword": "Forgot password?",
+    "loggingIn": "Signing in...",
+    "loginButton": "Log in",
+    "profileType": "Profile type",
+    "providerProfile": "Service Provider",
+    "businessProfile": "Restaurant / Shop",
+    "name": "Name",
+    "businessName": "Business name",
+    "creatingAccount": "Creating account...",
+    "createProviderAccount": "Create provider account",
+    "createBusinessAccount": "Create restaurant/shop account",
+    "afterProvider": "After signing in, complete your profile to appear in the directory.",
+    "afterBusiness": "After signing in, complete your business profile and add the menu.",
+    "passwordMin": "Password must be at least 6 characters",
+    "enterName": "Please enter your name",
+    "registerError": "Registration error",
+    "loginSuccess": "Signed in",
+    "accountCreated": "Account created. Signing in..."
+  }
+}

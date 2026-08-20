@@ -10,17 +10,18 @@ import { useProviders, useCategories, useBusinessCategories } from "@/hooks/useP
 import { useBairros } from "@/hooks/useBairros";
 import { BAIRROS_FILTER } from "@/lib/locations";
 import { getPageCount, paginateArray } from "@/lib/pagination";
+import { useTranslation } from "react-i18next";
 
 const PAGE_SIZE = 10;
 
-const SECTIONS = [
-  { key: "servicos", label: "Prestadores de Serviço", short: "Prestadores" },
-  { key: "lojas", label: "Restaurantes / Lojas", short: "Restaurantes" },
-] as const;
-
-type SectionKey = (typeof SECTIONS)[number]["key"];
+type SectionKey = "servicos" | "lojas";
 
 const Index = () => {
+  const { t } = useTranslation();
+  const SECTIONS = [
+    { key: "servicos" as const, label: t("home.providersTitle"), short: t("home.providersShort") },
+    { key: "lojas" as const, label: t("home.shopsTitle"), short: t("home.shopsShort") },
+  ] as const;
   const [searchParams, setSearchParams] = useSearchParams();
   const section = (searchParams.get("tipo") as SectionKey) || "servicos";
   const activeCategory = searchParams.get("categoria") || "";
@@ -35,7 +36,8 @@ const Index = () => {
   const { data: serviceCategories = [] } = useCategories();
   const { data: businessCategories = [] } = useBusinessCategories();
   const { data: bairros = [] } = useBairros();
-  const bairroOptions = bairros.length ? ["Todos os Bairros", ...bairros] : BAIRROS_FILTER;
+  const bairroOptions = bairros.length ? [BAIRROS_FILTER[0], ...bairros] : BAIRROS_FILTER;
+  const displayBairro = (loc: string) => (loc === BAIRROS_FILTER[0] ? t("common.allNeighborhoods") : loc);
 
   const categories = section === "lojas" ? businessCategories : serviceCategories;
 
@@ -103,7 +105,7 @@ const Index = () => {
       <div className="relative mb-3">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
-          placeholder="Pesquisar por nome, categoria ou localização..."
+          placeholder={t("common.searchPlaceholder")}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="pl-10 bg-card"
@@ -119,7 +121,7 @@ const Index = () => {
           </SelectTrigger>
           <SelectContent>
             {bairroOptions.map((loc) => (
-              <SelectItem key={loc} value={loc}>{loc}</SelectItem>
+              <SelectItem key={loc} value={loc}>{displayBairro(loc)}</SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -132,7 +134,7 @@ const Index = () => {
             className="cursor-pointer px-3 py-1"
             onClick={() => setCategory("")}
           >
-            Todas
+            {t("common.all")}
           </Badge>
           {categories.map((cat) => (
             <Badge
@@ -152,10 +154,10 @@ const Index = () => {
           <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
         </div>
       ) : providersError ? (
-        <p className="text-center text-destructive py-12 text-sm">Erro ao carregar.</p>
+        <p className="text-center text-destructive py-12 text-sm">{t("common.errorLoading")}</p>
       ) : filtered.length === 0 ? (
         <p className="text-center text-muted-foreground py-12 text-sm">
-          Nenhum resultado encontrado nesta secção.
+          {t("common.noResults")}
         </p>
       ) : (
         <>
