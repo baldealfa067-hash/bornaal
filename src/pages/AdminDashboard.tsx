@@ -21,6 +21,7 @@ import {
   Phone,
   Images,
   ChevronRight,
+  Store,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -68,6 +69,7 @@ type MenuKey =
   | "reviews"
   | "requests"
   | "categories"
+  | "lojas-categorias"
   | "bairros"
   | "stats"
   | "settings";
@@ -147,6 +149,7 @@ const AdminDashboard = () => {
   const [complaints, setComplaints] = useState<Complaint[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [bairros, setBairros] = useState<Bairro[]>([]);
+  const [businessCategories, setBusinessCategories] = useState<Category[]>([]);
   const [activity, setActivity] = useState<Record<string, ActivitySeries>>({});
   const [portfolioCount, setPortfolioCount] = useState<Record<string, number>>({});
   const [quality, setQuality] = useState<Record<string, { level: string; score: number }>>({});
@@ -159,6 +162,7 @@ const AdminDashboard = () => {
   const [rejectReason, setRejectReason] = useState("");
   const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(null);
   const [bairroToDelete, setBairroToDelete] = useState<Bairro | null>(null);
+  const [bizCategoryToDelete, setBizCategoryToDelete] = useState<Category | null>(null);
 
   useEffect(() => {
     if (loading) return;
@@ -179,6 +183,7 @@ const AdminDashboard = () => {
       { data: act },
       { data: pf },
       { data: ql },
+      { data: bc },
     ] = await Promise.all([
       supabase.from("profiles").select("id, name, category, phone, location, price_type, starting_price, photo_url, profile_type, is_verified, verification_status, verification_reason, verification_doc_url, verification_selfie_url").order("name"),
       supabase.from("service_requests").select("id, requester_name, category, location, description, status, created_at").order("created_at", { ascending: false }),
@@ -190,6 +195,7 @@ const AdminDashboard = () => {
       supabase.from("provider_activity").select("provider_id, activity_type, created_at").order("created_at", { ascending: false }),
       supabase.from("portfolio_images").select("provider_id"),
       supabase.from("quality_levels").select("provider_id, level, score"),
+      supabase.from("business_categories").select("id, name").order("name"),
     ]);
     const statsMap: Record<string, { profile_views: number; whatsapp_clicks: number; call_clicks: number }> = {};
     (st ?? []).forEach((s) => {
@@ -209,6 +215,7 @@ const AdminDashboard = () => {
     setComplaints((cp ?? []) as Complaint[]);
     setCategories((c ?? []) as Category[]);
     setBairros((b ?? []) as Bairro[]);
+    setBusinessCategories((bc ?? []) as Category[]);
     setActivity(buildActivityMap((act ?? []) as { provider_id: string; activity_type: string; created_at: string }[]));
     setPortfolioCount(pfMap);
     setQuality(qlMap);
@@ -228,6 +235,7 @@ const AdminDashboard = () => {
       .on("postgres_changes", { event: "*", schema: "public", table: "quality_levels" }, () => loadAll())
       .on("postgres_changes", { event: "*", schema: "public", table: "portfolio_images" }, () => loadAll())
       .on("postgres_changes", { event: "*", schema: "public", table: "categories" }, () => loadAll())
+      .on("postgres_changes", { event: "*", schema: "public", table: "business_categories" }, () => loadAll())
       .on("postgres_changes", { event: "*", schema: "public", table: "bairros" }, () => loadAll())
       .subscribe();
     return () => {
@@ -338,6 +346,27 @@ const AdminDashboard = () => {
     const { error } = await supabase.from("bairros").delete().eq("id", id);
     if (error) return toast.error(error.message);
     toast.success("Bairro eliminado");
+    loadAll();
+  };
+
+  const addBusinessCategory = async (name: string) => {
+    const { error } = await supabase.from("business_categories").insert({ name });
+    if (error) return toast.error(error.message);
+    toast.success("Categoria de loja adicionada");
+    loadAll();
+  };
+
+  const renameBusinessCategory = async (id: string, name: string) => {
+    const { error } = await supabase.from("business_categories").update({ name }).eq("id", id);
+    if (error) return toast.error(error.message);
+    toast.success("Categoria de loja atualizada");
+    loadAll();
+  };
+
+  const removeBusinessCategory = async (id: string) => {
+    const { error } = await supabase.from("business_categories").delete().eq("id", id);
+    if (error) return toast.error(error.message);
+    toast.success("Categoria de loja eliminada");
     loadAll();
   };
 
@@ -509,6 +538,7 @@ const AdminDashboard = () => {
     { key: "reviews", label: "Avaliações", icon: <Star className="h-4 w-4" />, count: pendingReviews.length },
     { key: "requests", label: "Pedidos", icon: <ClipboardList className="h-4 w-4" />, count: requests.length },
     { key: "categories", label: "Categorias", icon: <Tag className="h-4 w-4" />, count: categories.length },
+    { key: "lojas-categorias", label: "Categorias Lojas", icon: <Store className="h-4 w-4" />, count: businessCategories.length },
     { key: "bairros", label: "Bairros", icon: <MapPin className="h-4 w-4" />, count: bairros.length },
     { key: "stats", label: "Estatísticas", icon: <BarChart3 className="h-4 w-4" /> },
     { key: "settings", label: "Configurações", icon: <Settings className="h-4 w-4" /> },
@@ -864,6 +894,23 @@ const AdminDashboard = () => {
             </div>
           )}
 
+          {menu === "lojas-categorias" && (
+            <div className="flex flex-col gap-4">
+              <h1 className="text-2xl font-bold">Categorias de Lojas</h1>
+              <p className="text-xs text-muted-foreground">
+                Categorias de restaurantes e lojas — aparecem na secção "Restaurantes / Lojas" do Explorar.
+              </p>
+              <ManageList
+                placeholder="Nova categoria (ex: Talho)"
+                items={businessCategories}
+                onAdd={addBusinessCategory}
+                onRename={renameBusinessCategory}
+                onDelete={(id) => setBizCategoryToDelete(businessCategories.find((c) => c.id === id) ?? null)}
+                emptyText="Sem categorias de lojas."
+              />
+            </div>
+          )}
+
           {menu === "bairros" && (
             <div className="flex flex-col gap-4">
               <h1 className="text-2xl font-bold">Bairros</h1>
@@ -987,6 +1034,19 @@ const AdminDashboard = () => {
         onConfirm={() => {
           if (categoryToDelete) removeCategory(categoryToDelete.id);
           setCategoryToDelete(null);
+        }}
+      />
+
+      <ConfirmDialog
+        open={bizCategoryToDelete !== null}
+        onOpenChange={(o) => { if (!o) setBizCategoryToDelete(null); }}
+        title="Eliminar categoria de loja"
+        description={bizCategoryToDelete ? `Eliminar a categoria "${bizCategoryToDelete.name}"?` : ""}
+        confirmLabel="Eliminar"
+        destructive
+        onConfirm={() => {
+          if (bizCategoryToDelete) removeBusinessCategory(bizCategoryToDelete.id);
+          setBizCategoryToDelete(null);
         }}
       />
 
