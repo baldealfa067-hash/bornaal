@@ -19,16 +19,21 @@ interface ProviderCardProps {
   starting_price?: number | null;
   services?: string[] | null;
   is_verified?: boolean | null;
+  profile_type?: string | null;
   avgRating: number;
   reviewCount: number;
 }
 
 export const ProviderCard = ({
-  id, name, category, location, phone, photo_url, price_type, starting_price, services, is_verified, avgRating, reviewCount
+  id, name, category, location, phone, photo_url, price_type, starting_price, services, is_verified, profile_type, avgRating, reviewCount
 }: ProviderCardProps) => {
+  const isBusiness = profile_type === "business";
+  const detailUrl = isBusiness ? `/loja/${id}` : `/prestador/${id}`;
   const cleanPhone = phone.replace(/\D/g, "");
   const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(
-    `Olá ${name}, encontrei o seu perfil no Bornaal e gostaria de saber mais sobre os seus serviços.`
+    isBusiness
+      ? `Olá ${name}, vi o vosso estabelecimento no Bornaal e gostaria de fazer um pedido.`
+      : `Olá ${name}, encontrei o seu perfil no Bornaal e gostaria de saber mais sobre os seus serviços.`
   )}`;
   const telUrl = `tel:${phone.replace(/\s/g, "")}`;
 
@@ -41,7 +46,7 @@ export const ProviderCard = ({
   return (
     <Card className="overflow-hidden hover:shadow-md transition-shadow border-border/60">
       <CardContent className="p-4 flex gap-3 items-center">
-        <Link to={`/prestador/${id}`} className="flex gap-3 items-center flex-1 min-w-0">
+        <Link to={detailUrl} className="flex gap-3 items-center flex-1 min-w-0">
           <Avatar className="h-14 w-14 rounded-lg">
             {photo_url ? (
               <AvatarImage src={photo_url} alt={name} className="object-cover" />
@@ -53,6 +58,11 @@ export const ProviderCard = ({
           <div className="flex-1 min-w-0">
             <h3 className="font-semibold text-foreground flex items-center gap-1 min-w-0">
               <span className="truncate">{name}</span>
+              {isBusiness && (
+                <Badge variant="default" className="text-[10px] px-1.5 py-0 h-4 shrink-0">
+                  Loja
+                </Badge>
+              )}
               {is_verified && (
                 <BadgeCheck
                   className="h-4 w-4 text-primary shrink-0"

@@ -14,6 +14,8 @@ export interface ProviderWithRating {
   starting_price: number | null;
   services?: string[] | null;
   is_verified?: boolean | null;
+  profile_type?: string | null;
+  consumption_options?: string[] | null;
   avgRating: number;
   reviewCount: number;
 }
@@ -22,7 +24,11 @@ export const useProviders = (category?: string) =>
   useQuery({
     queryKey: ["providers", category],
     queryFn: async (): Promise<ProviderWithRating[]> => {
-      let q = supabase.from("profiles").select("*").neq("category", "").eq("profile_type", "provider");
+      let q = supabase
+        .from("profiles")
+        .select("*")
+        .neq("category", "")
+        .in("profile_type", ["provider", "business"]);
       if (category) q = q.eq("category", category);
       const { data: profiles, error } = await q;
       if (error) throw error;
