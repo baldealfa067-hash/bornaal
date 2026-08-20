@@ -308,14 +308,14 @@ const BusinessDashboard = () => {
     <div className="min-h-screen bg-background">
       <header className="border-b">
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
+          <Link to="/" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground p-2 -m-2 rounded-md">
             <ArrowLeft className="h-4 w-4" /> Início
           </Link>
           <div className="flex items-center gap-2">
             {isAdmin && (
               <Link to="/admin"><Button variant="outline" size="sm">Admin</Button></Link>
             )}
-            <Button variant="ghost" size="sm" onClick={() => signOut().then(() => navigate("/"))} className="gap-1">
+            <Button variant="ghost" size="sm" onClick={() => signOut().then(() => navigate("/"))} className="gap-1 min-h-11">
               <LogOut className="h-4 w-4" /> Sair
             </Button>
           </div>
@@ -334,14 +334,14 @@ const BusinessDashboard = () => {
           <CardHeader><CardTitle className="text-base">Dados do estabelecimento</CardTitle></CardHeader>
           <CardContent>
             <form onSubmit={save} className="grid gap-4">
-              <div className="flex items-center gap-4">
-                <Avatar className="h-20 w-20 rounded-xl">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                <Avatar className="h-20 w-20 rounded-xl self-start">
                   {form.photo_url ? <AvatarImage src={form.photo_url} className="object-cover" /> : null}
                   <AvatarFallback className="rounded-xl bg-primary/10 text-primary text-xl font-bold">
                     {form.name.charAt(0) || "?"}
                   </AvatarFallback>
                 </Avatar>
-                <div className="flex-1">
+                <div className="flex-1 min-w-0">
                   <input
                     ref={fileInputRef}
                     type="file"
@@ -354,7 +354,7 @@ const BusinessDashboard = () => {
                     variant="outline"
                     disabled={uploading}
                     onClick={() => fileInputRef.current?.click()}
-                    className="gap-2 min-h-11"
+                    className="gap-2 min-h-11 w-full sm:w-auto"
                   >
                     {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
                     Carregar Foto do Estabelecimento
@@ -639,7 +639,7 @@ const BusinessDashboard = () => {
 
         {profileId && (
           <div className="mt-4 flex justify-center">
-            <Link to={`/loja/${profileId}`} className="text-xs text-primary hover:underline">
+            <Link to={`/loja/${profileId}`} className="text-xs text-primary hover:underline inline-flex items-center justify-center min-h-11 w-full">
               Ver página pública do estabelecimento
             </Link>
           </div>

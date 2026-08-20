@@ -83,9 +83,9 @@ const Login = () => {
         </CardHeader>
         <CardContent>
           <Tabs value={mode} onValueChange={(v) => setMode(v as "login" | "signup")}>
-            <TabsList className="grid grid-cols-2 w-full mb-4">
-              <TabsTrigger value="login">Entrar</TabsTrigger>
-              <TabsTrigger value="signup">Registar</TabsTrigger>
+            <TabsList className="grid grid-cols-2 w-full mb-4 h-11">
+              <TabsTrigger value="login" className="min-h-10">Entrar</TabsTrigger>
+              <TabsTrigger value="signup" className="min-h-10">Registar</TabsTrigger>
             </TabsList>
             <TabsContent value="login">
               <form onSubmit={handleLogin} className="flex flex-col gap-3">
@@ -116,7 +116,7 @@ const Login = () => {
                       type="button"
                       onClick={() => setProfileType("provider")}
                       className={
-                        "flex flex-col items-center gap-1 rounded-lg border p-3 text-center transition-colors " +
+                        "flex flex-col items-center gap-1 rounded-lg border p-3 min-h-20 text-center transition-colors " +
                         (profileType === "provider"
                           ? "border-primary bg-primary/5 text-primary"
                           : "hover:bg-muted text-muted-foreground")
@@ -129,7 +129,7 @@ const Login = () => {
                       type="button"
                       onClick={() => setProfileType("business")}
                       className={
-                        "flex flex-col items-center gap-1 rounded-lg border p-3 text-center transition-colors " +
+                        "flex flex-col items-center gap-1 rounded-lg border p-3 min-h-20 text-center transition-colors " +
                         (profileType === "business"
                           ? "border-primary bg-primary/5 text-primary"
                           : "hover:bg-muted text-muted-foreground")
