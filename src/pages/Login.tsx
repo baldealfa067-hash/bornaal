@@ -5,18 +5,22 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Store, Wrench } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import logo from "@/assets/logo.png";
 
+type ProfileType = "provider" | "business";
+
 const Login = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { user, isAdmin, isProvider, loading } = useAuth();
+  const { user, isAdmin, isProvider, isBusiness, loading } = useAuth();
   const [mode, setMode] = useState<"login" | "signup">(
     searchParams.get("tab") === "registar" ? "signup" : "login"
   );
+  const [profileType, setProfileType] = useState<ProfileType>("provider");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
@@ -27,8 +31,9 @@ const Login = () => {
     if (!user) return;
     if (isAdmin) navigate("/admin", { replace: true });
     else if (isProvider) navigate("/painel", { replace: true });
+    else if (isBusiness) navigate("/painel-loja", { replace: true });
     else navigate("/inicio", { replace: true });
-  }, [user, isAdmin, isProvider, loading, navigate]);
+  }, [user, isAdmin, isProvider, isBusiness, loading, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,9 +58,11 @@ const Login = () => {
       setSubmitting(false);
       return toast.error(error?.message ?? "Erro no registo");
     }
-    // Wait for session, then assign provider role
+    // Wait for session, then assign role
     if (data.session) {
-      const { error: roleErr } = await supabase.rpc("register_as_provider");
+      const { error: roleErr } = profileType === "business"
+        ? await supabase.rpc("register_as_business")
+        : await supabase.rpc("register_as_provider");
       if (roleErr) console.error("Role error:", roleErr);
     }
     setSubmitting(false);
@@ -70,13 +77,13 @@ const Login = () => {
       <Card className="w-full max-w-sm">
         <CardHeader>
           <CardTitle className="text-xl">Acesso</CardTitle>
-          <p className="text-xs text-muted-foreground">Para administradores e prestadores de serviços.</p>
+          <p className="text-xs text-muted-foreground">Para administradores, prestadores de serviços e restaurantes/lojas.</p>
         </CardHeader>
         <CardContent>
           <Tabs value={mode} onValueChange={(v) => setMode(v as "login" | "signup")}>
             <TabsList className="grid grid-cols-2 w-full mb-4">
               <TabsTrigger value="login">Entrar</TabsTrigger>
-              <TabsTrigger value="signup">Registar prestador</TabsTrigger>
+              <TabsTrigger value="signup">Registar</TabsTrigger>
             </TabsList>
             <TabsContent value="login">
               <form onSubmit={handleLogin} className="flex flex-col gap-3">
@@ -100,8 +107,39 @@ const Login = () => {
             </TabsContent>
             <TabsContent value="signup">
               <form onSubmit={handleSignup} className="flex flex-col gap-3">
+                <div className="space-y-2">
+                  <Label>Tipo de perfil</Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setProfileType("provider")}
+                      className={
+                        "flex flex-col items-center gap-1 rounded-lg border p-3 text-center transition-colors " +
+                        (profileType === "provider"
+                          ? "border-primary bg-primary/5 text-primary"
+                          : "hover:bg-muted text-muted-foreground")
+                      }
+                    >
+                      <Wrench className="h-5 w-5" />
+                      <span className="text-xs font-medium">Prestador de Serviço</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setProfileType("business")}
+                      className={
+                        "flex flex-col items-center gap-1 rounded-lg border p-3 text-center transition-colors " +
+                        (profileType === "business"
+                          ? "border-primary bg-primary/5 text-primary"
+                          : "hover:bg-muted text-muted-foreground")
+                      }
+                    >
+                      <Store className="h-5 w-5" />
+                      <span className="text-xs font-medium">Restaurante / Loja</span>
+                    </button>
+                  </div>
+                </div>
                 <div className="space-y-1">
-                  <Label htmlFor="name">Nome</Label>
+                  <Label htmlFor="name">{profileType === "business" ? "Nome do estabelecimento" : "Nome"}</Label>
                   <Input id="name" value={name} onChange={(e) => setName(e.target.value)} required />
                 </div>
                 <div className="space-y-1">
@@ -113,10 +151,12 @@ const Login = () => {
                   <Input id="password-s" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
                 </div>
                 <Button type="submit" disabled={submitting} className="w-full">
-                  {submitting ? "A criar conta..." : "Criar conta de prestador"}
+                  {submitting ? "A criar conta..." : profileType === "business" ? "Criar conta de restaurante/loja" : "Criar conta de prestador"}
                 </Button>
                 <p className="text-[11px] text-muted-foreground text-center">
-                  Depois de entrar, complete o seu perfil para aparecer no diretório.
+                  {profileType === "business"
+                    ? "Depois de entrar, complete o perfil do seu estabelecimento e adicione o menu."
+                    : "Depois de entrar, complete o seu perfil para aparecer no diretório."}
                 </p>
               </form>
             </TabsContent>

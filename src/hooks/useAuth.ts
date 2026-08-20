@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
-export type AppRole = "admin" | "provider" | "client";
+export type AppRole = "admin" | "provider" | "client" | "business";
 
 export const useAuth = () => {
   const [session, setSession] = useState<Session | null>(null);
@@ -36,10 +36,11 @@ export const useAuth = () => {
 
   const isAdmin = roles.includes("admin");
   const isProvider = roles.includes("provider");
+  const isBusiness = roles.includes("business");
 
   const signOut = async () => {
     await supabase.auth.signOut();
   };
 
-  return { session, user, roles, isAdmin, isProvider, loading, signOut };
+  return { session, user, roles, isAdmin, isProvider, isBusiness, loading, signOut };
 };

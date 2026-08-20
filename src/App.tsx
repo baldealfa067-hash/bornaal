@@ -20,6 +20,7 @@ const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 const ProviderDashboard = lazy(() => import("./pages/ProviderDashboard"));
+const BusinessDashboard = lazy(() => import("./pages/BusinessDashboard"));
 const Requests = lazy(() => import("./pages/Requests"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Models = lazy(() => import("./pages/Models"));
@@ -79,6 +80,7 @@ const App = () => (
               <Route path="/admin-moderacao" element={<AdminDashboard />} />
               <Route path="/models" element={<Models />} />
               <Route path="/painel" element={<ProviderDashboard />} />
+              <Route path="/painel-loja" element={<BusinessDashboard />} />
               <Route element={<Layout />}>
                 <Route path="/inicio" element={<Index />} />
                 <Route path="/explorar" element={<Explore />} />

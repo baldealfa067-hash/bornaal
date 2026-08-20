@@ -77,6 +77,80 @@ export type Database = {
         }
         Relationships: []
       }
+      menu_categories: {
+        Row: {
+          business_id: string
+          created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          id?: string
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "menu_categories_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      menu_items: {
+        Row: {
+          business_id: string
+          category_id: string | null
+          created_at: string
+          id: string
+          name: string
+          photo_url: string | null
+          price: number
+        }
+        Insert: {
+          business_id: string
+          category_id?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          photo_url?: string | null
+          price: number
+        }
+        Update: {
+          business_id?: string
+          category_id?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          photo_url?: string | null
+          price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "menu_items_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "menu_items_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "menu_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           body: string
@@ -156,6 +230,7 @@ export type Database = {
       profiles: {
         Row: {
           category: string
+          consumption_options: string[]
           created_at: string
           description: string | null
           id: string
@@ -165,6 +240,7 @@ export type Database = {
           phone: string
           photo_url: string | null
           price_type: string
+          profile_type: string
           services: string[]
           starting_price: number | null
           updated_at: string
@@ -177,6 +253,7 @@ export type Database = {
         }
         Insert: {
           category: string
+          consumption_options?: string[]
           created_at?: string
           description?: string | null
           id?: string
@@ -186,6 +263,7 @@ export type Database = {
           phone: string
           photo_url?: string | null
           price_type?: string
+          profile_type?: string
           services?: string[]
           starting_price?: number | null
           updated_at?: string
@@ -198,6 +276,7 @@ export type Database = {
         }
         Update: {
           category?: string
+          consumption_options?: string[]
           created_at?: string
           description?: string | null
           id?: string
@@ -207,6 +286,7 @@ export type Database = {
           phone?: string
           photo_url?: string | null
           price_type?: string
+          profile_type?: string
           services?: string[]
           starting_price?: number | null
           updated_at?: string
@@ -599,14 +679,19 @@ export type Database = {
         Args: { p_provider_id: string }
         Returns: undefined
       }
+      mark_request_completed: {
+        Args: { p_request_id: string }
+        Returns: undefined
+      }
       record_provider_contact: {
         Args: { p_provider_id: string; contact_type: string }
         Returns: undefined
       }
+      register_as_business: { Args: never; Returns: undefined }
       register_as_provider: { Args: never; Returns: undefined }
     }
     Enums: {
-      app_role: "client" | "provider" | "admin"
+      app_role: "client" | "provider" | "admin" | "business"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -734,7 +819,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["client", "provider", "admin"],
+      app_role: ["client", "provider", "admin", "business"],
     },
   },
 } as const
