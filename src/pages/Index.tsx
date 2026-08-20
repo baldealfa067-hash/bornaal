@@ -1,182 +1,171 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
-import { Search, ArrowRight, Loader2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Search, MapPin, Loader2 } from "lucide-react";
 import { ProviderCard } from "@/components/ProviderCard";
+import { Pagination } from "@/components/Pagination";
 import { useProviders, useCategories, useBusinessCategories } from "@/hooks/useProviders";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import logo from "@/assets/logo.png";
-import { NotificationBell } from "@/components/NotificationBell";
+import { useBairros } from "@/hooks/useBairros";
+import { BAIRROS_FILTER } from "@/lib/locations";
+import { getPageCount, paginateArray } from "@/lib/pagination";
+
+const PAGE_SIZE = 10;
+
+const SECTIONS = [
+  { key: "servicos", label: "Prestadores de Serviço", short: "Prestadores" },
+  { key: "lojas", label: "Restaurantes / Lojas", short: "Restaurantes" },
+] as const;
+
+type SectionKey = (typeof SECTIONS)[number]["key"];
 
 const Index = () => {
-  const [search, setSearch] = useState("");
-  const { data: providers = [], isLoading: loadingProviders, error: providersError } = useProviders("provider");
-  const { data: businesses = [], isLoading: loadingBusinesses, error: businessesError } = useProviders("business");
-  const { data: categories = [] } = useCategories();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const section = (searchParams.get("tipo") as SectionKey) || "servicos";
+  const activeCategory = searchParams.get("categoria") || "";
+  const qParam = searchParams.get("q") || "";
+  const [search, setSearch] = useState(qParam);
+  const [location, setLocation] = useState(BAIRROS_FILTER[0]);
+  const [page, setPage] = useState(1);
+
+  const { data: providers = [], isLoading: loadingProviders, error: providersError } = useProviders(
+    section === "lojas" ? "business" : "provider"
+  );
+  const { data: serviceCategories = [] } = useCategories();
   const { data: businessCategories = [] } = useBusinessCategories();
-  const { data: requests = [], isLoading: loadingRequests } = useQuery({
-    queryKey: ["recent-requests"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("service_requests")
-        .select("*")
-        .eq("status", "open")
-        .order("created_at", { ascending: false })
-        .limit(5);
-      if (error) throw error;
-      return data;
-    },
+  const { data: bairros = [] } = useBairros();
+  const bairroOptions = bairros.length ? ["Todos os Bairros", ...bairros] : BAIRROS_FILTER;
+
+  const categories = section === "lojas" ? businessCategories : serviceCategories;
+
+  // Sync q param to search state on mount
+  useEffect(() => {
+    if (qParam) setSearch(qParam);
+  }, [qParam]);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setPage(1);
+  }, [search, location, activeCategory, section]);
+
+  const goSection = (key: SectionKey) => {
+    const params: Record<string, string> = { tipo: key };
+    if (search) params.q = search;
+    setSearchParams(params);
+  };
+
+  const setCategory = (cat: string) => {
+    const params: Record<string, string> = { tipo: section };
+    if (cat) params.categoria = cat;
+    if (search) params.q = search;
+    setSearchParams(params);
+  };
+
+  const current = SECTIONS.find((s) => s.key === section)!;
+
+  const filtered = providers.filter((p) => {
+    const matchCat = !activeCategory || p.category === activeCategory;
+    const matchSearch =
+      !search ||
+      p.name.toLowerCase().includes(search.toLowerCase()) ||
+      p.location.toLowerCase().includes(search.toLowerCase()) ||
+      p.category.toLowerCase().includes(search.toLowerCase());
+    const matchLocation =
+      location === BAIRROS_FILTER[0] ||
+      p.location.toLowerCase().includes(location.toLowerCase());
+    return matchCat && matchSearch && matchLocation;
   });
 
-  const matchSearch = (p: { name: string; category: string }) =>
-    p.name.toLowerCase().includes(search.toLowerCase()) ||
-    p.category.toLowerCase().includes(search.toLowerCase());
-
-  const filteredProviders = search ? providers.filter(matchSearch) : providers.slice(0, 6);
-  const filteredBusinesses = search ? businesses.filter(matchSearch) : businesses.slice(0, 6);
+  const pageCount = getPageCount(filtered.length, PAGE_SIZE);
+  const paginated = paginateArray(filtered, page, PAGE_SIZE);
 
   return (
-    <div className="max-w-lg mx-auto px-4">
-      {/* Header */}
-      <div className="pt-8 pb-5 flex items-center justify-between">
-        <div>
-          <Link to="/" className="inline-flex items-center gap-3">
-            <img src={logo} alt="Bornaal" className="h-14 md:h-16 w-auto" />
-          </Link>
-          <p className="text-sm text-muted-foreground mt-2">
-            Encontre serviços locais na Guiné-Bissau
-          </p>
-        </div>
-        <NotificationBell />
+    <div className="max-w-lg mx-auto px-4 pt-6">
+      <h1 className="text-xl font-bold mb-3">{current.label}</h1>
+
+      {/* Section switcher */}
+      <div className="flex gap-1.5 rounded-full bg-muted p-1 mb-3">
+        {SECTIONS.map((s) => (
+          <button
+            key={s.key}
+            type="button"
+            onClick={() => goSection(s.key)}
+            className={`flex-1 rounded-full px-3 py-2 text-sm font-medium transition-colors ${
+              section === s.key ? "bg-background shadow-sm" : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {s.short}
+          </button>
+        ))}
       </div>
 
-      {/* Search */}
-      <div className="relative mb-6">
+      <div className="relative mb-3">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
-          placeholder="Pesquisar prestadores ou categorias..."
+          placeholder="Pesquisar por nome, categoria ou localização..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="pl-10 bg-card"
         />
       </div>
 
-      {/* Categories */}
-      {!search && (categories.length > 0 || businessCategories.length > 0) && (
-        <section className="mb-6">
-          <div className="flex justify-between items-center mb-3">
-            <h2 className="text-lg font-semibold">Categorias</h2>
-            <Link to="/explorar" className="text-sm text-primary flex items-center gap-1">
-              Ver todas <ArrowRight className="h-3 w-3" />
-            </Link>
-          </div>
+      {/* Location filter */}
+      <div className="flex items-center gap-2 mb-4">
+        <MapPin className="h-4 w-4 text-muted-foreground shrink-0" />
+        <Select value={location} onValueChange={setLocation}>
+          <SelectTrigger className="h-9 text-sm bg-card">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {bairroOptions.map((loc) => (
+              <SelectItem key={loc} value={loc}>{loc}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
 
-          {categories.length > 0 && (
-            <div className="mb-3">
-              <p className="text-xs font-medium text-muted-foreground mb-1.5">Serviços</p>
-              <div className="flex gap-2 flex-wrap">
-                {categories.slice(0, 8).map((cat) => (
-                  <Link key={cat} to={`/explorar?tipo=servicos&categoria=${encodeURIComponent(cat)}`}>
-                    <Badge variant="outline" className="px-3 py-1.5 text-sm cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors">
-                      {cat}
-                    </Badge>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {businessCategories.length > 0 && (
-            <div>
-              <p className="text-xs font-medium text-muted-foreground mb-1.5">Restaurantes / Lojas</p>
-              <div className="flex gap-2 flex-wrap">
-                {businessCategories.slice(0, 8).map((cat) => (
-                  <Link key={cat} to={`/explorar?tipo=lojas&categoria=${encodeURIComponent(cat)}`}>
-                    <Badge variant="outline" className="px-3 py-1.5 text-sm cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors">
-                      {cat}
-                    </Badge>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          )}
-        </section>
+      {categories.length > 0 && (
+        <div className="flex gap-2 flex-wrap mb-4">
+          <Badge
+            variant={!activeCategory ? "default" : "outline"}
+            className="cursor-pointer px-3 py-1"
+            onClick={() => setCategory("")}
+          >
+            Todas
+          </Badge>
+          {categories.map((cat) => (
+            <Badge
+              key={cat}
+              variant={activeCategory === cat ? "default" : "outline"}
+              className="cursor-pointer px-3 py-1"
+              onClick={() => setCategory(cat)}
+            >
+              {cat}
+            </Badge>
+          ))}
+        </div>
       )}
 
-      {/* Service providers */}
-      <section className="mb-6">
-        <h2 className="text-lg font-semibold mb-3">
-          {search ? "Resultados — Prestadores" : "Prestadores em destaque"}
-        </h2>
-        {loadingProviders ? (
-          <div className="flex justify-center py-8">
-            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-          </div>
-        ) : providersError ? (
-          <p className="text-sm text-destructive py-8 text-center">Erro ao carregar prestadores.</p>
-        ) : filteredProviders.length === 0 ? (
-          <p className="text-sm text-muted-foreground py-8 text-center">
-            {search ? "Nenhum prestador encontrado." : "Ainda não há prestadores registados."}
-          </p>
-        ) : (
+      {loadingProviders ? (
+        <div className="flex justify-center py-12">
+          <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+        </div>
+      ) : providersError ? (
+        <p className="text-center text-destructive py-12 text-sm">Erro ao carregar.</p>
+      ) : filtered.length === 0 ? (
+        <p className="text-center text-muted-foreground py-12 text-sm">
+          Nenhum resultado encontrado nesta secção.
+        </p>
+      ) : (
+        <>
           <div className="flex flex-col gap-3">
-            {filteredProviders.map((p) => (
+            {paginated.map((p) => (
               <ProviderCard key={p.id} {...p} />
             ))}
           </div>
-        )}
-      </section>
-
-      {/* Restaurants / Stores */}
-      <section className="mb-6">
-        <h2 className="text-lg font-semibold mb-3">
-          {search ? "Resultados — Restaurantes / Lojas" : "Restaurantes / Lojas em destaque"}
-        </h2>
-        {loadingBusinesses ? (
-          <div className="flex justify-center py-8">
-            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-          </div>
-        ) : businessesError ? (
-          <p className="text-sm text-destructive py-8 text-center">Erro ao carregar restaurantes.</p>
-        ) : filteredBusinesses.length === 0 ? (
-          <p className="text-sm text-muted-foreground py-8 text-center">
-            {search ? "Nenhum restaurante ou loja encontrado." : "Ainda não há restaurantes ou lojas registados."}
-          </p>
-        ) : (
-          <div className="flex flex-col gap-3">
-            {filteredBusinesses.map((b) => (
-              <ProviderCard key={b.id} {...b} />
-            ))}
-          </div>
-        )}
-      </section>
-
-      {/* Recent requests */}
-      {!search && loadingRequests && (
-        <div className="flex justify-center py-4 mb-6">
-          <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-        </div>
-      )}
-      {!search && !loadingRequests && requests.length > 0 && (
-        <section className="mb-6">
-          <h2 className="text-lg font-semibold mb-3">Pedidos recentes</h2>
-          <div className="flex flex-col gap-2">
-            {requests.map((r) => (
-              <div key={r.id} className="p-3 rounded-lg border bg-card">
-                <div className="flex justify-between items-start">
-                  <Badge variant="secondary" className="text-xs">{r.category}</Badge>
-                  <span className="text-[11px] text-muted-foreground">
-                    {new Date(r.created_at).toLocaleDateString("pt")}
-                  </span>
-                </div>
-                <p className="text-sm mt-1.5 text-foreground line-clamp-2">{r.description}</p>
-                <p className="text-xs text-muted-foreground mt-1">{r.location}</p>
-              </div>
-            ))}
-          </div>
-        </section>
+          <Pagination page={page} pageCount={pageCount} total={filtered.length} onPageChange={setPage} />
+        </>
       )}
     </div>
   );
