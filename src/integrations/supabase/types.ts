@@ -551,6 +551,38 @@ export type Database = {
           },
         ]
       }
+      quality_levels: {
+        Row: {
+          calculated_at: string
+          id: string
+          level: string
+          provider_id: string
+          score: number
+        }
+        Insert: {
+          calculated_at?: string
+          id?: string
+          level: string
+          provider_id: string
+          score?: number
+        }
+        Update: {
+          calculated_at?: string
+          id?: string
+          level?: string
+          provider_id?: string
+          score?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quality_levels_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -564,11 +596,11 @@ export type Database = {
         Returns: boolean
       }
       increment_provider_view: {
-        Args: { provider_id: string }
+        Args: { p_provider_id: string }
         Returns: undefined
       }
       record_provider_contact: {
-        Args: { provider_id: string; contact_type: string }
+        Args: { p_provider_id: string; contact_type: string }
         Returns: undefined
       }
       register_as_provider: { Args: never; Returns: undefined }
