@@ -8,6 +8,7 @@ import { Layout } from "@/components/Layout";
 import ErrorBoundary from "./components/ErrorBoundary";
 import InstallPrompt from "./components/InstallPrompt";
 import PushPrompt from "./components/PushPrompt";
+import PushRepair from "./components/PushRepair";
 import { Loader2 } from "lucide-react";
 
 const Landing = lazy(() => import("./pages/Landing"));
@@ -47,6 +48,7 @@ const App = () => (
       <ErrorBoundary>
         <BrowserRouter>
           <Suspense fallback={<Loading />}>
+            <PushRepair />
             <InstallPrompt />
             <PushPrompt />
             <Routes>
