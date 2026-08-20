@@ -8,7 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/hooks/useAuth";
 import { usePushSettings } from "@/hooks/usePushSettings";
 import { supabase } from "@/integrations/supabase/client";
-import { useProviderStatsQuery } from "@/hooks/useProviderStats";
+import { useProviderStatsQuery, useCommentCount, useCommentCountRealtime, useQualityLevel, useQualityLevelRealtime } from "@/hooks/useProviderStats";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
@@ -30,8 +30,10 @@ const Profile = () => {
   const qc = useQueryClient();
   const [profile, setProfile] = useState<ProviderProfile | null>(null);
   const [profileId, setProfileId] = useState<string | null>(null);
-  const [commentCount, setCommentCount] = useState(0);
-  const [qualityLevel, setQualityLevel] = useState<string>("média");
+  const { data: commentCount = 0 } = useCommentCount(profileId);
+  const { data: qualityLevel } = useQualityLevel(profileId);
+  useCommentCountRealtime(profileId);
+  useQualityLevelRealtime(profileId);
 
   const { data: stats } = useProviderStatsQuery(profileId);
   const push = usePushSettings(user?.id ?? null);
@@ -65,29 +67,8 @@ const Profile = () => {
 
   useEffect(() => {
     if (!profileId) return;
-    supabase
-      .from("reviews")
-      .select("id", { count: "exact", head: true })
-      .eq("provider_id", profileId)
-      .then(({ count }) => setCommentCount(count ?? 0));
-  }, [profileId]);
-
-  useEffect(() => {
-    if (!profileId) return;
-    supabase
-      .from("quality_levels")
-      .select("level")
-      .eq("provider_id", profileId)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (data?.level) setQualityLevel(data.level);
-      });
-  }, [profileId]);
-
-  useEffect(() => {
-    if (!profileId) return;
     const channel = supabase
-      .channel(`profile-stats-${profileId}`)
+      .channel(`profile-stats-${profileId}-${crypto.randomUUID()}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "provider_stats", filter: `provider_id=eq.${profileId}` },
@@ -215,7 +196,7 @@ const Profile = () => {
                 </div>
                 <div className="flex items-center gap-2">
                   <Star className="h-4 w-4 text-yellow-500" />
-                  <span><span className="font-bold">{qualityLevel}</span> <span className="text-muted-foreground">qualidade</span></span>
+                  <span><span className="font-bold">{qualityLevel ?? "média"}</span> <span className="text-muted-foreground">qualidade</span></span>
                 </div>
               </div>
             </div>

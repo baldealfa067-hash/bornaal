@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { useProviderStatsQuery, useProviderActivity, useProviderActivityRealtime } from "@/hooks/useProviderStats";
+import { useProviderStatsQuery, useProviderActivity, useProviderActivityRealtime, useCommentCount, useCommentCountRealtime } from "@/hooks/useProviderStats";
 import { toast } from "sonner";
 import { LOCATION_OPTIONS } from "@/lib/locations";
 import { canSubmitVerification, isVerifiedStatus, verificationDescription } from "@/lib/verification";
@@ -58,8 +58,9 @@ const ProviderDashboard = () => {
   const [verifying, setVerifying] = useState(false);
   const verifyDocRef = useRef<HTMLInputElement>(null);
   const verifySelfieRef = useRef<HTMLInputElement>(null);
-  const [commentCount, setCommentCount] = useState(0);
   const { data: stats = { profile_views: 0, whatsapp_clicks: 0, call_clicks: 0 } } = useProviderStatsQuery(profileId);
+  const { data: commentCount = 0 } = useCommentCount(profileId);
+  useCommentCountRealtime(profileId);
 
   const loadGallery = async (pid: string) => {
     const { data } = await supabase
@@ -69,15 +70,6 @@ const ProviderDashboard = () => {
       .order("created_at", { ascending: false });
     setGallery((data ?? []) as { id: string; image_url: string }[]);
   };
-
-  useEffect(() => {
-    if (!profileId) return;
-    supabase
-      .from("reviews")
-      .select("id", { count: "exact", head: true })
-      .eq("provider_id", profileId)
-      .then(({ count }) => setCommentCount(count ?? 0));
-  }, [profileId]);
 
   useProviderActivityRealtime(profileId);
   const { data: activity = [] } = useProviderActivity(profileId);

@@ -42,6 +42,15 @@ const BusinessDashboard = () => {
   const [commentCount, setCommentCount] = useState(0);
   const { data: stats = { profile_views: 0, whatsapp_clicks: 0, call_clicks: 0 } } = useProviderStatsQuery(profile?.id ?? null);
 
+  const loadCounts = async (pid: string) => {
+    const [{ count: orders }, { count: reviews }] = await Promise.all([
+      supabase.from("orders").select("id", { count: "exact", head: true }).eq("business_id", pid),
+      supabase.from("reviews").select("id", { count: "exact", head: true }).eq("provider_id", pid),
+    ]);
+    setOrderCount(orders ?? 0);
+    setCommentCount(reviews ?? 0);
+  };
+
   useEffect(() => {
     if (loading) return;
     if (!user) return navigate("/login", { replace: true });
@@ -54,12 +63,7 @@ const BusinessDashboard = () => {
         .maybeSingle();
       if (data) {
         setProfile(data as DashboardProfile);
-        const [{ count: orders }, { count: reviews }] = await Promise.all([
-          supabase.from("orders").select("id", { count: "exact", head: true }).eq("business_id", data.id),
-          supabase.from("reviews").select("id", { count: "exact", head: true }).eq("provider_id", data.id),
-        ]);
-        setOrderCount(orders ?? 0);
-        setCommentCount(reviews ?? 0);
+        await loadCounts(data.id);
       }
       setFetching(false);
     })();
@@ -67,8 +71,14 @@ const BusinessDashboard = () => {
 
   useEffect(() => {
     if (!profile?.id) return;
+    const interval = setInterval(() => loadCounts(profile.id), 15000);
+    return () => clearInterval(interval);
+  }, [profile?.id]);
+
+  useEffect(() => {
+    if (!profile?.id) return;
     const channel = supabase
-      .channel(`business-stats-${profile.id}`)
+      .channel(`business-stats-${profile.id}-${crypto.randomUUID()}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "provider_stats", filter: `provider_id=eq.${profile.id}` },
@@ -77,12 +87,12 @@ const BusinessDashboard = () => {
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "orders", filter: `business_id=eq.${profile.id}` },
-        () => setOrderCount((c) => c + 1)
+        () => loadCounts(profile.id)
       )
       .on(
         "postgres_changes",
-        { event: "INSERT", schema: "public", table: "reviews", filter: `provider_id=eq.${profile.id}` },
-        () => setCommentCount((c) => c + 1)
+        { event: "*", schema: "public", table: "reviews", filter: `provider_id=eq.${profile.id}` },
+        () => loadCounts(profile.id)
       )
       .subscribe();
     return () => { supabase.removeChannel(channel); };
