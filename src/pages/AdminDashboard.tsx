@@ -32,6 +32,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { formatCFA } from "@/lib/format";
 import ManageList from "@/components/ManageList";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import logo from "@/assets/logo.png";
 
 type Provider = {
@@ -153,6 +154,11 @@ const AdminDashboard = () => {
   const [menu, setMenu] = useState<MenuKey>("overview");
   const [providerFilter, setProviderFilter] = useState<ProviderFilter>("avaliacao");
   const [reviewFilter, setReviewFilter] = useState<ReviewFilter>("pendentes");
+  const [deleteTarget, setDeleteTarget] = useState<{ table: "profiles" | "service_requests" | "reviews"; id: string; entity: string } | null>(null);
+  const [rejectTarget, setRejectTarget] = useState<Provider | null>(null);
+  const [rejectReason, setRejectReason] = useState("");
+  const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(null);
+  const [bairroToDelete, setBairroToDelete] = useState<Bairro | null>(null);
 
   useEffect(() => {
     if (loading) return;
@@ -230,7 +236,6 @@ const AdminDashboard = () => {
   }, [user, isAdmin, loading]);
 
   const remove = async (table: "profiles" | "service_requests" | "reviews", id: string) => {
-    if (!confirm("Tem a certeza que pretende eliminar?")) return;
     const { error } = await supabase.from(table).delete().eq("id", id);
     if (error) return toast.error(error.message);
     toast.success("Eliminado");
@@ -259,15 +264,15 @@ const AdminDashboard = () => {
   };
 
   const rejectVerification = async (p: Provider) => {
-    const reason = prompt("Motivo da rejeição (será mostrado ao prestador):");
-    if (reason === null) return;
     const { error } = await supabase.from("profiles").update({
       is_verified: false,
       verification_status: "rejeitado",
-      verification_reason: reason.trim() || "Documentação não aprovada",
+      verification_reason: rejectReason.trim() || "Documentação não aprovada",
     }).eq("id", p.id);
     if (error) return toast.error(error.message);
     toast.success("Perfil rejeitado");
+    setRejectTarget(null);
+    setRejectReason("");
     loadAll();
   };
 
@@ -307,7 +312,6 @@ const AdminDashboard = () => {
   };
 
   const removeCategory = async (id: string) => {
-    if (!confirm("Eliminar esta categoria?")) return;
     const { error } = await supabase.from("categories").delete().eq("id", id);
     if (error) return toast.error(error.message);
     toast.success("Categoria eliminada");
@@ -329,7 +333,6 @@ const AdminDashboard = () => {
   };
 
   const removeBairro = async (id: string) => {
-    if (!confirm("Eliminar este bairro?")) return;
     const { error } = await supabase.from("bairros").delete().eq("id", id);
     if (error) return toast.error(error.message);
     toast.success("Bairro eliminado");
@@ -408,7 +411,7 @@ const AdminDashboard = () => {
                 {p.price_type === "combinar" && " · A combinar"}
               </div>
             </div>
-            <Button variant="ghost" size="icon" className="shrink-0" onClick={() => remove("profiles", p.id)}>
+            <Button variant="ghost" size="icon" className="shrink-0" onClick={() => setDeleteTarget({ table: "profiles", id: p.id, entity: `o perfil de ${p.name}` })}>
               <Trash2 className="h-4 w-4 text-destructive" />
             </Button>
           </div>
@@ -478,7 +481,7 @@ const AdminDashboard = () => {
                     <Check className="h-3.5 w-3.5" /> Aprovar Perfil
                   </Button>
                 )}
-                <Button size="sm" variant="destructive" onClick={() => rejectVerification(p)} className="gap-1">
+                <Button size="sm" variant="destructive" onClick={() => setRejectTarget(p)} className="gap-1">
                   <X className="h-3.5 w-3.5" /> Rejeitar
                 </Button>
                 {p.verification_doc_url || p.verification_selfie_url ? (
@@ -670,7 +673,7 @@ const AdminDashboard = () => {
                         <Button size="sm" onClick={() => approveVerification(p)} className="gap-1 bg-green-600 hover:bg-green-700 text-white">
                           <Check className="h-3.5 w-3.5" /> Aprovar
                         </Button>
-                        <Button size="sm" variant="destructive" onClick={() => rejectVerification(p)} className="gap-1">
+                        <Button size="sm" variant="destructive" onClick={() => setRejectTarget(p)} className="gap-1">
                           <X className="h-3.5 w-3.5" /> Rejeitar
                         </Button>
                       </div>
@@ -790,7 +793,7 @@ const AdminDashboard = () => {
                             <Button size="sm" onClick={() => approveReview(r.id)} className="gap-1 bg-green-600 hover:bg-green-700 text-white">
                               <Check className="h-3.5 w-3.5" /> Aprovar
                             </Button>
-                            <Button size="sm" variant="destructive" onClick={() => remove("reviews", r.id)} className="gap-1">
+                            <Button size="sm" variant="destructive" onClick={() => setDeleteTarget({ table: "reviews", id: r.id, entity: "esta avaliação" })} className="gap-1">
                               <X className="h-3.5 w-3.5" /> Rejeitar
                             </Button>
                           </div>
@@ -804,7 +807,7 @@ const AdminDashboard = () => {
                             {r.comment && <p className="text-sm text-muted-foreground">{r.comment}</p>}
                             <Link to={providerLink(r.provider_id)} className="text-xs text-primary hover:underline">Ver prestador</Link>
                           </div>
-                          <Button variant="ghost" size="icon" onClick={() => remove("reviews", r.id)}>
+                          <Button variant="ghost" size="icon" onClick={() => setDeleteTarget({ table: "reviews", id: r.id, entity: "esta avaliação" })}>
                             <Trash2 className="h-4 w-4 text-destructive" />
                           </Button>
                         </CardContent>
@@ -834,7 +837,7 @@ const AdminDashboard = () => {
                         <div className="text-xs text-muted-foreground mb-1">{r.category} · {r.location}</div>
                         <p className="text-sm">{r.description}</p>
                       </div>
-                      <Button variant="ghost" size="icon" onClick={() => remove("service_requests", r.id)}>
+                      <Button variant="ghost" size="icon" onClick={() => setDeleteTarget({ table: "service_requests", id: r.id, entity: "este pedido" })}>
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
                     </CardContent>
@@ -853,7 +856,7 @@ const AdminDashboard = () => {
                 items={categories}
                 onAdd={addCategory}
                 onRename={renameCategory}
-                onDelete={removeCategory}
+                onDelete={(id) => setCategoryToDelete(categories.find((c) => c.id === id) ?? null)}
                 emptyText="Sem categorias."
               />
             </div>
@@ -867,7 +870,7 @@ const AdminDashboard = () => {
                 items={bairros}
                 onAdd={addBairro}
                 onRename={renameBairro}
-                onDelete={removeBairro}
+                onDelete={(id) => setBairroToDelete(bairros.find((b) => b.id === id) ?? null)}
                 emptyText="Sem bairros."
               />
             </div>
@@ -942,6 +945,61 @@ const AdminDashboard = () => {
           )}
         </main>
       </div>
+
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        onOpenChange={(o) => { if (!o) setDeleteTarget(null); }}
+        title="Eliminar"
+        description={deleteTarget ? `Tem a certeza que pretende eliminar ${deleteTarget.entity}?` : ""}
+        confirmLabel="Eliminar"
+        destructive
+        onConfirm={() => {
+          if (deleteTarget) remove(deleteTarget.table, deleteTarget.id);
+          setDeleteTarget(null);
+        }}
+      />
+
+      <ConfirmDialog
+        open={rejectTarget !== null}
+        onOpenChange={(o) => { if (!o) { setRejectTarget(null); setRejectReason(""); } }}
+        title={`Rejeitar ${rejectTarget?.name ?? ""}`}
+        description="O motivo será mostrado ao prestador no painel dele."
+        confirmLabel="Rejeitar"
+        destructive
+        input={{
+          label: "Motivo da rejeição",
+          placeholder: "Ex: Documentação incompleta",
+          value: rejectReason,
+          onChange: setRejectReason,
+        }}
+        onConfirm={() => { if (rejectTarget) rejectVerification(rejectTarget); }}
+      />
+
+      <ConfirmDialog
+        open={categoryToDelete !== null}
+        onOpenChange={(o) => { if (!o) setCategoryToDelete(null); }}
+        title="Eliminar categoria"
+        description={categoryToDelete ? `Eliminar a categoria "${categoryToDelete.name}"?` : ""}
+        confirmLabel="Eliminar"
+        destructive
+        onConfirm={() => {
+          if (categoryToDelete) removeCategory(categoryToDelete.id);
+          setCategoryToDelete(null);
+        }}
+      />
+
+      <ConfirmDialog
+        open={bairroToDelete !== null}
+        onOpenChange={(o) => { if (!o) setBairroToDelete(null); }}
+        title="Eliminar bairro"
+        description={bairroToDelete ? `Eliminar o bairro "${bairroToDelete.name}"?` : ""}
+        confirmLabel="Eliminar"
+        destructive
+        onConfirm={() => {
+          if (bairroToDelete) removeBairro(bairroToDelete.id);
+          setBairroToDelete(null);
+        }}
+      />
     </div>
   );
 };

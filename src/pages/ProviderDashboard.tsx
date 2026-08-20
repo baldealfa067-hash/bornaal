@@ -19,6 +19,7 @@ import { LOCATION_OPTIONS } from "@/lib/locations";
 import { canSubmitVerification, isVerifiedStatus, verificationDescription } from "@/lib/verification";
 import { useCategories } from "@/hooks/useProviders";
 import { useBairros } from "@/hooks/useBairros";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 
 type Form = {
   name: string;
@@ -44,6 +45,7 @@ const ProviderDashboard = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
   const [gallery, setGallery] = useState<{ id: string; image_url: string }[]>([]);
+  const [galleryDeleteId, setGalleryDeleteId] = useState<string | null>(null);
   const [galleryUploading, setGalleryUploading] = useState(false);
   const MAX_GALLERY = 4;
   const { data: categories = [] } = useCategories();
@@ -143,7 +145,6 @@ const ProviderDashboard = () => {
   };
 
   const deleteGalleryImage = async (id: string) => {
-    if (!confirm("Remover esta foto da galeria?")) return;
     const { error } = await supabase.from("portfolio_images").delete().eq("id", id);
     if (error) return toast.error(error.message);
     toast.success("Foto removida");
@@ -351,7 +352,7 @@ const ProviderDashboard = () => {
                     <img src={img.image_url} alt="Trabalho" className="w-full h-full object-cover" />
                     <button
                       type="button"
-                      onClick={() => deleteGalleryImage(img.id)}
+                      onClick={() => setGalleryDeleteId(img.id)}
                       className="absolute top-1 right-1 p-1 rounded-md bg-background/90 hover:bg-destructive hover:text-destructive-foreground transition-colors"
                       aria-label="Remover foto"
                     >
@@ -388,6 +389,19 @@ const ProviderDashboard = () => {
             </CardContent>
           </Card>
         )}
+
+        <ConfirmDialog
+          open={galleryDeleteId !== null}
+          onOpenChange={(o) => { if (!o) setGalleryDeleteId(null); }}
+          title="Remover foto"
+          description="Remover esta foto da galeria?"
+          confirmLabel="Remover"
+          destructive
+          onConfirm={() => {
+            if (galleryDeleteId) deleteGalleryImage(galleryDeleteId);
+            setGalleryDeleteId(null);
+          }}
+        />
 
         {profileId && (
           <Card className="mt-4">

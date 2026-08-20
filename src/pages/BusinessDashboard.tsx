@@ -38,6 +38,7 @@ import { toast } from "sonner";
 import { LOCATION_OPTIONS } from "@/lib/locations";
 import { canSubmitVerification, verificationDescription } from "@/lib/verification";
 import ManageList from "@/components/ManageList";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import { formatCFA } from "@/lib/format";
 
 type ConsumptionOption = "comer_no_local" | "para_levar" | "entrega";
@@ -96,6 +97,8 @@ const BusinessDashboard = () => {
   const [menuCategories, setMenuCategories] = useState<MenuCategory[]>([]);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [orderCount, setOrderCount] = useState(0);
+  const [categoryToDelete, setCategoryToDelete] = useState<MenuCategory | null>(null);
+  const [itemToDelete, setItemToDelete] = useState<MenuItem | null>(null);
 
   const [itemForm, setItemForm] = useState({ name: "", price: "", category_id: "", photo_url: "" });
   const [itemUploading, setItemUploading] = useState(false);
@@ -263,7 +266,6 @@ const BusinessDashboard = () => {
 
   const removeMenuCategory = async (id: string) => {
     if (!profileId) return;
-    if (!confirm("Eliminar esta categoria? Os itens ficam sem categoria.")) return;
     const { error } = await supabase.from("menu_categories").delete().eq("id", id);
     if (error) return toast.error(error.message);
     toast.success("Categoria eliminada");
@@ -290,7 +292,6 @@ const BusinessDashboard = () => {
   };
 
   const removeMenuItem = async (id: string) => {
-    if (!confirm("Remover este item do menu?")) return;
     const { error } = await supabase.from("menu_items").delete().eq("id", id);
     if (error) return toast.error(error.message);
     toast.success("Item removido");
@@ -455,7 +456,7 @@ const BusinessDashboard = () => {
                   items={menuCategories}
                   onAdd={addMenuCategory}
                   onRename={renameMenuCategory}
-                  onDelete={removeMenuCategory}
+                  onDelete={(id) => setCategoryToDelete(menuCategories.find((c) => c.id === id) ?? null)}
                   emptyText="Sem categorias. Crie a primeira para organizar o menu."
                 />
               </div>
@@ -517,7 +518,7 @@ const BusinessDashboard = () => {
                         <div className="text-sm font-medium truncate">{item.name}</div>
                         <div className="text-xs text-muted-foreground">{formatCFA(item.price)} · <Badge variant="secondary" className="text-[10px] px-1.5 py-0">{categoryName(item.category_id)}</Badge></div>
                       </div>
-                      <Button variant="ghost" size="icon" onClick={() => removeMenuItem(item.id)}>
+                      <Button variant="ghost" size="icon" onClick={() => setItemToDelete(item)}>
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
                     </div>
@@ -644,6 +645,32 @@ const BusinessDashboard = () => {
             </Link>
           </div>
         )}
+
+        <ConfirmDialog
+          open={categoryToDelete !== null}
+          onOpenChange={(o) => { if (!o) setCategoryToDelete(null); }}
+          title="Eliminar categoria"
+          description="Eliminar esta categoria? Os itens ficam sem categoria."
+          confirmLabel="Eliminar"
+          destructive
+          onConfirm={() => {
+            if (categoryToDelete) removeMenuCategory(categoryToDelete.id);
+            setCategoryToDelete(null);
+          }}
+        />
+
+        <ConfirmDialog
+          open={itemToDelete !== null}
+          onOpenChange={(o) => { if (!o) setItemToDelete(null); }}
+          title="Remover item"
+          description={itemToDelete ? `Remover "${itemToDelete.name}" do menu?` : ""}
+          confirmLabel="Remover"
+          destructive
+          onConfirm={() => {
+            if (itemToDelete) removeMenuItem(itemToDelete.id);
+            setItemToDelete(null);
+          }}
+        />
       </main>
     </div>
   );
