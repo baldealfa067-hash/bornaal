@@ -1,9 +1,9 @@
-import { lazy, Suspense, useState, useEffect } from "react";
+import { lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Layout } from "@/components/Layout";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { Loader2 } from "lucide-react";
@@ -35,30 +35,7 @@ const Loading = () => (
   </div>
 );
 
-const LANDING_VISITED_KEY = "ja_visitou_landing";
-
-const HomeRoute = () => {
-  const [hasVisited, setHasVisited] = useState(() => {
-    try {
-      return localStorage.getItem(LANDING_VISITED_KEY) === "1";
-    } catch {
-      return false;
-    }
-  });
-
-  useEffect(() => {
-    if (!hasVisited) {
-      try {
-        localStorage.setItem(LANDING_VISITED_KEY, "1");
-      } catch {
-        // localStorage indisponível (modo privado) — mostra sempre a landing
-      }
-    }
-  }, [hasVisited]);
-
-  if (hasVisited) return <Navigate to="/explorar" replace />;
-  return <Landing />;
-};
+const HomeRoute = () => <Landing />;
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
