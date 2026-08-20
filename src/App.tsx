@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Layout } from "@/components/Layout";
 import ErrorBoundary from "./components/ErrorBoundary";
+import InstallPrompt from "./components/InstallPrompt";
 import { Loader2 } from "lucide-react";
 
 const Landing = lazy(() => import("./pages/Landing"));
@@ -45,6 +46,7 @@ const App = () => (
       <ErrorBoundary>
         <BrowserRouter>
           <Suspense fallback={<Loading />}>
+            <InstallPrompt />
             <Routes>
               <Route path="/" element={<HomeRoute />} />
               <Route path="/landing" element={<Landing />} />

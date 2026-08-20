@@ -20,6 +20,10 @@ export const isStandalone = (): boolean =>
   (window.matchMedia?.("(display-mode: standalone)").matches ||
     (window.navigator as { standalone?: boolean }).standalone === true);
 
+export const isIOS = (): boolean =>
+  typeof navigator !== "undefined" &&
+  /iphone|ipad|ipod/i.test(navigator.userAgent || "");
+
 export const getPermission = (): PushPermission => {
   if (!isPushSupported()) return "unsupported";
   return Notification.permission as PushPermission;
