@@ -59,6 +59,21 @@ export const subscribeToPush = async (): Promise<PushSubscription | null> => {
   });
 };
 
+/**
+ * Verifica se uma subscrição existente está ligada à chave VAPID atual.
+ * Se a app foi carregada de cache com a chave antiga, a subscrição fica
+ * presa a essa chave e a FCM rejeitaria os envios — é preciso recriá-la.
+ */
+export const subscriptionMatchesVapidKey = (sub: PushSubscription | null): boolean => {
+  if (!sub) return false;
+  const bytes = sub.options?.applicationServerKey;
+  if (!bytes) return false;
+  const current = urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
+  const stored = bytes instanceof ArrayBuffer ? new Uint8Array(bytes) : new Uint8Array(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  if (stored.length !== current.length) return false;
+  return current.every((b, i) => b === stored[i]);
+};
+
 export const unsubscribeFromPush = async (): Promise<void> => {
   const sub = await getExistingSubscription();
   if (sub) {
@@ -74,10 +89,12 @@ export const saveSubscription = async (
   subscription: PushSubscription,
   options: { pushEnabled: boolean; novidades: boolean }
 ): Promise<void> => {
-  const key = (id: string) =>
-    (subscription.toJSON() as { [k: string]: unknown })[id] as string | undefined;
-  const endpoint = subscription.endpoint;
-  const keys = { p256dh: key("p256dh") ?? "", auth: key("auth") ?? "" };
+  const json = subscription.toJSON() as {
+    endpoint?: string;
+    keys?: { p256dh?: string; auth?: string };
+  };
+  const endpoint = json.endpoint ?? subscription.endpoint;
+  const keys = { p256dh: json.keys?.p256dh ?? "", auth: json.keys?.auth ?? "" };
   const { error } = await supabase.rpc("upsert_push_subscription", {
     p_endpoint: endpoint,
     p_keys: keys,
@@ -105,7 +122,15 @@ export const enablePush = async (options: {
     return { granted: false, error: "Permissão de notificações negada." };
   }
   try {
-    const subscription = (await getExistingSubscription()) ?? (await subscribeToPush());
+    // Se já existe uma subscrição mas com a chave VAPID errada (cache antiga),
+    // recria-a com a chave atual antes de guardar.
+    let subscription = await getExistingSubscription();
+    if (subscription && !subscriptionMatchesVapidKey(subscription)) {
+      await subscription.unsubscribe().catch(() => {});
+      subscription = await subscribeToPush();
+    } else if (!subscription) {
+      subscription = await subscribeToPush();
+    }
     if (!subscription) return { granted: false, error: "Não foi possível criar a subscrição push." };
     await saveSubscription(subscription, {
       pushEnabled: options.pushEnabled ?? true,

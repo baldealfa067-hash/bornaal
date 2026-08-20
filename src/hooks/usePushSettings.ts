@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,6 +9,8 @@ import {
   getPermission,
   isPushSupported,
   saveSubscription,
+  subscribeToPush,
+  subscriptionMatchesVapidKey,
   type PushPermission,
 } from "@/lib/push";
 
@@ -32,7 +34,7 @@ export const usePushSettings = (userId: string | null): PushSettings => {
       if (!userId) return null;
       const { data } = await supabase
         .from("push_subscriptions")
-        .select("endpoint, push_enabled, novidades")
+        .select("endpoint, push_enabled, novidades, keys")
         .eq("user_id", userId)
         .limit(1)
         .maybeSingle();
@@ -41,6 +43,32 @@ export const usePushSettings = (userId: string | null): PushSettings => {
     enabled: !!userId && isPushSupported(),
     staleTime: 30_000,
   });
+
+  // Auto-reparação: se o navegador tem uma subscrição mas a BD está sem chaves
+  // (bug antigo que gravava p256dh/auth vazios) ou a subscrição usa a chave
+  // VAPID antiga (cache), recria/re-guarda com o estado correto.
+  useEffect(() => {
+    if (!userId || !subscription) return;
+    (async () => {
+      const existing = await getExistingSubscription();
+      if (!existing) return;
+      const keys = subscription.keys as { p256dh?: string } | null | undefined;
+      if (keys?.p256dh && subscriptionMatchesVapidKey(existing)) return;
+      const options = {
+        pushEnabled: subscription.push_enabled ?? true,
+        novidades: subscription.novidades ?? false,
+      };
+      if (!subscriptionMatchesVapidKey(existing)) {
+        await existing.unsubscribe().catch(() => {});
+        const fresh = await subscribeToPush();
+        if (!fresh) return;
+        await saveSubscription(fresh, options);
+      } else {
+        await saveSubscription(existing, options);
+      }
+      refetch();
+    })();
+  }, [userId, subscription, refetch]);
 
   const permission = useMemo<PushPermission>(() => {
     if (!isPushSupported()) return "unsupported";
