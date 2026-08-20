@@ -32,13 +32,18 @@ self.addEventListener("push", (event) => {
     body: data.body || "Tem uma novidade na Bornaal.",
     icon: "/icon-192.png",
     badge: "/icon-192.png",
-    data: { url: data.url || "/" },
+    data: { url: data.url || "/", whatsapp_url: data.whatsapp_url || "" },
   };
   event.waitUntil(self.registration.showNotification(data.title || "Bornaal", options));
 });
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
+  const wa = event.notification.data?.whatsapp_url;
+  if (wa) {
+    event.waitUntil(self.clients.openWindow(wa));
+    return;
+  }
   const url = new URL(event.notification.data?.url || "/", self.location.origin).href;
   event.waitUntil(
     (async () => {

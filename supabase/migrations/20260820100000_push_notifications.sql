@@ -77,7 +77,8 @@ BEGIN
       'type', NEW.type,
       'title', NEW.title,
       'body', NEW.body,
-      'link', COALESCE(NEW.link, '/')
+      'link', COALESCE(NEW.link, '/'),
+      'request_id', NEW.request_id::text
     ),
     '{}'::jsonb,
     jsonb_build_object(

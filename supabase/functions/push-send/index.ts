@@ -59,6 +59,70 @@ function sendPush(
   });
 }
 
+interface PushPayload {
+  kind?: string;
+  user_id?: string;
+  type?: string;
+  title?: string;
+  body?: string;
+  link?: string;
+  request_id?: string;
+  location?: string;
+  name?: string;
+  category?: string;
+  profile_type?: string;
+  author_user_id?: string;
+}
+
+const cleanPhone = (p: string | null | undefined): string => (p ?? "").replace(/[^0-9]/g, "");
+
+const firstProfile = async (path: string): Promise<Record<string, unknown> | undefined> => {
+  const res = await rest(path);
+  if (!res.ok) return undefined;
+  const rows = await res.json();
+  return Array.isArray(rows) && rows.length > 0 ? rows[0] : undefined;
+};
+
+/**
+ * Calcula o link WhatsApp para uma notificação:
+ * - contacto: abre o WhatsApp do próprio (alguém clicou no teu botão).
+ * - candidatura_*: abre o WhatsApp da OUTRA parte envolvida no pedido
+ *   (candidato para o dono do pedido; cliente para o candidato).
+ * - restantes: sem WhatsApp (a notificação abre a plataforma).
+ */
+async function whatsappUrlForNotification(p: PushPayload): Promise<string> {
+  try {
+    if (p.type === "contacto") {
+      const profile = await firstProfile(`/rest/v1/profiles?user_id=eq.${p.user_id}&select=phone&limit=1`);
+      const num = cleanPhone(profile?.phone as string | undefined);
+      return num ? `https://wa.me/${num}` : "";
+    }
+    if (p.type?.includes("candidatura") && p.request_id) {
+      const req = await firstProfile(
+        `/rest/v1/service_requests?select=user_id,requester_phone&id=eq.${p.request_id}&limit=1`
+      );
+      if (!req) return "";
+      if (req.user_id === p.user_id) {
+        // Destinatário = dono do pedido → outra parte é o candidato (prestador/loja)
+        const bid = await firstProfile(
+          `/rest/v1/request_bids?select=provider_id&request_id=eq.${p.request_id}&order=created_at.desc&limit=1`
+        );
+        if (!bid?.provider_id) return "";
+        const prov = await firstProfile(`/rest/v1/profiles?select=phone&id=eq.${bid.provider_id}&limit=1`);
+        const num = cleanPhone(prov?.phone as string | undefined);
+        return num ? `https://wa.me/${num}` : "";
+      } else {
+        // Destinatário = candidato → outra parte é o cliente
+        const num = cleanPhone(req.requester_phone as string | undefined);
+        return num ? `https://wa.me/${num}` : "";
+      }
+    }
+  } catch {
+    // nunca bloqueia o envio do push
+  }
+  return "";
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -71,6 +135,7 @@ Deno.serve(async (req) => {
       title?: string;
       body?: string;
       link?: string;
+      request_id?: string;
       location?: string;
       name?: string;
       category?: string;
@@ -106,7 +171,7 @@ Deno.serve(async (req) => {
     }
 
     let subscriptions: SubscriptionRow[] = [];
-    let pushes: { title: string; body: string; url: string }[] = [];
+    let pushes: { title: string; body: string; url: string; whatsapp_url?: string }[] = [];
 
     if (payload.kind === "notification") {
       if (!payload.user_id || !payload.title) {
@@ -115,7 +180,8 @@ Deno.serve(async (req) => {
       subscriptions = await getSubscriptions(
         `/rest/v1/push_subscriptions?user_id=eq.${payload.user_id}&push_enabled=eq.true&select=endpoint,keys`
       );
-      pushes = [{ title: payload.title, body: payload.body ?? "", url: payload.link ?? "/" }];
+      const whatsappUrl = await whatsappUrlForNotification(payload);
+      pushes = [{ title: payload.title, body: payload.body ?? "", url: payload.link ?? "/", whatsapp_url: whatsappUrl }];
     } else if (payload.kind === "novidades") {
       if (!payload.location) {
         return new Response("missing location", { status: 400, headers: corsHeaders });
@@ -175,6 +241,7 @@ Deno.serve(async (req) => {
         failed: results.filter((r) => !r.ok).length,
         delete_statuses: deletes,
         failed_statuses: results.filter((r) => !r.ok).map((r) => ({ status: r.status, error: r.error ?? "" })),
+        whatsapp_urls: pushes.map((p) => p.whatsapp_url ?? ""),
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
