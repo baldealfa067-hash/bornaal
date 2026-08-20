@@ -9,6 +9,7 @@ import { Store, Wrench } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { JUST_SIGNED_UP_KEY } from "@/lib/push";
 import logo from "@/assets/logo.png";
 
 type ProfileType = "provider" | "business";
@@ -67,6 +68,7 @@ const Login = () => {
     }
     setSubmitting(false);
     toast.success("Conta criada. A entrar...");
+    sessionStorage.setItem(JUST_SIGNED_UP_KEY, "1");
   };
 
   return (

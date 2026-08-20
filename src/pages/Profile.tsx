@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { LogOut, Settings, Briefcase, Loader2, Eye, MessageCircle, Phone, MessageSquareText, Star } from "lucide-react";
+import { LogOut, Settings, Briefcase, Loader2, Eye, MessageCircle, Phone, MessageSquareText, Star, BellRing } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/hooks/useAuth";
+import { usePushSettings } from "@/hooks/usePushSettings";
 import { supabase } from "@/integrations/supabase/client";
 import { useProviderStatsQuery } from "@/hooks/useProviderStats";
 import { useQueryClient } from "@tanstack/react-query";
@@ -32,6 +34,7 @@ const Profile = () => {
   const [qualityLevel, setQualityLevel] = useState<string>("média");
 
   const { data: stats } = useProviderStatsQuery(profileId);
+  const push = usePushSettings(user?.id ?? null);
 
   useEffect(() => {
     if (loading) return;
@@ -233,6 +236,58 @@ const Profile = () => {
             <LogOut className="h-4 w-4" />
             Terminar sessão
           </Button>
+        </CardContent>
+      </Card>
+
+      <Card className="mt-4">
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <BellRing className="h-4 w-4 text-primary" />
+            Notificações
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-4">
+          {!push.supported ? (
+            <p className="text-sm text-muted-foreground">
+              Notificações push não são suportadas neste navegador.
+            </p>
+          ) : (
+            <>
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-medium">Notificações push</p>
+                  <p className="text-xs text-muted-foreground">
+                    Alertas no telemóvel quando alguém vê o teu perfil, te contacta
+                    ou responde ao teu pedido.
+                  </p>
+                </div>
+                <Switch
+                  checked={push.pushEnabled}
+                  disabled={push.updating || (push.pushEnabled && push.permission !== "granted")}
+                  onCheckedChange={push.togglePush}
+                />
+              </div>
+              {push.permission === "denied" && (
+                <p className="text-xs text-destructive">
+                  Permissão negada no navegador. Ativa as notificações nas definições do
+                  navegador para voltar a receber alertas.
+                </p>
+              )}
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-medium">Novidades perto de mim</p>
+                  <p className="text-xs text-muted-foreground">
+                    Aviso quando um novo prestador ou restaurante aparece na tua zona.
+                  </p>
+                </div>
+                <Switch
+                  checked={push.novidades}
+                  disabled={!push.pushEnabled || push.updating}
+                  onCheckedChange={push.setNovidades}
+                />
+              </div>
+            </>
+          )}
         </CardContent>
       </Card>
     </div>
