@@ -77,6 +77,44 @@ export type Database = {
         }
         Relationships: []
       }
+      orders: {
+        Row: {
+          address: string | null
+          business_id: string
+          consumption_option: string
+          created_at: string
+          id: string
+          items: Json
+          total: number
+        }
+        Insert: {
+          address?: string | null
+          business_id: string
+          consumption_option: string
+          created_at?: string
+          id?: string
+          items?: Json
+          total?: number
+        }
+        Update: {
+          address?: string | null
+          business_id?: string
+          consumption_option?: string
+          created_at?: string
+          id?: string
+          items?: Json
+          total?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       menu_categories: {
         Row: {
           business_id: string
@@ -689,6 +727,16 @@ export type Database = {
       }
       register_as_business: { Args: never; Returns: undefined }
       register_as_provider: { Args: never; Returns: undefined }
+      record_business_order: {
+        Args: {
+          p_address: string | null
+          p_business_id: string
+          p_consumption_option: string
+          p_items: Json
+          p_total: number
+        }
+        Returns: string
+      }
     }
     Enums: {
       app_role: "client" | "provider" | "admin" | "business"

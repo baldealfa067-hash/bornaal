@@ -17,6 +17,7 @@ import {
   Store,
   UtensilsCrossed,
   Plus,
+  ShoppingCart,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -94,18 +95,21 @@ const BusinessDashboard = () => {
 
   const [menuCategories, setMenuCategories] = useState<MenuCategory[]>([]);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [orderCount, setOrderCount] = useState(0);
 
   const [itemForm, setItemForm] = useState({ name: "", price: "", category_id: "", photo_url: "" });
   const [itemUploading, setItemUploading] = useState(false);
   const itemFileRef = useRef<HTMLInputElement>(null);
 
   const loadMenu = async (pid: string) => {
-    const [{ data: cats }, { data: items }] = await Promise.all([
+    const [{ data: cats }, { data: items }, { count: orders }] = await Promise.all([
       supabase.from("menu_categories").select("id, name").eq("business_id", pid).order("name"),
       supabase.from("menu_items").select("id, name, price, photo_url, category_id").eq("business_id", pid).order("name"),
+      supabase.from("orders").select("id", { count: "exact", head: true }).eq("business_id", pid),
     ]);
     setMenuCategories((cats ?? []) as MenuCategory[]);
     setMenuItems((items ?? []) as MenuItem[]);
+    setOrderCount(orders ?? 0);
   };
 
   useEffect(() => {
@@ -602,7 +606,12 @@ const BusinessDashboard = () => {
               <p className="text-xs text-muted-foreground">Como os clientes interagem com o seu estabelecimento.</p>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                <div className="rounded-lg border p-3 flex flex-col items-center gap-1">
+                  <ShoppingCart className="h-5 w-5 text-primary" />
+                  <span className="text-2xl font-bold">{orderCount}</span>
+                  <span className="text-[11px] text-muted-foreground text-center">Pedidos recebidos</span>
+                </div>
                 <div className="rounded-lg border p-3 flex flex-col items-center gap-1">
                   <Eye className="h-5 w-5 text-primary" />
                   <span className="text-2xl font-bold">{stats.profile_views}</span>

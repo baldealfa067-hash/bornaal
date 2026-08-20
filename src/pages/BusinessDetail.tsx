@@ -1,10 +1,11 @@
 import { useParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useRef, useState } from "react";
-import { AlertCircle, MapPin, Phone, MessageCircle, BadgeCheck, CheckCircle2, ShieldAlert, Store, UtensilsCrossed } from "lucide-react";
+import { AlertCircle, MapPin, Phone, MessageCircle, BadgeCheck, CheckCircle2, ShieldAlert, Store, UtensilsCrossed, Plus, Minus, ShoppingCart, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 import { StarRating } from "@/components/StarRating";
 import { formatCFA } from "@/lib/format";
 import { supabase } from "@/integrations/supabase/client";
@@ -49,6 +50,10 @@ const BusinessDetail = () => {
   const [reportReason, setReportReason] = useState("");
   const [reportDescription, setReportDescription] = useState("");
   const [reportContact, setReportContact] = useState("");
+  const [cart, setCart] = useState<Record<string, number>>({});
+  const [consumptionOption, setConsumptionOption] = useState("");
+  const [address, setAddress] = useState("");
+  const [sending, setSending] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -92,6 +97,10 @@ const BusinessDetail = () => {
     (o) => ["comer_no_local", "para_levar", "entrega"].includes(o)
   );
   const avgRating = reviews.length ? Math.round((reviews.reduce((s, r) => s + r.rating, 0) / reviews.length) * 10) / 10 : 0;
+  const activeConsumption = consumptionOption || consumptionOptions[0] || "";
+  const cartItems = menuItems.filter((i) => (cart[i.id] ?? 0) > 0);
+  const cartTotal = cartItems.reduce((sum, i) => sum + i.price * (cart[i.id] ?? 0), 0);
+  const cartCount = cartItems.reduce((sum, i) => sum + (cart[i.id] ?? 0), 0);
 
   const whatsappUrl = `https://wa.me/${phone.replace(/\D/g, "")}?text=${encodeURIComponent(
     `Olá ${name}, encontrei o seu estabelecimento no Bornaal e gostaria de saber mais.`
@@ -109,6 +118,53 @@ const BusinessDetail = () => {
     supabase.rpc("record_provider_contact", { p_provider_id: id, contact_type: "call" }).then(({ error }) => {
       if (error) console.error("[stats] record call error:", error.message);
     });
+  };
+
+  const addToCart = (itemId: string) => setCart((c) => ({ ...c, [itemId]: (c[itemId] ?? 0) + 1 }));
+  const removeFromCart = (itemId: string) => {
+    setCart((c) => {
+      const qty = (c[itemId] ?? 0) - 1;
+      if (qty <= 0) {
+        const { [itemId]: _, ...rest } = c;
+        return rest;
+      }
+      return { ...c, [itemId]: qty };
+    });
+  };
+
+  const sendOrder = async () => {
+    if (!id) return;
+    if (!cartItems.length) return toast.error("Adicione itens ao pedido.");
+    if (!activeConsumption) return toast.error("Escolha a opção de consumo.");
+    if (activeConsumption === "entrega" && !address.trim()) {
+      return toast.error("Indique a morada de entrega.");
+    }
+    setSending(true);
+    const lines = cartItems
+      .map((i) => `• ${i.name} x${cart[i.id]} — ${formatCFA(i.price * (cart[i.id] ?? 0))}`)
+      .join("\n");
+    const consumptionLabel = CONSUMPTION_LABELS[activeConsumption] ?? activeConsumption;
+    const addressLine = activeConsumption === "entrega" ? `\nMorada de entrega: ${address.trim()}` : "";
+    const message =
+      `Olá ${name}! Gostaria de fazer um pedido pelo Bornaal:\n\n${lines}\n\n` +
+      `Opção de consumo: ${consumptionLabel}${addressLine}\nTotal estimado: ${formatCFA(cartTotal)}`;
+    const waUrl = `https://wa.me/${phone.replace(/\D/g, "")}?text=${encodeURIComponent(message)}`;
+    const { error } = await supabase.rpc("record_business_order", {
+      p_business_id: id,
+      p_items: cartItems.map((i) => ({ name: i.name, price: i.price, qty: cart[i.id] })),
+      p_total: cartTotal,
+      p_consumption_option: activeConsumption,
+      p_address: activeConsumption === "entrega" ? address.trim() : null,
+    });
+    setSending(false);
+    if (error) {
+      console.error("[order] error:", error.message);
+      return toast.error("Erro ao registar o pedido. Abre o WhatsApp na mesma?");
+    }
+    window.open(waUrl, "_blank");
+    toast.success("Pedido registado! A abrir o WhatsApp...");
+    setCart({});
+    setAddress("");
   };
 
   const groupedItems = (catId: string | null) => menuItems.filter((i) => i.category_id === catId);
@@ -227,19 +283,7 @@ const BusinessDetail = () => {
                   <h3 className="text-sm font-semibold text-primary mb-2 border-b pb-1">{cat.name}</h3>
                   <div className="flex flex-col gap-2">
                     {items.map((item) => (
-                      <div key={item.id} className="flex items-center gap-3 rounded-lg border bg-card p-2.5">
-                        {item.photo_url ? (
-                          <img src={item.photo_url} alt={item.name} className="h-14 w-14 rounded-lg object-cover shrink-0" />
-                        ) : (
-                          <div className="h-14 w-14 rounded-lg bg-muted flex items-center justify-center text-muted-foreground shrink-0">
-                            <UtensilsCrossed className="h-5 w-5" />
-                          </div>
-                        )}
-                        <div className="min-w-0 flex-1">
-                          <div className="text-sm font-medium">{item.name}</div>
-                          <div className="text-sm font-semibold text-primary">{formatCFA(item.price)}</div>
-                        </div>
-                      </div>
+                      <MenuItemRow key={item.id} item={item} qty={cart[item.id] ?? 0} onAdd={() => addToCart(item.id)} onRemove={() => removeFromCart(item.id)} />
                     ))}
                   </div>
                 </div>
@@ -250,25 +294,74 @@ const BusinessDetail = () => {
                 <h3 className="text-sm font-semibold text-primary mb-2 border-b pb-1">Outros</h3>
                 <div className="flex flex-col gap-2">
                   {uncategorized.map((item) => (
-                    <div key={item.id} className="flex items-center gap-3 rounded-lg border bg-card p-2.5">
-                      {item.photo_url ? (
-                        <img src={item.photo_url} alt={item.name} className="h-14 w-14 rounded-lg object-cover shrink-0" />
-                      ) : (
-                        <div className="h-14 w-14 rounded-lg bg-muted flex items-center justify-center text-muted-foreground shrink-0">
-                          <UtensilsCrossed className="h-5 w-5" />
-                        </div>
-                      )}
-                      <div className="min-w-0 flex-1">
-                        <div className="text-sm font-medium">{item.name}</div>
-                        <div className="text-sm font-semibold text-primary">{formatCFA(item.price)}</div>
-                      </div>
-                    </div>
+                    <MenuItemRow key={item.id} item={item} qty={cart[item.id] ?? 0} onAdd={() => addToCart(item.id)} onRemove={() => removeFromCart(item.id)} />
                   ))}
                 </div>
               </div>
             )}
           </div>
         </div>
+      )}
+
+      {cartItems.length > 0 && (
+        <Card className="mb-6 border-primary/40">
+          <CardContent className="p-4">
+            <h2 className="font-semibold mb-2 flex items-center gap-2">
+              <ShoppingCart className="h-5 w-5 text-primary" /> O seu pedido ({cartCount})
+            </h2>
+            <div className="flex flex-col gap-1.5 mb-3">
+              {cartItems.map((i) => (
+                <div key={i.id} className="flex items-center justify-between text-sm">
+                  <span className="min-w-0 truncate">{i.name} x{cart[i.id]}</span>
+                  <span className="font-medium shrink-0">{formatCFA(i.price * (cart[i.id] ?? 0))}</span>
+                </div>
+              ))}
+              <div className="flex items-center justify-between text-sm font-bold border-t pt-1.5">
+                <span>Total estimado</span>
+                <span>{formatCFA(cartTotal)}</span>
+              </div>
+            </div>
+
+            {consumptionOptions.length > 0 && (
+              <div className="mb-3">
+                <Label className="text-xs">Opção de consumo</Label>
+                <div className="flex flex-wrap gap-1.5 mt-1.5">
+                  {consumptionOptions.map((o) => (
+                    <Badge
+                      key={o}
+                      variant={activeConsumption === o ? "default" : "outline"}
+                      className="cursor-pointer px-3 py-1.5 text-xs"
+                      onClick={() => setConsumptionOption(o)}
+                    >
+                      {CONSUMPTION_LABELS[o] ?? o}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {activeConsumption === "entrega" && (
+              <div className="mb-3">
+                <Label htmlFor="order-address">Morada de entrega *</Label>
+                <Input
+                  id="order-address"
+                  placeholder="Ex: Quelele, rua 2, casa 15"
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  className="mt-1.5"
+                />
+              </div>
+            )}
+
+            <Button onClick={sendOrder} disabled={sending} className="w-full bg-[#25D366] hover:bg-[#1ebe57] text-white gap-2">
+              {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <MessageCircle className="h-5 w-5" />}
+              {sending ? "A registar..." : "Enviar pedido por WhatsApp"}
+            </Button>
+            <p className="text-[11px] text-muted-foreground text-center mt-2">
+              O pedido abre no WhatsApp do estabelecimento, sem pagamento na app.
+            </p>
+          </CardContent>
+        </Card>
       )}
 
       <div className="mb-8 grid grid-cols-2 gap-2">
@@ -393,5 +486,36 @@ const BusinessDetail = () => {
     </div>
   );
 };
+
+const MenuItemRow = ({ item, qty, onAdd, onRemove }: { item: MenuItem; qty: number; onAdd: () => void; onRemove: () => void }) => (
+  <div className="flex items-center gap-3 rounded-lg border bg-card p-2.5">
+    {item.photo_url ? (
+      <img src={item.photo_url} alt={item.name} className="h-14 w-14 rounded-lg object-cover shrink-0" />
+    ) : (
+      <div className="h-14 w-14 rounded-lg bg-muted flex items-center justify-center text-muted-foreground shrink-0">
+        <UtensilsCrossed className="h-5 w-5" />
+      </div>
+    )}
+    <div className="min-w-0 flex-1">
+      <div className="text-sm font-medium">{item.name}</div>
+      <div className="text-sm font-semibold text-primary">{formatCFA(item.price)}</div>
+    </div>
+    {qty === 0 ? (
+      <Button size="sm" variant="outline" className="shrink-0 gap-1" onClick={onAdd}>
+        <Plus className="h-3.5 w-3.5" /> Adicionar
+      </Button>
+    ) : (
+      <div className="flex items-center gap-1 shrink-0">
+        <Button size="icon" variant="outline" className="h-8 w-8" onClick={onRemove}>
+          <Minus className="h-3.5 w-3.5" />
+        </Button>
+        <span className="w-6 text-center font-semibold text-sm">{qty}</span>
+        <Button size="icon" className="h-8 w-8" onClick={onAdd}>
+          <Plus className="h-3.5 w-3.5" />
+        </Button>
+      </div>
+    )}
+  </div>
+);
 
 export default BusinessDetail;
