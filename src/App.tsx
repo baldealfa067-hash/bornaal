@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Layout } from "@/components/Layout";
 import ErrorBoundary from "./components/ErrorBoundary";
 import InstallPrompt from "./components/InstallPrompt";
+import PushPrompt from "./components/PushPrompt";
 import { Loader2 } from "lucide-react";
 
 const Landing = lazy(() => import("./pages/Landing"));
@@ -47,6 +48,7 @@ const App = () => (
         <BrowserRouter>
           <Suspense fallback={<Loading />}>
             <InstallPrompt />
+            <PushPrompt />
             <Routes>
               <Route path="/" element={<HomeRoute />} />
               <Route path="/landing" element={<Landing />} />

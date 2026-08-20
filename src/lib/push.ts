@@ -94,19 +94,26 @@ export const saveSubscription = async (
 export const enablePush = async (options: {
   pushEnabled?: boolean;
   novidades?: boolean;
-} = {}): Promise<{ granted: boolean }> => {
-  if (!isPushSupported()) return { granted: false };
-  const permission = await Notification.requestPermission();
+} = {}): Promise<{ granted: boolean; error?: string }> => {
+  if (!isPushSupported()) return { granted: false, error: "Push não é suportado neste navegador." };
+  let permission = Notification.permission;
+  if (permission === "default") {
+    permission = await Notification.requestPermission().catch(() => "denied" as NotificationPermission);
+  }
   if (permission !== "granted") {
     markAsked();
-    return { granted: false };
+    return { granted: false, error: "Permissão de notificações negada." };
   }
-  const subscription = (await getExistingSubscription()) ?? (await subscribeToPush());
-  if (!subscription) return { granted: false };
-  await saveSubscription(subscription, {
-    pushEnabled: options.pushEnabled ?? true,
-    novidades: options.novidades ?? false,
-  });
+  try {
+    const subscription = (await getExistingSubscription()) ?? (await subscribeToPush());
+    if (!subscription) return { granted: false, error: "Não foi possível criar a subscrição push." };
+    await saveSubscription(subscription, {
+      pushEnabled: options.pushEnabled ?? true,
+      novidades: options.novidades ?? false,
+    });
+  } catch (err) {
+    return { granted: false, error: `Erro ao ativar notificações: ${(err as Error)?.message ?? "desconhecido"}` };
+  }
   markAsked();
   return { granted: true };
 };

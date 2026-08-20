@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import {
   disablePush,
@@ -53,9 +54,12 @@ export const usePushSettings = (userId: string | null): PushSettings => {
     try {
       if (subscription?.push_enabled) {
         await disablePush();
+        toast.success("Notificações push desativadas");
       } else {
-        const { granted } = await enablePush({ pushEnabled: true, novidades: subscription?.novidades ?? false });
+        const { granted, error } = await enablePush({ pushEnabled: true, novidades: subscription?.novidades ?? false });
+        if (error) toast.error(error);
         if (!granted) return;
+        toast.success("Notificações push ativadas");
       }
       await refetch();
     } finally {

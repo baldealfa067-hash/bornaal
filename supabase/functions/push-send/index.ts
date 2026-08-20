@@ -50,7 +50,7 @@ function sendPush(
       .then(() => resolve({ ok: true, gone: false, status: 201 }))
       .catch((err) => {
         const status = err?.statusCode ?? 0;
-        const gone = status === 404 || status === 410 || status === 403;
+        const gone = status >= 400;
         resolve({ ok: false, gone, status });
       });
   });
@@ -128,10 +128,10 @@ Deno.serve(async (req) => {
       )
     );
 
-    // Remove subscrições expiradas/inválidas (410/404/403)
+    // Remove subscrições inválidas/expiradas (qualquer falha HTTP >= 400)
     const gone = results.filter((r) => r.gone);
     for (const g of gone) {
-      fetch(`${supabaseUrl}/rest/v1/push_subscriptions?endpoint=eq.${encodeURIComponent(g.endpoint)}`, {
+      await fetch(`${supabaseUrl}/rest/v1/push_subscriptions?endpoint=eq.${encodeURIComponent(g.endpoint)}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${serviceRoleKey}`, apikey: serviceRoleKey },
       }).catch(() => {});

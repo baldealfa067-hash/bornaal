@@ -2,7 +2,6 @@ import { Outlet } from "react-router-dom";
 import { Link } from "react-router-dom";
 import { BottomNav } from "./BottomNav";
 import { NotificationBell } from "./NotificationBell";
-import PushPrompt from "./PushPrompt";
 import logo from "@/assets/logo.png";
 
 export const Layout = () => (
@@ -17,6 +16,5 @@ export const Layout = () => (
     </header>
     <Outlet />
     <BottomNav />
-    <PushPrompt />
   </div>
 );

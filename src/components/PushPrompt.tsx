@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Loader2, BellRing } from "lucide-react";
+import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { useUnreadCount } from "@/hooks/useNotifications";
 import {
@@ -22,7 +23,7 @@ const PushPrompt = () => {
 
   useEffect(() => {
     if (!user) return;
-    if (!isPushSupported() || isStandalone()) return;
+    if (!isPushSupported()) return;
     if (hasAsked()) return;
     if (getPermission() !== "default") return;
 
@@ -32,6 +33,8 @@ const PushPrompt = () => {
     // Mostra discretamente quando o utilizador já está a usar a plataforma:
     // logo após o registo, quando já tem notificações por ler, ou após ~15s
     // numa página da app. Nunca ao abrir o site pela primeira vez na landing.
+    // Nota: NÃO bloqueamos o modo standalone — é aí que o push funciona
+    // melhor (app instalada no iPhone/Android).
     const delay = justSignedUp ? 800 : hasActivity ? 1500 : 15000;
     const t = setTimeout(() => setOpen(true), delay);
     return () => clearTimeout(t);
@@ -40,7 +43,12 @@ const PushPrompt = () => {
   const handleEnable = async () => {
     setBusy(true);
     try {
-      await enablePush();
+      const { granted, error } = await enablePush();
+      if (granted) {
+        toast.success("Notificações ativadas!");
+      } else if (error) {
+        toast.error(error);
+      }
       sessionStorage.removeItem(JUST_SIGNED_UP_KEY);
       setOpen(false);
     } finally {
