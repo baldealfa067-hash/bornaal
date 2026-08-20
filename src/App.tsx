@@ -21,6 +21,7 @@ const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 const ProviderDashboard = lazy(() => import("./pages/ProviderDashboard"));
 const BusinessDashboard = lazy(() => import("./pages/BusinessDashboard"));
+const BusinessDetail = lazy(() => import("./pages/BusinessDetail"));
 const Requests = lazy(() => import("./pages/Requests"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Models = lazy(() => import("./pages/Models"));
@@ -87,6 +88,7 @@ const App = () => (
                 <Route path="/pedidos" element={<Requests />} />
                 <Route path="/perfil" element={<Profile />} />
                 <Route path="/prestador/:id" element={<ProviderDetail />} />
+                <Route path="/loja/:id" element={<BusinessDetail />} />
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>

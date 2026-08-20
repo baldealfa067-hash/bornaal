@@ -43,6 +43,7 @@ type Provider = {
   price_type: string;
   starting_price: number | null;
   photo_url: string | null;
+  profile_type: string;
   is_verified: boolean;
   verification_status: string;
   verification_reason: string | null;
@@ -173,7 +174,7 @@ const AdminDashboard = () => {
       { data: pf },
       { data: ql },
     ] = await Promise.all([
-      supabase.from("profiles").select("id, name, category, phone, location, price_type, starting_price, photo_url, is_verified, verification_status, verification_reason, verification_doc_url, verification_selfie_url").order("name"),
+      supabase.from("profiles").select("id, name, category, phone, location, price_type, starting_price, photo_url, profile_type, is_verified, verification_status, verification_reason, verification_doc_url, verification_selfie_url").order("name"),
       supabase.from("service_requests").select("id, requester_name, category, location, description, status, created_at").order("created_at", { ascending: false }),
       supabase.from("reviews").select("id, provider_id, reviewer_name, rating, comment, created_at, status").order("created_at", { ascending: false }),
       supabase.from("categories").select("id, name").order("name"),
@@ -336,6 +337,11 @@ const AdminDashboard = () => {
   };
 
   const providerName = (pid: string) => providers.find((p) => p.id === pid)?.name ?? "Prestador";
+  const profileUrl = (p: Provider) => (p.profile_type === "business" ? `/loja/${p.id}` : `/prestador/${p.id}`);
+  const providerLink = (pid: string) => {
+    const p = providers.find((x) => x.id === pid);
+    return p ? profileUrl(p) : `/prestador/${pid}`;
+  };
   const pendingReviews = reviews.filter((r) => r.status === "pendente");
   const approvedReviews = reviews.filter((r) => r.status === "aprovado");
   const pendingVerifications = providers.filter((p) => p.verification_status === "pendente");
@@ -388,10 +394,11 @@ const AdminDashboard = () => {
             </Avatar>
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-1.5">
-                <Link to={`/prestador/${p.id}`} className="font-semibold hover:underline inline-flex items-center gap-1">
+                <Link to={profileUrl(p)} className="font-semibold hover:underline inline-flex items-center gap-1">
                   {p.name}
                   {p.is_verified && <BadgeCheck className="h-4 w-4 text-primary" />}
                 </Link>
+                {p.profile_type === "business" && <Badge variant="outline" className="text-[10px]">Loja</Badge>}
                 {statusBadge(p)}
               </div>
               <div className="text-xs text-muted-foreground mt-0.5">
@@ -643,7 +650,7 @@ const AdminDashboard = () => {
                     <CardContent className="p-3 flex items-start justify-between gap-2">
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-1.5">
-                          <Link to={`/prestador/${p.id}`} className="font-semibold hover:underline inline-flex items-center gap-1">
+                          <Link to={profileUrl(p)} className="font-semibold hover:underline inline-flex items-center gap-1">
                             {p.name}
                             {p.is_verified && <BadgeCheck className="h-4 w-4 text-primary" />}
                           </Link>
@@ -689,7 +696,7 @@ const AdminDashboard = () => {
                         </div>
                         <div className="mt-1.5 text-sm">
                           <span className="text-muted-foreground">Prestador:</span>{" "}
-                          <Link to={`/prestador/${c.provider_id}`} className="font-semibold hover:underline">
+                          <Link to={providerLink(c.provider_id)} className="font-semibold hover:underline">
                             {providerName(c.provider_id)}
                           </Link>
                         </div>
@@ -732,7 +739,7 @@ const AdminDashboard = () => {
                           </div>
                           <div className="mt-1.5 text-sm">
                             <span className="text-muted-foreground">Prestador:</span>{" "}
-                            <Link to={`/prestador/${c.provider_id}`} className="font-semibold hover:underline">
+                            <Link to={providerLink(c.provider_id)} className="font-semibold hover:underline">
                               {providerName(c.provider_id)}
                             </Link>{" "}
                             <span className="text-muted-foreground">· Denunciante: {clientName(c.client_id)}</span>
@@ -771,7 +778,7 @@ const AdminDashboard = () => {
                         <CardContent className="p-3 flex items-start justify-between gap-2">
                           <div className="min-w-0 flex-1">
                             <div className="text-xs text-muted-foreground">Prestador:</div>
-                            <Link to={`/prestador/${r.provider_id}`} className="font-semibold hover:underline text-sm">
+                            <Link to={providerLink(r.provider_id)} className="font-semibold hover:underline text-sm">
                               {providerName(r.provider_id)}
                             </Link>
                             <div className="text-sm mt-1">
@@ -795,7 +802,7 @@ const AdminDashboard = () => {
                           <div className="min-w-0">
                             <div className="text-sm font-semibold">{r.reviewer_name ?? "Anónimo"} · {r.rating}★</div>
                             {r.comment && <p className="text-sm text-muted-foreground">{r.comment}</p>}
-                            <Link to={`/prestador/${r.provider_id}`} className="text-xs text-primary hover:underline">Ver prestador</Link>
+                            <Link to={providerLink(r.provider_id)} className="text-xs text-primary hover:underline">Ver prestador</Link>
                           </div>
                           <Button variant="ghost" size="icon" onClick={() => remove("reviews", r.id)}>
                             <Trash2 className="h-4 w-4 text-destructive" />
@@ -888,7 +895,7 @@ const AdminDashboard = () => {
                           <AvatarFallback className="rounded-lg bg-primary/10 text-primary text-xs font-bold">{p.name.charAt(0)}</AvatarFallback>
                         </Avatar>
                         <div className="min-w-0 flex-1">
-                          <Link to={`/prestador/${p.id}`} className="font-medium hover:underline">{p.name}</Link>
+                          <Link to={profileUrl(p)} className="font-medium hover:underline">{p.name}</Link>
                           <div className="text-xs text-muted-foreground">{p.category} · {p.location}</div>
                         </div>
                         <div className="flex gap-3 text-xs text-muted-foreground shrink-0">

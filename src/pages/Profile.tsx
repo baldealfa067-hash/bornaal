@@ -24,7 +24,7 @@ type ProviderProfile = {
 
 const Profile = () => {
   const navigate = useNavigate();
-  const { user, isProvider, isAdmin, roles, loading, signOut } = useAuth();
+  const { user, isProvider, isBusiness, isAdmin, roles, loading, signOut } = useAuth();
   const qc = useQueryClient();
   const [profile, setProfile] = useState<ProviderProfile | null>(null);
   const [profileId, setProfileId] = useState<string | null>(null);
@@ -41,6 +41,10 @@ const Profile = () => {
     }
     if (isAdmin) {
       navigate("/admin", { replace: true });
+      return;
+    }
+    if (isBusiness && !isProvider) {
+      navigate("/painel-loja", { replace: true });
       return;
     }
     supabase
