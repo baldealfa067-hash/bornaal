@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { useCategories } from "@/hooks/useProviders";
+import { useBusinessCategories } from "@/hooks/useProviders";
 import { useBairros } from "@/hooks/useBairros";
 import { toast } from "sonner";
 import { LOCATION_OPTIONS } from "@/lib/locations";
@@ -36,6 +36,7 @@ import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import { formatCFA } from "@/lib/format";
 import { useTranslation } from "react-i18next";
 import { LanguageSelector } from "@/components/LanguageSelector";
+import { getCategoryName } from "@/lib/categoryI18n";
 
 type ConsumptionOption = "comer_no_local" | "para_levar" | "entrega";
 
@@ -69,7 +70,7 @@ type MenuCategory = { id: string; name: string };
 type MenuItem = { id: string; name: string; price: number; photo_url: string | null; category_id: string | null };
 
 const BusinessDashboard = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { user, isBusiness, isAdmin, loading, signOut } = useAuth();
   const [profileId, setProfileId] = useState<string | null>(null);
@@ -78,7 +79,7 @@ const BusinessDashboard = () => {
   const [fetching, setFetching] = useState(true);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { data: categories = [] } = useCategories();
+  const { data: categories = [] } = useBusinessCategories();
   const { data: bairros = [] } = useBairros();
   const locationOptions = bairros.length ? bairros : LOCATION_OPTIONS;
   const [verificationStatus, setVerificationStatus] = useState<string>("none");
@@ -356,9 +357,13 @@ const BusinessDashboard = () => {
                 <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
                   <SelectTrigger><SelectValue placeholder={t("businessEdit.selectCategory")} /></SelectTrigger>
                   <SelectContent>
-                    {categories.map((c) => (
-                      <SelectItem key={c} value={c}>{c}</SelectItem>
-                    ))}
+                    {categories.map((c) => {
+                      const cat = c as unknown as string | { id: string; name: string; name_en: string | null; name_fr: string | null };
+                      const isStr = typeof cat === "string";
+                      const value = isStr ? cat : cat.name;
+                      const display = isStr ? cat : getCategoryName(cat, i18n.language);
+                      return <SelectItem key={isStr ? cat : cat.id} value={value}>{display}</SelectItem>;
+                    })}
                   </SelectContent>
                 </Select>
               </Field>

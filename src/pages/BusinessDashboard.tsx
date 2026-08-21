@@ -25,6 +25,8 @@ import { useProviderStatsQuery } from "@/hooks/useProviderStats";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { LanguageSelector } from "@/components/LanguageSelector";
+import { useBusinessCategories } from "@/hooks/useProviders";
+import { translateCategoryName } from "@/lib/categoryI18n";
 
 type DashboardProfile = {
   id: string;
@@ -35,7 +37,7 @@ type DashboardProfile = {
 };
 
 const BusinessDashboard = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { user, isBusiness, isAdmin, loading, signOut } = useAuth();
   const qc = useQueryClient();
@@ -44,6 +46,7 @@ const BusinessDashboard = () => {
   const [orderCount, setOrderCount] = useState(0);
   const [commentCount, setCommentCount] = useState(0);
   const { data: stats = { profile_views: 0, whatsapp_clicks: 0, call_clicks: 0 } } = useProviderStatsQuery(profile?.id ?? null);
+  const { data: bizCats = [] } = useBusinessCategories();
 
   const loadCounts = async (pid: string) => {
     const [{ count: orders }, { count: reviews }] = await Promise.all([
@@ -147,7 +150,7 @@ const BusinessDashboard = () => {
               <div className="min-w-0">
                 <h1 className="text-xl font-bold truncate">{profile.name}</h1>
                 <p className="text-sm text-muted-foreground flex items-center gap-1.5 flex-wrap">
-                  {profile.category}
+                  {translateCategoryName(profile.category, bizCats as { id: string; name: string; name_en: string | null; name_fr: string | null }[], i18n.language)}
                   {profile.verification_status === "aprovado" && (
                     <Badge variant="secondary" className="text-[10px] px-1.5 py-0 gap-1">
                       <ShieldCheck className="h-3 w-3 text-green-600" /> {t("businessDashboard.verified")}

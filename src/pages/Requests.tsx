@@ -22,6 +22,7 @@ import { useBairros } from "@/hooks/useBairros";
 import { BAIRROS_FILTER } from "@/lib/locations";
 import { formatCFA } from "@/lib/format";
 import { getPageCount, paginateArray } from "@/lib/pagination";
+import { getCategoryName, translateCategoryName } from "@/lib/categoryI18n";
 import {
   useRequests, useCreateRequest,
   useBidsForRequest, useBidOnRequest, useUpdateBidStatus, useMyBidOnRequest,
@@ -275,9 +276,13 @@ const Requests = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">{t("requests.allCategories")}</SelectItem>
-                {categories.map((c) => (
-                  <SelectItem key={c} value={c}>{c}</SelectItem>
-                ))}
+                {categories.map((c) => {
+                  const cat = c as unknown as string | { id: string; name: string; name_en: string | null; name_fr: string | null };
+                  const isStr = typeof cat === "string";
+                  const value = isStr ? cat : cat.name;
+                  const display = isStr ? cat : getCategoryName(cat, i18n.language);
+                  return <SelectItem key={isStr ? cat : cat.id} value={value}>{display}</SelectItem>;
+                })}
               </SelectContent>
             </Select>
             <Select value={filterLocation} onValueChange={setFilterLocation}>
@@ -346,9 +351,13 @@ const Requests = () => {
             <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
               <SelectTrigger><SelectValue placeholder={t("requests.serviceCategory")} /></SelectTrigger>
               <SelectContent>
-                {categories.map((c) => (
-                  <SelectItem key={c} value={c}>{c}</SelectItem>
-                ))}
+                {categories.map((c) => {
+                  const cat = c as unknown as string | { id: string; name: string; name_en: string | null; name_fr: string | null };
+                  const isStr = typeof cat === "string";
+                  const value = isStr ? cat : cat.name;
+                  const display = isStr ? cat : getCategoryName(cat, i18n.language);
+                  return <SelectItem key={isStr ? cat : cat.id} value={value}>{display}</SelectItem>;
+                })}
               </SelectContent>
             </Select>
             <Select value={form.location} onValueChange={(v) => setForm({ ...form, location: v })}>
@@ -541,6 +550,8 @@ function RequestCard({
   bidOnRequest: { isPending: boolean };
 }) {
   const { t } = useTranslation();
+  const { data: cats = [] } = useCategories();
+  const displayCat = translateCategoryName(r.category, cats as { id: string; name: string; name_en: string | null; name_fr: string | null }[], i18n.language);
   const { data: myBid } = useMyBidOnRequest(r.id, providerProfile?.id ?? null);
   const deadlineMap: Record<string, string> = {
     urgente: t("requests.urgent"),
@@ -563,7 +574,7 @@ function RequestCard({
           <div className="min-w-0">
             <h3 className="font-semibold text-sm">{r.requester_name ?? t("admin.client")}</h3>
             <div className="flex flex-wrap items-center gap-2 mt-1 text-xs text-muted-foreground">
-              <span className="flex items-center gap-1"><Tag className="h-3 w-3" />{r.category}</span>
+              <span className="flex items-center gap-1"><Tag className="h-3 w-3" />{displayCat}</span>
               <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{r.location}</span>
               {deadlineLabel && (
                 <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{deadlineLabel}</span>
@@ -641,7 +652,7 @@ function RequestCard({
         </button>
         {expanded && (
           <div className="mt-2 text-xs text-muted-foreground space-y-1">
-            <p><span className="font-medium text-foreground">{t("requests.categoryLabel")}</span> {r.category}</p>
+            <p><span className="font-medium text-foreground">{t("requests.categoryLabel")}</span> {displayCat}</p>
             <p><span className="font-medium text-foreground">{t("requests.locationLabel")}</span> {r.location}</p>
             {deadlineLabel && <p><span className="font-medium text-foreground">{t("requests.deadlineLabel")}</span> {deadlineLabel}</p>}
             <p><span className="font-medium text-foreground">{t("requests.budgetLabel")}</span>{" "}
@@ -671,6 +682,8 @@ function MyRequestCard({
   onReview: (requestId: string, providerId: string, providerName: string) => void;
 }) {
   const { t } = useTranslation();
+  const { data: cats2 = [] } = useCategories();
+  const displayCatMy = translateCategoryName(r.category, cats2 as { id: string; name: string; name_en: string | null; name_fr: string | null }[], i18n.language);
   const { data: bids = [], isLoading: loadingBids } = useBidsForRequest(r.id);
   const deadlineMap: Record<string, string> = {
     urgente: t("requests.urgent"),
@@ -689,7 +702,7 @@ function MyRequestCard({
       <CardContent className="p-4">
         <div className="flex items-start justify-between gap-2 mb-2">
           <div className="min-w-0">
-            <h3 className="font-semibold text-sm">{r.category}</h3>
+            <h3 className="font-semibold text-sm">{displayCatMy}</h3>
             <div className="flex flex-wrap items-center gap-2 mt-1 text-xs text-muted-foreground">
               <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{r.location}</span>
               {deadlineLabel && (
@@ -743,7 +756,7 @@ function MyRequestCard({
                       </Avatar>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium truncate">{bid.provider?.name ?? t("requestsExtra.providerFallback")}</p>
-                        <p className="text-[11px] text-muted-foreground">{bid.provider?.category}</p>
+                        <p className="text-[11px] text-muted-foreground">{bid.provider?.category ? translateCategoryName(bid.provider.category, cats2 as { id: string; name: string; name_en: string | null; name_fr: string | null }[], i18n.language) : ""}</p>
                         {bid.message && <p className="text-xs text-muted-foreground mt-0.5 italic">"{bid.message}"</p>}
                       </div>
                       <div className="flex flex-col gap-1 shrink-0">

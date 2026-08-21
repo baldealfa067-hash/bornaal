@@ -33,6 +33,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { formatCFA } from "@/lib/format";
 import ManageList from "@/components/ManageList";
+import ManageCategoryList from "@/components/ManageCategoryList";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import logo from "@/assets/logo.png";
 import { useTranslation } from "react-i18next";
@@ -59,7 +60,7 @@ type Provider = {
 type Request = { id: string; requester_name: string | null; category: string; location: string; description: string; status: string; created_at: string };
 type Review = { id: string; provider_id: string; reviewer_name: string | null; rating: number; comment: string | null; created_at: string; status: string };
 type Complaint = { id: string; provider_id: string; client_id: string | null; reason: string; description: string | null; contact: string | null; status: string; created_at: string };
-type Category = { id: string; name: string };
+type Category = { id: string; name: string; name_en?: string | null; name_fr?: string | null };
 type Bairro = { id: string; name: string };
 type ActivityType = "vista" | "whatsapp" | "call";
 type ActivitySeries = Record<ActivityType, number[]>;
@@ -192,14 +193,14 @@ const AdminDashboard = () => {
       supabase.from("profiles").select("id, name, category, phone, location, price_type, starting_price, photo_url, profile_type, is_verified, verification_status, verification_reason, verification_doc_url, verification_selfie_url").order("name"),
       supabase.from("service_requests").select("id, requester_name, category, location, description, status, created_at").order("created_at", { ascending: false }),
       supabase.from("reviews").select("id, provider_id, reviewer_name, rating, comment, created_at, status").order("created_at", { ascending: false }),
-      supabase.from("categories").select("id, name").order("name"),
+      supabase.from("categories").select("id, name, name_en, name_fr").order("name"),
       supabase.from("bairros").select("id, name").order("name"),
       supabase.from("provider_stats").select("provider_id, profile_views, whatsapp_clicks, call_clicks"),
       supabase.from("complaints").select("id, provider_id, client_id, reason, description, contact, status, created_at").order("created_at", { ascending: false }),
       supabase.from("provider_activity").select("provider_id, activity_type, created_at").order("created_at", { ascending: false }),
       supabase.from("portfolio_images").select("provider_id"),
       supabase.from("quality_levels").select("provider_id, level, score"),
-      supabase.from("business_categories").select("id, name").order("name"),
+      supabase.from("business_categories").select("id, name, name_en, name_fr").order("name"),
     ]);
     const statsMap: Record<string, { profile_views: number; whatsapp_clicks: number; call_clicks: number }> = {};
     (st ?? []).forEach((s) => {
@@ -311,15 +312,15 @@ const AdminDashboard = () => {
     loadAll();
   };
 
-  const addCategory = async (name: string) => {
-    const { error } = await supabase.from("categories").insert({ name });
+  const addCategory = async (data: { name: string; name_en: string | null; name_fr: string | null }) => {
+    const { error } = await supabase.from("categories").insert({ name: data.name, name_en: data.name_en, name_fr: data.name_fr });
     if (error) return toast.error(error.message);
     toast.success(t("admin.categoryAdded"));
     loadAll();
   };
 
-  const renameCategory = async (id: string, name: string) => {
-    const { error } = await supabase.from("categories").update({ name }).eq("id", id);
+  const renameCategory = async (id: string, data: { name: string; name_en: string | null; name_fr: string | null }) => {
+    const { error } = await supabase.from("categories").update({ name: data.name, name_en: data.name_en, name_fr: data.name_fr }).eq("id", id);
     if (error) return toast.error(error.message);
     toast.success(t("admin.categoryUpdated"));
     loadAll();
@@ -353,15 +354,15 @@ const AdminDashboard = () => {
     loadAll();
   };
 
-  const addBusinessCategory = async (name: string) => {
-    const { error } = await supabase.from("business_categories").insert({ name });
+  const addBusinessCategory = async (data: { name: string; name_en: string | null; name_fr: string | null }) => {
+    const { error } = await supabase.from("business_categories").insert({ name: data.name, name_en: data.name_en, name_fr: data.name_fr });
     if (error) return toast.error(error.message);
     toast.success(t("admin.shopCategoryAdded"));
     loadAll();
   };
 
-  const renameBusinessCategory = async (id: string, name: string) => {
-    const { error } = await supabase.from("business_categories").update({ name }).eq("id", id);
+  const renameBusinessCategory = async (id: string, data: { name: string; name_en: string | null; name_fr: string | null }) => {
+    const { error } = await supabase.from("business_categories").update({ name: data.name, name_en: data.name_en, name_fr: data.name_fr }).eq("id", id);
     if (error) return toast.error(error.message);
     toast.success(t("admin.shopCategoryUpdated"));
     loadAll();
@@ -889,8 +890,10 @@ const AdminDashboard = () => {
           {menu === "categories" && (
             <div className="flex flex-col gap-4">
               <h1 className="text-2xl font-bold">{t("admin.categories")}</h1>
-              <ManageList
-                placeholder={t("admin.newCategoryPlaceholder")}
+              <p className="text-xs text-muted-foreground">
+                Crie a categoria em PT e adicione as traduções em inglês e francês. O nome em PT é o identificador guardado nos perfis.
+              </p>
+              <ManageCategoryList
                 items={categories}
                 onAdd={addCategory}
                 onRename={renameCategory}
@@ -906,8 +909,10 @@ const AdminDashboard = () => {
               <p className="text-xs text-muted-foreground">
                 {t("admin.shopCategoriesDesc")}
               </p>
-              <ManageList
-                placeholder={t("admin.newShopCategoryPlaceholder")}
+              <p className="text-xs text-muted-foreground">
+                Tradução: preencha EN e FR para cada categoria. Exibida conforme o idioma do utilizador.
+              </p>
+              <ManageCategoryList
                 items={businessCategories}
                 onAdd={addBusinessCategory}
                 onRename={renameBusinessCategory}

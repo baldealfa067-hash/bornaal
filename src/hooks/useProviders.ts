@@ -90,6 +90,17 @@ export const useCategories = () =>
   useQuery({
     queryKey: ["categories"],
     queryFn: async () => {
+      const { data, error } = await supabase.from("categories").select("id, name, name_en, name_fr");
+      if (error) throw error;
+      return (data ?? []) as { id: string; name: string; name_en: string | null; name_fr: string | null }[];
+    },
+  });
+
+// Legacy helper: returns only names sorted (for backwards compat)
+export const useCategoryNames = () =>
+  useQuery({
+    queryKey: ["category-names"],
+    queryFn: async () => {
       const { data, error } = await supabase.from("categories").select("name");
       if (error) throw error;
       return (data ?? []).map((c) => c.name).sort();
@@ -99,6 +110,16 @@ export const useCategories = () =>
 export const useBusinessCategories = () =>
   useQuery({
     queryKey: ["business-categories"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("business_categories").select("id, name, name_en, name_fr");
+      if (error) throw error;
+      return (data ?? []) as { id: string; name: string; name_en: string | null; name_fr: string | null }[];
+    },
+  });
+
+export const useBusinessCategoryNames = () =>
+  useQuery({
+    queryKey: ["business-category-names"],
     queryFn: async () => {
       const { data, error } = await supabase.from("business_categories").select("name");
       if (error) throw error;

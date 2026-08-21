@@ -23,6 +23,7 @@ import { useCategories } from "@/hooks/useProviders";
 import { useBairros } from "@/hooks/useBairros";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import i18n from "@/i18n";
+import { getCategoryName } from "@/lib/categoryI18n";
 
 type Form = {
   name: string;
@@ -276,9 +277,13 @@ const ProviderDashboard = () => {
                 <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
                   <SelectTrigger><SelectValue placeholder={t("providerDashboard.selectCategory")} /></SelectTrigger>
                   <SelectContent>
-                    {categories.map((c) => (
-                      <SelectItem key={c} value={c}>{c}</SelectItem>
-                    ))}
+                    {categories.map((c) => {
+                      const cat = c as unknown as string | { id: string; name: string; name_en: string | null; name_fr: string | null };
+                      const isStr = typeof cat === "string";
+                      const value = isStr ? cat : cat.name;
+                      const display = isStr ? cat : getCategoryName(cat, i18n.language);
+                      return <SelectItem key={isStr ? cat : cat.id} value={value}>{display}</SelectItem>;
+                    })}
                   </SelectContent>
                 </Select>
               </Field>

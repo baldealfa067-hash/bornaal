@@ -11,13 +11,14 @@ import { useBairros } from "@/hooks/useBairros";
 import { BAIRROS_FILTER } from "@/lib/locations";
 import { getPageCount, paginateArray } from "@/lib/pagination";
 import { useTranslation } from "react-i18next";
+import { getCategoryName } from "@/lib/categoryI18n";
 
 const PAGE_SIZE = 10;
 
 type SectionKey = "servicos" | "lojas";
 
 const Index = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const SECTIONS = [
     { key: "servicos" as const, label: t("home.providersTitle"), short: t("home.providersShort") },
     { key: "lojas" as const, label: t("home.shopsTitle"), short: t("home.shopsShort") },
@@ -136,16 +137,21 @@ const Index = () => {
           >
             {t("common.all")}
           </Badge>
-          {categories.map((cat) => (
-            <Badge
-              key={cat}
-              variant={activeCategory === cat ? "default" : "outline"}
-              className="cursor-pointer px-3 py-1"
-              onClick={() => setCategory(cat)}
-            >
-              {cat}
-            </Badge>
-          ))}
+          {categories.map((cat) => {
+            const catObj = typeof cat === "string" ? { id: cat, name: cat, name_en: null, name_fr: null } : cat as { id: string; name: string; name_en: string | null; name_fr: string | null };
+            const display = getCategoryName(catObj, i18n.language);
+            const value = catObj.name;
+            return (
+              <Badge
+                key={catObj.id ?? value}
+                variant={activeCategory === value ? "default" : "outline"}
+                className="cursor-pointer px-3 py-1"
+                onClick={() => setCategory(value)}
+              >
+                {display}
+              </Badge>
+            );
+          })}
         </div>
       )}
 

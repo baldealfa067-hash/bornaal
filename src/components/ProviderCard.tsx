@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { formatCFA } from "@/lib/format";
 import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from "react-i18next";
+import { useCategories, useBusinessCategories } from "@/hooks/useProviders";
+import { translateCategoryName } from "@/lib/categoryI18n";
 
 interface ProviderCardProps {
   id: string;
@@ -28,7 +30,13 @@ interface ProviderCardProps {
 export const ProviderCard = ({
   id, name, category, location, phone, photo_url, price_type, starting_price, services, is_verified, profile_type, avgRating, reviewCount
 }: ProviderCardProps) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const { data: serviceCats = [] } = useCategories();
+  const { data: businessCats = [] } = useBusinessCategories();
+  const displayCategory = (() => {
+    const list = isBusiness ? businessCats : serviceCats;
+    return translateCategoryName(category, list as { id: string; name: string; name_en: string | null; name_fr: string | null }[], i18n.language);
+  })();
   const isBusiness = profile_type === "business";
   const detailUrl = isBusiness ? `/loja/${id}` : `/prestador/${id}`;
   const cleanPhone = phone.replace(/\D/g, "");
@@ -72,7 +80,7 @@ export const ProviderCard = ({
                 />
               )}
             </h3>
-            <Badge variant="secondary" className="text-[11px] mt-0.5 font-medium">{category}</Badge>
+            <Badge variant="secondary" className="text-[11px] mt-0.5 font-medium">{displayCategory}</Badge>
             {services && services.length > 0 && (
               <div className="flex flex-wrap gap-1 mt-1">
                 {services.slice(0, 3).map((s) => (

@@ -6,8 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { StarRating } from "@/components/StarRating";
-import { useProvider } from "@/hooks/useProviders";
+import { useProvider, useCategories } from "@/hooks/useProviders";
 import { formatCFA } from "@/lib/format";
+import { translateCategoryName } from "@/lib/categoryI18n";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -33,6 +34,7 @@ const ProviderDetail = () => {
   const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const { data: provider, isLoading } = useProvider(id!);
+  const { data: categories = [] } = useCategories();
   const [portfolio, setPortfolio] = useState<{ id: string; image_url: string }[]>([]);
   const viewLogged = useRef(false);
   const [complaining, setComplaining] = useState(false);
@@ -186,7 +188,7 @@ const ProviderDetail = () => {
               <BadgeCheck className="h-5 w-5 text-primary" aria-label={t("providerDetailExtra.verifiedLabel")} />
             )}
           </h1>
-          <Badge variant="secondary" className="mt-1">{provider.category}</Badge>
+          <Badge variant="secondary" className="mt-1">{translateCategoryName(provider.category, categories as { id: string; name: string; name_en: string | null; name_fr: string | null }[], i18n.language)}</Badge>
           {(provider as { services?: string[] }).services?.length ? (
             <div className="flex flex-wrap gap-1 mt-2">
               {(provider as { services?: string[] }).services!.map((s) => (

@@ -19,6 +19,8 @@ import { useTranslation } from "react-i18next";
 import i18n from "@/i18n";
 import { useQueryClient } from "@tanstack/react-query";
 import { sanitizeName, sanitizeComment, sanitizeReason, sanitizeDescription, sanitizeContact } from "@/lib/sanitize";
+import { useBusinessCategories } from "@/hooks/useProviders";
+import { translateCategoryName } from "@/lib/categoryI18n";
 
 type ReportReasonKey = "food" | "charge" | "behaviour" | "fake" | "hygiene" | "other";
 const REPORT_REASONS: { key: ReportReasonKey; labelKey: string }[] = [
@@ -44,6 +46,7 @@ const BusinessDetail = () => {
   const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
+  const { data: bizCats = [] } = useBusinessCategories();
   const [loading, setLoading] = useState(true);
   const [business, setBusiness] = useState<Record<string, unknown> | null>(null);
   const [menuCategories, setMenuCategories] = useState<MenuCategory[]>([]);
@@ -278,7 +281,7 @@ const BusinessDetail = () => {
             )}
           </h1>
           <Badge variant="secondary" className="mt-1 flex items-center gap-1">
-            <Store className="h-3 w-3" /> {category}
+            <Store className="h-3 w-3" /> {translateCategoryName(category, bizCats as { id: string; name: string; name_en: string | null; name_fr: string | null }[], i18n.language)}
           </Badge>
           {consumptionOptions.length > 0 && (
             <div className="flex flex-wrap gap-1 mt-2">
