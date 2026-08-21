@@ -35,6 +35,9 @@ import { formatCFA } from "@/lib/format";
 import ManageList from "@/components/ManageList";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import logo from "@/assets/logo.png";
+import { useTranslation } from "react-i18next";
+import i18n from "@/i18n";
+import { LanguageSelector } from "@/components/LanguageSelector";
 
 type Provider = {
   id: string;
@@ -77,11 +80,11 @@ type MenuKey =
 type ProviderFilter = "todos" | "avaliacao" | "ativos" | "rejeitados";
 type ReviewFilter = "pendentes" | "aprovadas";
 
-const STATUS_BADGE: Record<string, { label: string; className: string }> = {
-  aprovado: { label: "Ativo", className: "bg-green-100 text-green-700" },
-  pendente: { label: "Em avaliação", className: "bg-yellow-100 text-yellow-700" },
-  rejeitado: { label: "Rejeitado", className: "bg-red-100 text-red-700" },
-  none: { label: "Sem verificação", className: "bg-muted text-muted-foreground" },
+const STATUS_BADGE_KEYS: Record<string, { key: string; className: string }> = {
+  aprovado: { key: "admin.active", className: "bg-green-100 text-green-700" },
+  pendente: { key: "admin.inReview", className: "bg-yellow-100 text-yellow-700" },
+  rejeitado: { key: "admin.rejected", className: "bg-red-100 text-red-700" },
+  none: { key: "admin.noVerification", className: "bg-muted text-muted-foreground" },
 };
 
 const buildActivityMap = (rows: { provider_id: string; activity_type: string; created_at: string }[]) => {
@@ -141,6 +144,7 @@ const StatCard = ({ label, value, icon, onClick }: { label: string; value: numbe
 );
 
 const AdminDashboard = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { user, isAdmin, loading, signOut } = useAuth();
   const [providers, setProviders] = useState<Provider[]>([]);
@@ -248,7 +252,7 @@ const AdminDashboard = () => {
       ? await supabase.rpc("admin_delete_user", { p_profile_id: id })
       : await supabase.from(table).delete().eq("id", id);
     if (error) return toast.error(error.message);
-    toast.success("Eliminado");
+    toast.success(t("admin.deleted"));
     loadAll();
   };
 
@@ -258,7 +262,7 @@ const AdminDashboard = () => {
       verification_status: !p.is_verified ? "aprovado" : "none",
     }).eq("id", p.id);
     if (error) return toast.error(error.message);
-    toast.success(!p.is_verified ? "Marcado como verificado" : "Verificação removida");
+    toast.success(!p.is_verified ? t("admin.markedVerified") : t("admin.verificationRemoved"));
     loadAll();
   };
 
@@ -269,7 +273,7 @@ const AdminDashboard = () => {
       verification_reason: null,
     }).eq("id", p.id);
     if (error) return toast.error(error.message);
-    toast.success(`${p.name} aprovado`);
+    toast.success(`${p.name} ${t("admin.approved")}`);
     loadAll();
   };
 
@@ -277,10 +281,10 @@ const AdminDashboard = () => {
     const { error } = await supabase.from("profiles").update({
       is_verified: false,
       verification_status: "rejeitado",
-      verification_reason: rejectReason.trim() || "Documentação não aprovada",
+      verification_reason: rejectReason.trim() || t("adminExtra.docRejectedDefault"),
     }).eq("id", p.id);
     if (error) return toast.error(error.message);
-    toast.success("Perfil rejeitado");
+    toast.success(t("admin.rejectedProfile"));
     setRejectTarget(null);
     setRejectReason("");
     loadAll();
@@ -289,88 +293,88 @@ const AdminDashboard = () => {
   const openVerificationFile = async (path: string | null) => {
     if (!path) return;
     const { data } = await supabase.storage.from("verification").createSignedUrl(path, 300);
-    if (!data?.signedUrl) return toast.error("Não foi possível abrir o ficheiro");
+    if (!data?.signedUrl) return toast.error(t("admin.fileOpenError"));
     window.open(data.signedUrl, "_blank");
   };
 
   const approveReview = async (id: string) => {
     const { error } = await supabase.from("reviews").update({ status: "aprovado" }).eq("id", id);
     if (error) return toast.error(error.message);
-    toast.success("Avaliação aprovada");
+    toast.success(t("admin.reviewApproved"));
     loadAll();
   };
 
   const setComplaintStatus = async (c: Complaint, status: "validada" | "rejeitada") => {
     const { error } = await supabase.from("complaints").update({ status }).eq("id", c.id);
     if (error) return toast.error(error.message);
-    toast.success(status === "validada" ? "Denúncia validada — penaliza o prestador" : "Denúncia rejeitada — sem penalização");
+    toast.success(status === "validada" ? t("admin.complaintValidated") : t("admin.complaintRejected"));
     loadAll();
   };
 
   const addCategory = async (name: string) => {
     const { error } = await supabase.from("categories").insert({ name });
     if (error) return toast.error(error.message);
-    toast.success("Categoria adicionada");
+    toast.success(t("admin.categoryAdded"));
     loadAll();
   };
 
   const renameCategory = async (id: string, name: string) => {
     const { error } = await supabase.from("categories").update({ name }).eq("id", id);
     if (error) return toast.error(error.message);
-    toast.success("Categoria atualizada");
+    toast.success(t("admin.categoryUpdated"));
     loadAll();
   };
 
   const removeCategory = async (id: string) => {
     const { error } = await supabase.from("categories").delete().eq("id", id);
     if (error) return toast.error(error.message);
-    toast.success("Categoria eliminada");
+    toast.success(t("admin.categoryDeleted"));
     loadAll();
   };
 
   const addBairro = async (name: string) => {
     const { error } = await supabase.from("bairros").insert({ name });
     if (error) return toast.error(error.message);
-    toast.success("Bairro adicionado");
+    toast.success(t("admin.neighborhoodAdded"));
     loadAll();
   };
 
   const renameBairro = async (id: string, name: string) => {
     const { error } = await supabase.from("bairros").update({ name }).eq("id", id);
     if (error) return toast.error(error.message);
-    toast.success("Bairro atualizado");
+    toast.success(t("admin.neighborhoodUpdated"));
     loadAll();
   };
 
   const removeBairro = async (id: string) => {
     const { error } = await supabase.from("bairros").delete().eq("id", id);
     if (error) return toast.error(error.message);
-    toast.success("Bairro eliminado");
+    toast.success(t("admin.neighborhoodDeleted"));
     loadAll();
   };
 
   const addBusinessCategory = async (name: string) => {
     const { error } = await supabase.from("business_categories").insert({ name });
     if (error) return toast.error(error.message);
-    toast.success("Categoria de loja adicionada");
+    toast.success(t("admin.shopCategoryAdded"));
     loadAll();
   };
 
   const renameBusinessCategory = async (id: string, name: string) => {
     const { error } = await supabase.from("business_categories").update({ name }).eq("id", id);
     if (error) return toast.error(error.message);
-    toast.success("Categoria de loja atualizada");
+    toast.success(t("admin.shopCategoryUpdated"));
     loadAll();
   };
 
   const removeBusinessCategory = async (id: string) => {
     const { error } = await supabase.from("business_categories").delete().eq("id", id);
     if (error) return toast.error(error.message);
-    toast.success("Categoria de loja eliminada");
+    toast.success(t("admin.shopCategoryDeleted"));
     loadAll();
   };
 
-  const providerName = (pid: string) => providers.find((p) => p.id === pid)?.name ?? "Prestador";
+  const providerName = (pid: string) => providers.find((p) => p.id === pid)?.name ?? t("admin.client");
   const profileUrl = (p: Provider) => (p.profile_type === "business" ? `/loja/${p.id}` : `/prestador/${p.id}`);
   const providerLink = (pid: string) => {
     const p = providers.find((x) => x.id === pid);
@@ -381,7 +385,7 @@ const AdminDashboard = () => {
   const pendingVerifications = providers.filter((p) => p.verification_status === "pendente");
   const pendingComplaints = complaints.filter((c) => c.status === "pendente");
   const reviewedComplaints = complaints.filter((c) => c.status !== "pendente");
-  const clientName = (cid: string | null) => (cid ? providers.find((p) => p.id === cid)?.name ?? "Cliente" : "Anónimo");
+  const clientName = (cid: string | null) => (cid ? providers.find((p) => p.id === cid)?.name ?? t("admin.client") : t("admin.anonymous"));
 
   const filteredProviders = useMemo(() => {
     if (providerFilter === "avaliacao") return providers.filter((p) => p.verification_status === "pendente");
@@ -404,8 +408,8 @@ const AdminDashboard = () => {
 
   const statusBadge = (p: Provider) => {
     const key = p.verification_status || (p.is_verified ? "aprovado" : "none");
-    const s = STATUS_BADGE[key] ?? STATUS_BADGE.none;
-    return <Badge className={s.className}>{s.label}</Badge>;
+    const s = STATUS_BADGE_KEYS[key] ?? STATUS_BADGE_KEYS.none;
+    return <Badge className={s.className}>{t(s.key)}</Badge>;
   };
 
   const qualityLabel = (p: Provider) => {
@@ -432,14 +436,14 @@ const AdminDashboard = () => {
                   {p.name}
                   {p.is_verified && <BadgeCheck className="h-4 w-4 text-primary" />}
                 </Link>
-                {p.profile_type === "business" && <Badge variant="outline" className="text-[10px]">Loja</Badge>}
+                {p.profile_type === "business" && <Badge variant="outline" className="text-[10px]">{t("admin.shop")}</Badge>}
                 {statusBadge(p)}
               </div>
               <div className="text-xs text-muted-foreground mt-0.5">
                 {p.category} · {p.location} · {p.phone}
                 {p.price_type === "fixo" && p.starting_price != null && ` · ${formatCFA(p.starting_price)}`}
-                {p.price_type === "negociavel" && " · Negociável"}
-                {p.price_type === "combinar" && " · A combinar"}
+                {p.price_type === "negociavel" && ` · ${t("common.negotiable")}`}
+                {p.price_type === "combinar" && ` · ${t("common.toCombine")}`}
               </div>
             </div>
             <Button variant="ghost" size="icon" className="shrink-0" onClick={() => setDeleteTarget({ table: "profiles", id: p.id, entity: `o perfil de ${p.name}` })}>
@@ -449,25 +453,25 @@ const AdminDashboard = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4 pt-4 border-t">
             <div>
-              <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Desempenho</div>
+              <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">{t("admin.performance")}</div>
               <div className="flex flex-col gap-3">
                 <div>
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-xs text-muted-foreground inline-flex items-center gap-1"><Eye className="h-3.5 w-3.5" /> Vistas</span>
+                    <span className="text-xs text-muted-foreground inline-flex items-center gap-1"><Eye className="h-3.5 w-3.5" /> {t("admin.views")}</span>
                     <span className="font-semibold">{p.stats?.profile_views ?? 0}</span>
                   </div>
                   <MiniBars data={series.vista} color="bg-green-600" />
                 </div>
                 <div>
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-xs text-muted-foreground inline-flex items-center gap-1"><MessageCircle className="h-3.5 w-3.5" /> WhatsApp</span>
+                    <span className="text-xs text-muted-foreground inline-flex items-center gap-1"><MessageCircle className="h-3.5 w-3.5" /> {t("admin.whatsapp")}</span>
                     <span className="font-semibold">{p.stats?.whatsapp_clicks ?? 0}</span>
                   </div>
                   <MiniBars data={series.whatsapp} color="bg-emerald-500" />
                 </div>
                 <div>
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-xs text-muted-foreground inline-flex items-center gap-1"><Phone className="h-3.5 w-3.5" /> Ligações</span>
+                    <span className="text-xs text-muted-foreground inline-flex items-center gap-1"><Phone className="h-3.5 w-3.5" /> {t("admin.calls")}</span>
                     <span className="font-semibold">{p.stats?.call_clicks ?? 0}</span>
                   </div>
                   <MiniBars data={series.call} color="bg-teal-500" />
@@ -476,48 +480,48 @@ const AdminDashboard = () => {
             </div>
 
             <div>
-              <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Status do Perfil</div>
+              <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">{t("admin.profileStatus")}</div>
               <dl className="flex flex-col gap-2 text-sm">
                 <div className="flex items-center justify-between gap-2">
-                  <dt className="text-muted-foreground text-xs">Identidade verificada</dt>
-                  <dd className="font-medium">{p.is_verified ? "Sim" : "Não"}</dd>
+                  <dt className="text-muted-foreground text-xs">{t("admin.identityVerified")}</dt>
+                  <dd className="font-medium">{p.is_verified ? t("admin.yes") : t("admin.no")}</dd>
                 </div>
                 <div className="flex items-center justify-between gap-2">
-                  <dt className="text-muted-foreground text-xs">Estado da verificação</dt>
+                  <dt className="text-muted-foreground text-xs">{t("admin.verificationStatus")}</dt>
                   <dd>{statusBadge(p)}</dd>
                 </div>
                 <div className="flex items-center justify-between gap-2">
-                  <dt className="text-muted-foreground text-xs inline-flex items-center gap-1"><Images className="h-3.5 w-3.5" /> Fotos no portfólio</dt>
-                  <dd className="font-medium">{(portfolioCount[p.id] ?? 0) > 0 ? `Sim (${portfolioCount[p.id]})` : "Não"}</dd>
+                  <dt className="text-muted-foreground text-xs inline-flex items-center gap-1"><Images className="h-3.5 w-3.5" /> {t("admin.portfolioPhotos")}</dt>
+                  <dd className="font-medium">{(portfolioCount[p.id] ?? 0) > 0 ? `${t("admin.yes")} (${portfolioCount[p.id]})` : t("admin.no")}</dd>
                 </div>
                 <div className="flex items-center justify-between gap-2">
-                  <dt className="text-muted-foreground text-xs">Nível de qualidade</dt>
+                  <dt className="text-muted-foreground text-xs">{t("admin.qualityLevel")}</dt>
                   <dd className={`font-medium capitalize ${q.className}`}>{q.label}</dd>
                 </div>
                 {p.verification_reason && (
-                  <p className="text-xs text-red-600 bg-red-50 rounded-lg p-2">Motivo: {p.verification_reason}</p>
+                  <p className="text-xs text-red-600 bg-red-50 rounded-lg p-2">{t("admin.reason", { reason: p.verification_reason })}</p>
                 )}
               </dl>
             </div>
 
             <div>
-              <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Ações</div>
+              <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">{t("admin.actions")}</div>
               <div className="flex flex-col gap-1.5">
                 {p.is_verified ? (
                   <Button variant="outline" size="sm" onClick={() => toggleVerified(p)} className="gap-1">
-                    <BadgeCheck className="h-3.5 w-3.5" /> Remover selo
+                    <BadgeCheck className="h-3.5 w-3.5" /> {t("admin.removeBadge")}
                   </Button>
                 ) : (
                   <Button size="sm" onClick={() => approveVerification(p)} className="gap-1 bg-green-600 hover:bg-green-700 text-white">
-                    <Check className="h-3.5 w-3.5" /> Aprovar Perfil
+                    <Check className="h-3.5 w-3.5" /> {t("admin.approveProfile")}
                   </Button>
                 )}
                 <Button size="sm" variant="destructive" onClick={() => setRejectTarget(p)} className="gap-1">
-                  <X className="h-3.5 w-3.5" /> Rejeitar
+                  <X className="h-3.5 w-3.5" /> {t("admin.reject")}
                 </Button>
                 {p.verification_doc_url || p.verification_selfie_url ? (
                   <Button variant="outline" size="sm" onClick={() => openVerificationFile(p.verification_doc_url ?? p.verification_selfie_url)} className="gap-1">
-                    <ShieldCheck className="h-3.5 w-3.5" /> Ver documento
+                    <ShieldCheck className="h-3.5 w-3.5" /> {t("admin.viewDocument")}
                   </Button>
                 ) : null}
               </div>
@@ -528,20 +532,20 @@ const AdminDashboard = () => {
     );
   };
 
-  if (loading || loadingData) return <div className="min-h-screen flex items-center justify-center text-muted-foreground">A carregar...</div>;
+  if (loading || loadingData) return <div className="min-h-screen flex items-center justify-center text-muted-foreground">{t("admin.loading")}</div>;
 
   const menuItems: { key: MenuKey; label: string; icon: React.ReactNode; count?: number }[] = [
-    { key: "overview", label: "Painel Geral", icon: <LayoutDashboard className="h-4 w-4" /> },
-    { key: "providers", label: "Prestadores", icon: <Users className="h-4 w-4" />, count: providers.length },
-    { key: "verifications", label: "Verificações", icon: <ShieldCheck className="h-4 w-4" />, count: pendingVerifications.length },
-    { key: "complaints", label: "Denúncias", icon: <ShieldAlert className="h-4 w-4" />, count: pendingComplaints.length },
-    { key: "reviews", label: "Avaliações", icon: <Star className="h-4 w-4" />, count: pendingReviews.length },
-    { key: "requests", label: "Pedidos", icon: <ClipboardList className="h-4 w-4" />, count: requests.length },
-    { key: "categories", label: "Categorias", icon: <Tag className="h-4 w-4" />, count: categories.length },
-    { key: "lojas-categorias", label: "Categorias Lojas", icon: <Store className="h-4 w-4" />, count: businessCategories.length },
-    { key: "bairros", label: "Bairros", icon: <MapPin className="h-4 w-4" />, count: bairros.length },
-    { key: "stats", label: "Estatísticas", icon: <BarChart3 className="h-4 w-4" /> },
-    { key: "settings", label: "Configurações", icon: <Settings className="h-4 w-4" /> },
+    { key: "overview", label: t("admin.overview"), icon: <LayoutDashboard className="h-4 w-4" /> },
+    { key: "providers", label: t("admin.providers"), icon: <Users className="h-4 w-4" />, count: providers.length },
+    { key: "verifications", label: t("admin.verifications"), icon: <ShieldCheck className="h-4 w-4" />, count: pendingVerifications.length },
+    { key: "complaints", label: t("admin.complaints"), icon: <ShieldAlert className="h-4 w-4" />, count: pendingComplaints.length },
+    { key: "reviews", label: t("admin.reviews"), icon: <Star className="h-4 w-4" />, count: pendingReviews.length },
+    { key: "requests", label: t("admin.requests"), icon: <ClipboardList className="h-4 w-4" />, count: requests.length },
+    { key: "categories", label: t("admin.categories"), icon: <Tag className="h-4 w-4" />, count: categories.length },
+    { key: "lojas-categorias", label: t("admin.shopCategories"), icon: <Store className="h-4 w-4" />, count: businessCategories.length },
+    { key: "bairros", label: t("admin.neighborhoods"), icon: <MapPin className="h-4 w-4" />, count: bairros.length },
+    { key: "stats", label: t("admin.statistics"), icon: <BarChart3 className="h-4 w-4" /> },
+    { key: "settings", label: t("admin.settings"), icon: <Settings className="h-4 w-4" /> },
   ];
 
   const navList = (compact = false) => (
@@ -580,9 +584,9 @@ const AdminDashboard = () => {
         </div>
         <div className="flex-1 p-3 overflow-y-auto">{navList()}</div>
         <div className="p-3 border-t flex items-center justify-between gap-2">
-          <Badge variant="secondary">Administrador</Badge>
+          <Badge variant="secondary">{t("admin.administrator")}</Badge>
           <Button variant="ghost" size="sm" onClick={() => signOut().then(() => navigate("/"))} className="gap-1">
-            <LogOut className="h-4 w-4" /> Sair
+            <LogOut className="h-4 w-4" /> {t("admin.logout")}
           </Button>
         </div>
       </aside>
@@ -594,7 +598,8 @@ const AdminDashboard = () => {
               <img src={logo} alt="Bornaal" className="h-7 w-auto" />
             </Link>
             <div className="flex items-center gap-2">
-              <Badge variant="secondary">Admin</Badge>
+              <LanguageSelector />
+              <Badge variant="secondary">{t("admin.admin")}</Badge>
               <Button variant="ghost" size="icon" onClick={() => signOut().then(() => navigate("/"))}>
                 <LogOut className="h-4 w-4" />
               </Button>
@@ -605,42 +610,43 @@ const AdminDashboard = () => {
         <header className="hidden md:flex border-b px-6 py-3 items-center justify-between">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Link to="/" className="hover:text-foreground inline-flex items-center gap-1">
-              Início
+              {t("common.home")}
             </Link>
             <ChevronRight className="h-3.5 w-3.5" />
             <span className="text-foreground font-medium">{menuItems.find((m) => m.key === menu)?.label}</span>
           </div>
+          <LanguageSelector />
         </header>
 
         <main className="flex-1 p-4 md:p-6 w-full max-w-5xl">
           {menu === "overview" && (
             <div className="flex flex-col gap-4">
-              <h1 className="text-2xl font-bold">Painel Geral</h1>
+              <h1 className="text-2xl font-bold">{t("admin.overview")}</h1>
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-                <StatCard label="Prestadores" value={providers.length} icon={<Users className="h-5 w-5" />} onClick={() => setMenu("providers")} />
-                <StatCard label="Verificações pendentes" value={pendingVerifications.length} icon={<ShieldCheck className="h-5 w-5" />} onClick={() => setMenu("verifications")} />
-                <StatCard label="Avaliações pendentes" value={pendingReviews.length} icon={<Star className="h-5 w-5" />} onClick={() => setMenu("reviews")} />
-                <StatCard label="Denúncias pendentes" value={pendingComplaints.length} icon={<ShieldAlert className="h-5 w-5" />} onClick={() => setMenu("complaints")} />
-                <StatCard label="Pedidos" value={requests.length} icon={<ClipboardList className="h-5 w-5" />} onClick={() => setMenu("requests")} />
+                <StatCard label={t("admin.providers")} value={providers.length} icon={<Users className="h-5 w-5" />} onClick={() => setMenu("providers")} />
+                <StatCard label={t("admin.pendingVerifications")} value={pendingVerifications.length} icon={<ShieldCheck className="h-5 w-5" />} onClick={() => setMenu("verifications")} />
+                <StatCard label={t("admin.pendingReviews")} value={pendingReviews.length} icon={<Star className="h-5 w-5" />} onClick={() => setMenu("reviews")} />
+                <StatCard label={t("admin.pendingComplaints")} value={pendingComplaints.length} icon={<ShieldAlert className="h-5 w-5" />} onClick={() => setMenu("complaints")} />
+                <StatCard label={t("admin.requests")} value={requests.length} icon={<ClipboardList className="h-5 w-5" />} onClick={() => setMenu("requests")} />
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 <Card>
                   <CardContent className="p-4">
-                    <h2 className="font-semibold text-sm mb-3">Pedidos recentes</h2>
+                    <h2 className="font-semibold text-sm mb-3">{t("admin.recentRequests")}</h2>
                     {requests.slice(0, 5).map((r) => (
                       <div key={r.id} className="py-2 border-b last:border-0 text-sm">
-                        <div className="font-medium">{r.requester_name ?? "Cliente"}</div>
+                        <div className="font-medium">{r.requester_name ?? t("admin.client")}</div>
                         <div className="text-xs text-muted-foreground">{r.category} · {r.location}</div>
                         <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{r.description}</p>
                       </div>
                     ))}
-                    {!requests.length && <p className="text-sm text-muted-foreground text-center py-6">Sem pedidos.</p>}
+                    {!requests.length && <p className="text-sm text-muted-foreground text-center py-6">{t("admin.noRequests")}</p>}
                   </CardContent>
                 </Card>
                 <Card>
                   <CardContent className="p-4">
-                    <h2 className="font-semibold text-sm mb-3">Denúncias recentes</h2>
+                    <h2 className="font-semibold text-sm mb-3">{t("admin.recentComplaints")}</h2>
                     {complaints.slice(0, 5).map((c) => (
                       <div key={c.id} className="py-2 border-b last:border-0 text-sm">
                         <div className="font-medium">{providerName(c.provider_id)}</div>
@@ -648,7 +654,7 @@ const AdminDashboard = () => {
                         <Badge variant={c.status === "pendente" ? "destructive" : c.status === "validada" ? "default" : "secondary"} className="mt-1">{c.status}</Badge>
                       </div>
                     ))}
-                    {!complaints.length && <p className="text-sm text-muted-foreground text-center py-6">Sem denúncias.</p>}
+                    {!complaints.length && <p className="text-sm text-muted-foreground text-center py-6">{t("admin.noComplaints")}</p>}
                   </CardContent>
                 </Card>
               </div>
@@ -657,19 +663,19 @@ const AdminDashboard = () => {
 
           {menu === "providers" && (
             <div className="flex flex-col gap-4">
-              <h1 className="text-2xl font-bold">Prestadores</h1>
+              <h1 className="text-2xl font-bold">{t("admin.providers")}</h1>
               <Tabs value={providerFilter} onValueChange={(v) => setProviderFilter(v as ProviderFilter)}>
                 <div className="overflow-x-auto -mx-4 px-4 mb-4">
                   <TabsList className="inline-flex w-max gap-1">
-                    <TabsTrigger value="avaliacao">Em Avaliação ({providers.filter((p) => p.verification_status === "pendente").length})</TabsTrigger>
-                    <TabsTrigger value="ativos">Ativos ({providers.filter((p) => p.is_verified || p.verification_status === "aprovado").length})</TabsTrigger>
-                    <TabsTrigger value="rejeitados">Rejeitados ({providers.filter((p) => p.verification_status === "rejeitado").length})</TabsTrigger>
-                    <TabsTrigger value="todos">Todos ({providers.length})</TabsTrigger>
+                    <TabsTrigger value="avaliacao">{t("admin.inReviewCount", { count: providers.filter((p) => p.verification_status === "pendente").length })}</TabsTrigger>
+                    <TabsTrigger value="ativos">{t("admin.activeCount", { count: providers.filter((p) => p.is_verified || p.verification_status === "aprovado").length })}</TabsTrigger>
+                    <TabsTrigger value="rejeitados">{t("admin.rejectedCount", { count: providers.filter((p) => p.verification_status === "rejeitado").length })}</TabsTrigger>
+                    <TabsTrigger value="todos">{t("admin.allCount", { count: providers.length })}</TabsTrigger>
                   </TabsList>
                 </div>
                 <TabsContent value={providerFilter} className="flex flex-col gap-3">
                   {filteredProviders.map(providerCard)}
-                  {!filteredProviders.length && <p className="text-sm text-muted-foreground text-center py-6">Sem prestadores neste estado.</p>}
+                  {!filteredProviders.length && <p className="text-sm text-muted-foreground text-center py-6">{t("admin.noProvidersState")}</p>}
                 </TabsContent>
               </Tabs>
             </div>
@@ -677,8 +683,8 @@ const AdminDashboard = () => {
 
           {menu === "verifications" && (
             <div className="flex flex-col gap-4">
-              <h1 className="text-2xl font-bold">Verificações</h1>
-              <p className="text-sm text-muted-foreground">Prestadores que submeteram documentos de identidade e aguardam análise.</p>
+              <h1 className="text-2xl font-bold">{t("admin.verifications")}</h1>
+              <p className="text-sm text-muted-foreground">{t("admin.verificationsDesc")}</p>
               <div className="flex flex-col gap-3">
                 {pendingVerifications.map((p) => (
                   <Card key={p.id} className="border-yellow-500/40">
@@ -689,56 +695,56 @@ const AdminDashboard = () => {
                             {p.name}
                             {p.is_verified && <BadgeCheck className="h-4 w-4 text-primary" />}
                           </Link>
-                          <Badge className="bg-yellow-100 text-yellow-700">Em avaliação</Badge>
+                          <Badge className="bg-yellow-100 text-yellow-700">{t("admin.inReviewTab")}</Badge>
                         </div>
                         <div className="text-xs text-muted-foreground mt-1">{p.category} · {p.location} · {p.phone}</div>
                         <div className="flex flex-wrap gap-2 mt-2">
                           <Button variant="outline" size="sm" onClick={() => openVerificationFile(p.verification_doc_url)}>
-                            Ver documento
+                            {t("admin.viewDocument")}
                           </Button>
                           <Button variant="outline" size="sm" onClick={() => openVerificationFile(p.verification_selfie_url)}>
-                            Ver selfie
+                            {t("admin.viewSelfie")}
                           </Button>
                         </div>
                       </div>
                       <div className="flex flex-col gap-1 shrink-0">
                         <Button size="sm" onClick={() => approveVerification(p)} className="gap-1 bg-green-600 hover:bg-green-700 text-white">
-                          <Check className="h-3.5 w-3.5" /> Aprovar
+                          <Check className="h-3.5 w-3.5" /> {t("admin.approve")}
                         </Button>
                         <Button size="sm" variant="destructive" onClick={() => setRejectTarget(p)} className="gap-1">
-                          <X className="h-3.5 w-3.5" /> Rejeitar
+                          <X className="h-3.5 w-3.5" /> {t("admin.reject")}
                         </Button>
                       </div>
                     </CardContent>
                   </Card>
                 ))}
-                {!pendingVerifications.length && <p className="text-sm text-muted-foreground text-center py-6">Sem verificações pendentes.</p>}
+                {!pendingVerifications.length && <p className="text-sm text-muted-foreground text-center py-6">{t("admin.noPendingVerifications")}</p>}
               </div>
             </div>
           )}
 
           {menu === "complaints" && (
             <div className="flex flex-col gap-4">
-              <h1 className="text-2xl font-bold">Denúncias</h1>
+              <h1 className="text-2xl font-bold">{t("admin.complaints")}</h1>
               <div className="flex flex-col gap-3">
                 {pendingComplaints.map((c) => (
                   <Card key={c.id} className="border-red-500/40">
                     <CardContent className="p-3 flex items-start justify-between gap-2">
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">
-                          <Badge variant="destructive" className="gap-1">⚠ Pendente</Badge>
-                          <span className="text-xs text-muted-foreground">{new Date(c.created_at).toLocaleString("pt")}</span>
+                          <Badge variant="destructive" className="gap-1">⚠ {t("admin.pending")}</Badge>
+                          <span className="text-xs text-muted-foreground">{new Date(c.created_at).toLocaleString(i18n.language)}</span>
                         </div>
                         <div className="mt-1.5 text-sm">
-                          <span className="text-muted-foreground">Prestador:</span>{" "}
+                          <span className="text-muted-foreground">{t("admin.providerLabel")}</span>{" "}
                           <Link to={providerLink(c.provider_id)} className="font-semibold hover:underline">
                             {providerName(c.provider_id)}
                           </Link>
                         </div>
-                        <div className="text-sm text-muted-foreground">Denunciante: {clientName(c.client_id)}</div>
+                        <div className="text-sm text-muted-foreground">{t("admin.complainant")} {clientName(c.client_id)}</div>
                         {c.contact && (
                           <div className="text-sm mt-1">
-                            <span className="text-muted-foreground">Contacto do denunciante:</span>{" "}
+                            <span className="text-muted-foreground">{t("admin.complainantContact")}</span>{" "}
                             <a href={`tel:${c.contact}`} className="font-semibold text-primary hover:underline">{c.contact}</a>
                           </div>
                         )}
@@ -749,40 +755,40 @@ const AdminDashboard = () => {
                       </div>
                       <div className="flex flex-col gap-1 shrink-0">
                         <Button size="sm" onClick={() => setComplaintStatus(c, "validada")} className="gap-1 bg-green-600 hover:bg-green-700 text-white">
-                          <Check className="h-3.5 w-3.5" /> Validar
+                          <Check className="h-3.5 w-3.5" /> {t("admin.validate")}
                         </Button>
                         <Button size="sm" variant="destructive" onClick={() => setComplaintStatus(c, "rejeitada")} className="gap-1">
-                          <X className="h-3.5 w-3.5" /> Rejeitar
+                          <X className="h-3.5 w-3.5" /> {t("admin.reject")}
                         </Button>
                       </div>
                     </CardContent>
                   </Card>
                 ))}
-                {!pendingComplaints.length && <p className="text-sm text-muted-foreground text-center py-6">Sem denúncias pendentes.</p>}
+                {!pendingComplaints.length && <p className="text-sm text-muted-foreground text-center py-6">{t("admin.noPendingComplaints")}</p>}
 
                 {reviewedComplaints.length > 0 && (
                   <div className="mt-2">
-                    <h3 className="text-sm font-semibold mb-2 text-muted-foreground">Analisadas ({reviewedComplaints.length})</h3>
+                    <h3 className="text-sm font-semibold mb-2 text-muted-foreground">{t("admin.reviewedCount", { count: reviewedComplaints.length })}</h3>
                     {reviewedComplaints.map((c) => (
                       <Card key={c.id} className={c.status === "validada" ? "border-green-500/40" : "border-muted"}>
                         <CardContent className="p-3">
                           <div className="flex flex-wrap items-center gap-2">
                             <Badge variant={c.status === "validada" ? "default" : "secondary"}>
-                              {c.status === "validada" ? "✓ Validada" : "✕ Rejeitada"}
+                              {c.status === "validada" ? `✓ ${t("admin.validated")}` : `✕ ${t("admin.rejectedStatus")}`}
                             </Badge>
-                            <span className="text-xs text-muted-foreground">{new Date(c.created_at).toLocaleString("pt")}</span>
+                            <span className="text-xs text-muted-foreground">{new Date(c.created_at).toLocaleString(i18n.language)}</span>
                           </div>
                           <div className="mt-1.5 text-sm">
-                            <span className="text-muted-foreground">Prestador:</span>{" "}
+                            <span className="text-muted-foreground">{t("admin.providerLabel")}</span>{" "}
                             <Link to={providerLink(c.provider_id)} className="font-semibold hover:underline">
                               {providerName(c.provider_id)}
                             </Link>{" "}
-                            <span className="text-muted-foreground">· Denunciante: {clientName(c.client_id)}</span>
+                            <span className="text-muted-foreground">· {t("admin.complainant")} {clientName(c.client_id)}</span>
                           </div>
                           <div className="text-sm mt-1"><Badge variant="secondary">{c.reason}</Badge></div>
                           {c.contact && (
                             <div className="text-sm mt-1">
-                              <span className="text-muted-foreground">Contacto do denunciante:</span>{" "}
+                              <span className="text-muted-foreground">{t("admin.complainantContact")}</span>{" "}
                               <a href={`tel:${c.contact}`} className="font-semibold text-primary hover:underline">{c.contact}</a>
                             </div>
                           )}
@@ -798,12 +804,12 @@ const AdminDashboard = () => {
 
           {menu === "reviews" && (
             <div className="flex flex-col gap-4">
-              <h1 className="text-2xl font-bold">Avaliações</h1>
+              <h1 className="text-2xl font-bold">{t("admin.reviews")}</h1>
               <Tabs value={reviewFilter} onValueChange={(v) => setReviewFilter(v as ReviewFilter)}>
                 <div className="overflow-x-auto -mx-4 px-4 mb-4">
                   <TabsList className="inline-flex w-max gap-1">
-                    <TabsTrigger value="pendentes">Pendentes ({pendingReviews.length})</TabsTrigger>
-                    <TabsTrigger value="aprovadas">Aprovadas ({approvedReviews.length})</TabsTrigger>
+                    <TabsTrigger value="pendentes">{t("admin.pendingReviewsCount", { count: pendingReviews.length })}</TabsTrigger>
+                    <TabsTrigger value="aprovadas">{t("admin.approvedReviewsCount", { count: approvedReviews.length })}</TabsTrigger>
                   </TabsList>
                 </div>
                 <TabsContent value={reviewFilter} className="flex flex-col gap-2">
@@ -812,21 +818,21 @@ const AdminDashboard = () => {
                       <Card key={r.id} className="border-yellow-500/40">
                         <CardContent className="p-3 flex items-start justify-between gap-2">
                           <div className="min-w-0 flex-1">
-                            <div className="text-xs text-muted-foreground">Prestador:</div>
+                            <div className="text-xs text-muted-foreground">{t("admin.providerLabel")}</div>
                             <Link to={providerLink(r.provider_id)} className="font-semibold hover:underline text-sm">
                               {providerName(r.provider_id)}
                             </Link>
                             <div className="text-sm mt-1">
-                              <span className="font-medium">{r.reviewer_name ?? "Anónimo"}</span> · {r.rating}★
+                              <span className="font-medium">{r.reviewer_name ?? t("admin.anonymous")}</span> · {r.rating}★
                             </div>
                             {r.comment && <p className="text-sm text-muted-foreground mt-1">{r.comment}</p>}
                           </div>
                           <div className="flex flex-col gap-1 shrink-0">
                             <Button size="sm" onClick={() => approveReview(r.id)} className="gap-1 bg-green-600 hover:bg-green-700 text-white">
-                              <Check className="h-3.5 w-3.5" /> Aprovar
+                              <Check className="h-3.5 w-3.5" /> {t("admin.approve")}
                             </Button>
-                            <Button size="sm" variant="destructive" onClick={() => setDeleteTarget({ table: "reviews", id: r.id, entity: "esta avaliação" })} className="gap-1">
-                              <X className="h-3.5 w-3.5" /> Rejeitar
+                            <Button size="sm" variant="destructive" onClick={() => setDeleteTarget({ table: "reviews", id: r.id, entity: t("admin.reviews") })} className="gap-1">
+                              <X className="h-3.5 w-3.5" /> {t("admin.reject")}
                             </Button>
                           </div>
                         </CardContent>
@@ -835,18 +841,18 @@ const AdminDashboard = () => {
                       <Card key={r.id}>
                         <CardContent className="p-3 flex items-start justify-between gap-2">
                           <div className="min-w-0">
-                            <div className="text-sm font-semibold">{r.reviewer_name ?? "Anónimo"} · {r.rating}★</div>
+                            <div className="text-sm font-semibold">{r.reviewer_name ?? t("admin.anonymous")} · {r.rating}★</div>
                             {r.comment && <p className="text-sm text-muted-foreground">{r.comment}</p>}
-                            <Link to={providerLink(r.provider_id)} className="text-xs text-primary hover:underline">Ver prestador</Link>
+                            <Link to={providerLink(r.provider_id)} className="text-xs text-primary hover:underline">{t("admin.viewProvider")}</Link>
                           </div>
-                          <Button variant="ghost" size="icon" onClick={() => setDeleteTarget({ table: "reviews", id: r.id, entity: "esta avaliação" })}>
+                          <Button variant="ghost" size="icon" onClick={() => setDeleteTarget({ table: "reviews", id: r.id, entity: t("admin.reviews") })}>
                             <Trash2 className="h-4 w-4 text-destructive" />
                           </Button>
                         </CardContent>
                       </Card>
                     )
                   )}
-                  {!filteredReviews.length && <p className="text-sm text-muted-foreground text-center py-6">Sem avaliações.</p>}
+                  {!filteredReviews.length && <p className="text-sm text-muted-foreground text-center py-6">{t("admin.noReviews")}</p>}
                 </TabsContent>
               </Tabs>
             </div>
@@ -854,14 +860,14 @@ const AdminDashboard = () => {
 
           {menu === "requests" && (
             <div className="flex flex-col gap-4">
-              <h1 className="text-2xl font-bold">Pedidos</h1>
+              <h1 className="text-2xl font-bold">{t("admin.requests")}</h1>
               <div className="flex flex-col gap-2">
                 {requests.map((r) => (
                   <Card key={r.id}>
                     <CardContent className="p-3 flex items-start justify-between gap-2">
                       <div className="min-w-0">
                         <div className="font-semibold flex items-center gap-2">
-                          {r.requester_name ?? "Cliente"}
+                          {r.requester_name ?? t("admin.client")}
                           <Badge variant={r.status === "aberto" ? "secondary" : r.status === "concluido" ? "default" : "outline"}>
                             {r.status}
                           </Badge>
@@ -869,75 +875,75 @@ const AdminDashboard = () => {
                         <div className="text-xs text-muted-foreground mb-1">{r.category} · {r.location}</div>
                         <p className="text-sm">{r.description}</p>
                       </div>
-                      <Button variant="ghost" size="icon" onClick={() => setDeleteTarget({ table: "service_requests", id: r.id, entity: "este pedido" })}>
+                      <Button variant="ghost" size="icon" onClick={() => setDeleteTarget({ table: "service_requests", id: r.id, entity: t("admin.requests") })}>
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
                     </CardContent>
                   </Card>
                 ))}
-                {!requests.length && <p className="text-sm text-muted-foreground text-center py-6">Sem pedidos.</p>}
+                {!requests.length && <p className="text-sm text-muted-foreground text-center py-6">{t("admin.noRequestsTab")}</p>}
               </div>
             </div>
           )}
 
           {menu === "categories" && (
             <div className="flex flex-col gap-4">
-              <h1 className="text-2xl font-bold">Categorias</h1>
+              <h1 className="text-2xl font-bold">{t("admin.categories")}</h1>
               <ManageList
-                placeholder="Nova categoria (ex: Jardinagem)"
+                placeholder={t("admin.newCategoryPlaceholder")}
                 items={categories}
                 onAdd={addCategory}
                 onRename={renameCategory}
                 onDelete={(id) => setCategoryToDelete(categories.find((c) => c.id === id) ?? null)}
-                emptyText="Sem categorias."
+                emptyText={t("admin.noCategories")}
               />
             </div>
           )}
 
           {menu === "lojas-categorias" && (
             <div className="flex flex-col gap-4">
-              <h1 className="text-2xl font-bold">Categorias de Lojas</h1>
+              <h1 className="text-2xl font-bold">{t("admin.shopCategories")}</h1>
               <p className="text-xs text-muted-foreground">
-                Categorias de restaurantes e lojas — aparecem na secção "Restaurantes / Lojas" do Explorar.
+                {t("admin.shopCategoriesDesc")}
               </p>
               <ManageList
-                placeholder="Nova categoria (ex: Talho)"
+                placeholder={t("admin.newShopCategoryPlaceholder")}
                 items={businessCategories}
                 onAdd={addBusinessCategory}
                 onRename={renameBusinessCategory}
                 onDelete={(id) => setBizCategoryToDelete(businessCategories.find((c) => c.id === id) ?? null)}
-                emptyText="Sem categorias de lojas."
+                emptyText={t("admin.noShopCategories")}
               />
             </div>
           )}
 
           {menu === "bairros" && (
             <div className="flex flex-col gap-4">
-              <h1 className="text-2xl font-bold">Bairros</h1>
+              <h1 className="text-2xl font-bold">{t("admin.neighborhoods")}</h1>
               <ManageList
-                placeholder="Novo bairro (ex: Quelele)"
+                placeholder={t("admin.newNeighborhoodPlaceholder")}
                 items={bairros}
                 onAdd={addBairro}
                 onRename={renameBairro}
                 onDelete={(id) => setBairroToDelete(bairros.find((b) => b.id === id) ?? null)}
-                emptyText="Sem bairros."
+                emptyText={t("admin.noNeighborhoods")}
               />
             </div>
           )}
 
           {menu === "stats" && (
             <div className="flex flex-col gap-4">
-              <h1 className="text-2xl font-bold">Estatísticas</h1>
+              <h1 className="text-2xl font-bold">{t("admin.statistics")}</h1>
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-                <StatCard label="Prestadores" value={providers.length} icon={<Users className="h-5 w-5" />} onClick={() => setMenu("providers")} />
-                <StatCard label="Pedidos" value={requests.length} icon={<ClipboardList className="h-5 w-5" />} onClick={() => setMenu("requests")} />
-                <StatCard label="Avaliações aprovadas" value={approvedReviews.length} icon={<Star className="h-5 w-5" />} onClick={() => setMenu("reviews")} />
-                <StatCard label="Denúncias validadas" value={complaints.filter((c) => c.status === "validada").length} icon={<ShieldAlert className="h-5 w-5" />} onClick={() => setMenu("complaints")} />
-                <StatCard label="Avaliação média" value={avgRating} icon={<Star className="h-5 w-5" />} onClick={() => setMenu("reviews")} />
+                <StatCard label={t("admin.providers")} value={providers.length} icon={<Users className="h-5 w-5" />} onClick={() => setMenu("providers")} />
+                <StatCard label={t("admin.requests")} value={requests.length} icon={<ClipboardList className="h-5 w-5" />} onClick={() => setMenu("requests")} />
+                <StatCard label={t("admin.approvedReviews")} value={approvedReviews.length} icon={<Star className="h-5 w-5" />} onClick={() => setMenu("reviews")} />
+                <StatCard label={t("admin.validatedComplaints")} value={complaints.filter((c) => c.status === "validada").length} icon={<ShieldAlert className="h-5 w-5" />} onClick={() => setMenu("complaints")} />
+                <StatCard label={t("admin.avgRating")} value={avgRating} icon={<Star className="h-5 w-5" />} onClick={() => setMenu("reviews")} />
               </div>
               <Card>
                 <CardContent className="p-4">
-                  <h2 className="font-semibold text-sm mb-3">Top prestadores por vistas</h2>
+                  <h2 className="font-semibold text-sm mb-3">{t("admin.topProviders")}</h2>
                   <div className="flex flex-col gap-2">
                     {topProviders.map((p, i) => (
                       <div key={p.id} className="flex items-center gap-3 py-2 border-b last:border-0 text-sm">
@@ -957,7 +963,7 @@ const AdminDashboard = () => {
                         </div>
                       </div>
                     ))}
-                    {!topProviders.length && <p className="text-sm text-muted-foreground text-center py-6">Sem prestadores.</p>}
+                    {!topProviders.length && <p className="text-sm text-muted-foreground text-center py-6">{t("admin.noProviders")}</p>}
                   </div>
                 </CardContent>
               </Card>
@@ -966,29 +972,29 @@ const AdminDashboard = () => {
 
           {menu === "settings" && (
             <div className="flex flex-col gap-4 max-w-lg">
-              <h1 className="text-2xl font-bold">Configurações</h1>
+              <h1 className="text-2xl font-bold">{t("admin.settings")}</h1>
               <Card>
                 <CardContent className="p-4 flex flex-col gap-3">
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Administrador</span>
+                    <span className="text-muted-foreground">{t("admin.administrator")}</span>
                     <span className="font-medium">{user?.email}</span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Plataforma</span>
-                    <span className="font-medium">Bornaal</span>
+                    <span className="text-muted-foreground">{t("admin.platform")}</span>
+                    <span className="font-medium">{t("admin.bornaal")}</span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Categorias</span>
+                    <span className="text-muted-foreground">{t("admin.categories")}</span>
                     <span className="font-medium">{categories.length}</span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Bairros</span>
+                    <span className="text-muted-foreground">{t("admin.neighborhoods")}</span>
                     <span className="font-medium">{bairros.length}</span>
                   </div>
                 </CardContent>
               </Card>
               <p className="text-xs text-muted-foreground">
-                Configurações avançadas (notificações, aparência, backups) estarão disponíveis em breve.
+                {t("admin.advancedSettings")}
               </p>
             </div>
           )}
@@ -998,9 +1004,9 @@ const AdminDashboard = () => {
       <ConfirmDialog
         open={deleteTarget !== null}
         onOpenChange={(o) => { if (!o) setDeleteTarget(null); }}
-        title="Eliminar"
-        description={deleteTarget ? `Tem a certeza que pretende eliminar ${deleteTarget.entity}?` : ""}
-        confirmLabel="Eliminar"
+        title={t("admin.delete")}
+        description={deleteTarget ? t("admin.deleteConfirm", { entity: deleteTarget.entity }) : ""}
+        confirmLabel={t("admin.delete")}
         destructive
         onConfirm={() => {
           if (deleteTarget) remove(deleteTarget.table, deleteTarget.id);
@@ -1011,13 +1017,13 @@ const AdminDashboard = () => {
       <ConfirmDialog
         open={rejectTarget !== null}
         onOpenChange={(o) => { if (!o) { setRejectTarget(null); setRejectReason(""); } }}
-        title={`Rejeitar ${rejectTarget?.name ?? ""}`}
-        description="O motivo será mostrado ao prestador no painel dele."
-        confirmLabel="Rejeitar"
+        title={t("admin.rejectName", { name: rejectTarget?.name ?? "" })}
+        description={t("admin.rejectReasonHint")}
+        confirmLabel={t("admin.reject")}
         destructive
         input={{
-          label: "Motivo da rejeição",
-          placeholder: "Ex: Documentação incompleta",
+          label: t("admin.rejectionReason"),
+          placeholder: t("admin.rejectionPlaceholder"),
           value: rejectReason,
           onChange: setRejectReason,
         }}
@@ -1027,9 +1033,9 @@ const AdminDashboard = () => {
       <ConfirmDialog
         open={categoryToDelete !== null}
         onOpenChange={(o) => { if (!o) setCategoryToDelete(null); }}
-        title="Eliminar categoria"
-        description={categoryToDelete ? `Eliminar a categoria "${categoryToDelete.name}"?` : ""}
-        confirmLabel="Eliminar"
+        title={t("admin.deleteCategory")}
+        description={categoryToDelete ? t("admin.deleteCategoryConfirm", { name: categoryToDelete.name }) : ""}
+        confirmLabel={t("admin.delete")}
         destructive
         onConfirm={() => {
           if (categoryToDelete) removeCategory(categoryToDelete.id);
@@ -1040,9 +1046,9 @@ const AdminDashboard = () => {
       <ConfirmDialog
         open={bizCategoryToDelete !== null}
         onOpenChange={(o) => { if (!o) setBizCategoryToDelete(null); }}
-        title="Eliminar categoria de loja"
-        description={bizCategoryToDelete ? `Eliminar a categoria "${bizCategoryToDelete.name}"?` : ""}
-        confirmLabel="Eliminar"
+        title={t("admin.deleteShopCategory")}
+        description={bizCategoryToDelete ? t("admin.deleteCategoryConfirm", { name: bizCategoryToDelete.name }) : ""}
+        confirmLabel={t("admin.delete")}
         destructive
         onConfirm={() => {
           if (bizCategoryToDelete) removeBusinessCategory(bizCategoryToDelete.id);
@@ -1053,9 +1059,9 @@ const AdminDashboard = () => {
       <ConfirmDialog
         open={bairroToDelete !== null}
         onOpenChange={(o) => { if (!o) setBairroToDelete(null); }}
-        title="Eliminar bairro"
-        description={bairroToDelete ? `Eliminar o bairro "${bairroToDelete.name}"?` : ""}
-        confirmLabel="Eliminar"
+        title={t("admin.deleteNeighborhood")}
+        description={bairroToDelete ? t("admin.deleteNeighborhoodConfirm", { name: bairroToDelete.name }) : ""}
+        confirmLabel={t("admin.delete")}
         destructive
         onConfirm={() => {
           if (bairroToDelete) removeBairro(bairroToDelete.id);

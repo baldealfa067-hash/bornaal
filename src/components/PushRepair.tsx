@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
+import i18n from "@/i18n";
 import { supabase } from "@/integrations/supabase/client";
 import {
   getExistingSubscription,
@@ -63,7 +64,7 @@ const PushRepair = () => {
         }
 
         if (!cancelled) {
-          toast.success("Notificações do telemóvel reativadas automaticamente");
+          toast.success(i18n.t("push.repaired"));
         }
       } catch (e) {
         console.error("push repair failed:", e);

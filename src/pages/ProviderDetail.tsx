@@ -15,16 +15,20 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
+import i18n from "@/i18n";
 
-const REPORT_REASONS = [
-  "Serviço não foi realizado",
-  "Cobrança indevida",
-  "Comportamento inadequado",
-  "Perfil falso/enganoso",
-  "Outro",
-] as const;
+type ReportReasonKey = "notDone" | "charge" | "behaviour" | "fake" | "other";
+const REPORT_REASONS: { key: ReportReasonKey; labelKey: string }[] = [
+  { key: "notDone", labelKey: "providerDetail.reportReasons.notDone" },
+  { key: "charge", labelKey: "providerDetail.reportReasons.charge" },
+  { key: "behaviour", labelKey: "providerDetail.reportReasons.behaviour" },
+  { key: "fake", labelKey: "providerDetail.reportReasons.fake" },
+  { key: "other", labelKey: "providerDetail.reportReasons.other" },
+];
 
 const ProviderDetail = () => {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const { data: provider, isLoading } = useProvider(id!);
   const [portfolio, setPortfolio] = useState<{ id: string; image_url: string }[]>([]);
@@ -54,15 +58,15 @@ const ProviderDetail = () => {
   }, [id]);
 
   if (isLoading) {
-    return <div className="flex items-center justify-center min-h-screen text-muted-foreground">A carregar...</div>;
+    return <div className="flex items-center justify-center min-h-screen text-muted-foreground">{t("providerDetail.loading")}</div>;
   }
 
   if (!provider) {
-    return <div className="flex items-center justify-center min-h-screen text-muted-foreground">Prestador não encontrado.</div>;
+    return <div className="flex items-center justify-center min-h-screen text-muted-foreground">{t("providerDetail.notFound")}</div>;
   }
 
   const whatsappUrl = `https://wa.me/${provider.phone.replace(/\D/g, "")}?text=${encodeURIComponent(
-    `Olá ${provider.name}, encontrei o seu perfil no Bornaal e gostaria de saber mais sobre os seus serviços.`
+    t("providerDetailExtra.whatsappMsg", { name: provider.name })
   )}`;
 
   const trackWhatsapp = () => {
@@ -90,7 +94,7 @@ const ProviderDetail = () => {
   const submitReport = async () => {
     if (!id) return;
     if (!reportReason.trim() || !reportDescription.trim()) {
-      toast.error("Escolhe um motivo e escreve uma descrição.");
+      toast.error(t("providerDetail.chooseReasonDesc"));
       return;
     }
     setComplaining(true);
@@ -105,13 +109,13 @@ const ProviderDetail = () => {
       });
       if (error) {
         console.error("[complaints] error:", error.message);
-        toast.error("Erro ao enviar a denúncia. Tenta novamente.");
+        toast.error(t("providerDetail.reportError"));
       } else {
         setReportStep("success");
       }
     } catch (e) {
       console.error("[complaints] exception:", e);
-      toast.error("Erro ao enviar a denúncia. Tenta novamente.");
+      toast.error(t("providerDetail.reportError"));
     } finally {
       setComplaining(false);
     }
@@ -131,7 +135,7 @@ const ProviderDetail = () => {
           <h1 className="text-xl font-bold flex items-center gap-1.5">
             {provider.name}
             {(provider as { is_verified?: boolean }).is_verified && (
-              <BadgeCheck className="h-5 w-5 text-primary" aria-label="Prestador verificado" />
+              <BadgeCheck className="h-5 w-5 text-primary" aria-label={t("providerDetailExtra.verifiedLabel")} />
             )}
           </h1>
           <Badge variant="secondary" className="mt-1">{provider.category}</Badge>
@@ -169,34 +173,34 @@ const ProviderDetail = () => {
         {provider.price_type === "negociavel" && (
           <div className="flex items-center gap-2 text-foreground">
             <Wallet className="h-4 w-4 text-primary" />
-            <span className="font-semibold">Negociável</span>
+            <span className="font-semibold">{t("providerDetail.negotiable")}</span>
           </div>
         )}
         {provider.price_type === "combinar" && (
           <div className="flex items-center gap-2 text-foreground">
             <Wallet className="h-4 w-4 text-primary" />
-            <span className="font-semibold">A combinar</span>
+            <span className="font-semibold">{t("providerDetail.toCombine")}</span>
           </div>
         )}
         {/* Botão de denunciar (qualquer visitante) */}
         {provider.id !== user?.id && (
           <Button variant="outline" className="w-full gap-2" onClick={openReport}>
             <AlertCircle className="h-5 w-5" />
-            Denunciar
+            {t("providerDetail.report")}
           </Button>
         )}
       </div>
 
       {provider.description && (
         <div className="mb-6">
-          <h2 className="font-semibold mb-1">Sobre</h2>
+          <h2 className="font-semibold mb-1">{t("providerDetail.about")}</h2>
           <p className="text-sm text-muted-foreground">{provider.description}</p>
         </div>
       )}
 
       {portfolio.length > 0 && (
         <div className="mb-6">
-          <h2 className="font-semibold mb-2">Meus Trabalhos anteriores</h2>
+          <h2 className="font-semibold mb-2">{t("providerDetail.previousWorks")}</h2>
           <div className="grid grid-cols-2 gap-2">
             {portfolio.map((img) => (
               <a
@@ -206,7 +210,7 @@ const ProviderDetail = () => {
                 rel="noopener noreferrer"
                 className="block aspect-square overflow-hidden rounded-lg border bg-muted"
               >
-                <img src={img.image_url} alt="Trabalho do prestador" className="w-full h-full object-cover hover:scale-105 transition-transform" loading="lazy" />
+                <img src={img.image_url} alt={t("providerDetailExtra.workAlt")} className="w-full h-full object-cover hover:scale-105 transition-transform" loading="lazy" />
               </a>
             ))}
           </div>
@@ -218,19 +222,19 @@ const ProviderDetail = () => {
         <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="block" onClick={trackWhatsapp}>
           <Button className="w-full bg-[#25D366] hover:bg-[#1ebe57] text-white gap-2">
             <MessageCircle className="h-5 w-5" />
-            WhatsApp
+            {t("common.whatsapp")}
           </Button>
         </a>
         <a href={`tel:${provider.phone.replace(/\s/g, "")}`} className="block" onClick={trackCall}>
           <Button variant="secondary" className="w-full gap-2">
             <Phone className="h-5 w-5" />
-            Ligar
+            {t("common.call")}
           </Button>
         </a>
       </div>
 
       <section>
-        <h2 className="font-semibold mb-3">Avaliações ({provider.reviewCount})</h2>
+        <h2 className="font-semibold mb-3">{t("providerDetail.reviewsCount", { count: provider.reviewCount })}</h2>
 
         {provider.reviews && provider.reviews.length > 0 ? (
           <div className="flex flex-col gap-3">
@@ -244,13 +248,13 @@ const ProviderDetail = () => {
                 )}
                 {r.comment && <p className="text-sm mt-1">{r.comment}</p>}
                 <p className="text-[11px] text-muted-foreground mt-1">
-                  {new Date(r.created_at).toLocaleDateString("pt")}
+                  {new Date(r.created_at).toLocaleDateString(i18n.language)}
                 </p>
               </div>
             ))}
           </div>
         ) : (
-          <p className="text-sm text-muted-foreground">Ainda sem avaliações.</p>
+          <p className="text-sm text-muted-foreground">{t("providerDetail.noReviews")}</p>
         )}
       </section>
 
@@ -259,52 +263,52 @@ const ProviderDetail = () => {
           {reportStep === "form" && (
             <>
               <DialogHeader>
-                <DialogTitle>Denunciar {provider.name}</DialogTitle>
+                <DialogTitle>{t("providerDetail.reportTitle", { name: provider.name })}</DialogTitle>
                 <DialogDescription>
-                  As denúncias são analisadas pela nossa equipa antes de qualquer ação. O prestador não vê esta denúncia.
+                  {t("providerDetail.reportDesc")}
                 </DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-2">
                 <div className="grid gap-2">
-                  <Label htmlFor="report-reason">Motivo</Label>
+                  <Label htmlFor="report-reason">{t("providerDetail.reason")}</Label>
                   <Select value={reportReason} onValueChange={setReportReason}>
                     <SelectTrigger id="report-reason">
-                      <SelectValue placeholder="Seleciona o motivo" />
+                      <SelectValue placeholder={t("providerDetail.selectReason")} />
                     </SelectTrigger>
                     <SelectContent>
                       {REPORT_REASONS.map((r) => (
-                        <SelectItem key={r} value={r}>{r}</SelectItem>
+                        <SelectItem key={r.key} value={t(r.labelKey)}>{t(r.labelKey)}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="report-description">Descrição</Label>
+                  <Label htmlFor="report-description">{t("providerDetail.description")}</Label>
                   <Textarea
                     id="report-description"
-                    placeholder="Explica o que aconteceu (obrigatório)"
+                    placeholder={t("providerDetail.descriptionPlaceholder")}
                     value={reportDescription}
                     onChange={(e) => setReportDescription(e.target.value)}
                     rows={4}
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="report-contact">Contacto (opcional)</Label>
+                  <Label htmlFor="report-contact">{t("providerDetail.contactOptional")}</Label>
                   <Input
                     id="report-contact"
                     type="tel"
-                    placeholder="Telemóvel/WhatsApp para confirmarmos a denúncia"
+                    placeholder={t("providerDetail.contactPlaceholder")}
                     value={reportContact}
                     onChange={(e) => setReportContact(e.target.value)}
                   />
                   <p className="text-xs text-muted-foreground">
-                    Deixa o teu contacto se quiseres que a nossa equipa te ligue para confirmar a denúncia.
+                    {t("providerDetail.contactHint")}
                   </p>
                 </div>
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setReportOpen(false)}>
-                  Cancelar
+                  {t("common.cancel")}
                 </Button>
                 <Button
                   onClick={submitReport}
@@ -312,7 +316,7 @@ const ProviderDetail = () => {
                   className="gap-2"
                 >
                   <ShieldAlert className="h-4 w-4" />
-                  {complaining ? "A enviar..." : "Submeter denúncia"}
+                  {complaining ? t("providerDetail.sending") : t("providerDetail.submitReport")}
                 </Button>
               </DialogFooter>
             </>
@@ -323,14 +327,14 @@ const ProviderDetail = () => {
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2">
                   <CheckCircle2 className="h-5 w-5 text-green-600" />
-                  Denúncia enviada
+                  {t("providerDetail.reportSent")}
                 </DialogTitle>
                 <DialogDescription>
-                  A tua denúncia foi enviada e será analisada pela nossa equipa.
+                  {t("providerDetail.reportSentDesc")}
                 </DialogDescription>
               </DialogHeader>
               <DialogFooter>
-                <Button onClick={() => setReportOpen(false)}>Fechar</Button>
+                <Button onClick={() => setReportOpen(false)}>{t("common.close")}</Button>
               </DialogFooter>
             </>
           )}

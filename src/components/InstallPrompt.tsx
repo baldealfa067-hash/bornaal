@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from "@/components/ui/button";
 import { Download, Loader2, Share } from "lucide-react";
 import { isIOS, isStandalone } from "@/lib/push";
+import { useTranslation } from "react-i18next";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -57,6 +58,7 @@ const InstallPrompt = () => {
     setOpen(false);
   };
 
+  const { t } = useTranslation();
   const ios = isIOS();
 
   return (
@@ -67,21 +69,20 @@ const InstallPrompt = () => {
             {ios ? <Share className="h-6 w-6 text-primary" /> : <Download className="h-6 w-6 text-primary" />}
           </div>
           <DialogTitle className="text-center">
-            {ios ? "Instala a app Bornaal" : "Instalar a app Bornaal"}
+            {ios ? t("installPrompt.iosTitle") : t("installPrompt.androidTitle")}
           </DialogTitle>
           <DialogDescription className="text-center">
             {ios ? (
               <>
-                No Safari: toca no botão{" "}
+                {t("installPrompt.iosDesc1")}{" "}
                 <span className="inline-flex items-center gap-1 font-medium text-foreground">
-                  <Share className="h-3.5 w-3.5" /> Partilhar
+                  <Share className="h-3.5 w-3.5" /> {t("installPrompt.iosShare")}
                 </span>{" "}
-                e escolhe{" "}
-                <span className="font-medium text-foreground">"Adicionar ao ecrã principal"</span>. A app passa
-                a funcionar como uma aplicação normal, com notificações.
+                {t("installPrompt.iosDesc2")}{" "}
+                <span className="font-medium text-foreground">"{t("installPrompt.iosAdd")}"</span>. {t("installPrompt.iosDesc3")}
               </>
             ) : (
-              "Adiciona a Bornaal ao ecrã principal para a usares como uma app, mais rápida e com notificações mesmo fechada."
+              t("installPrompt.androidDesc")
             )}
           </DialogDescription>
         </DialogHeader>
@@ -89,11 +90,11 @@ const InstallPrompt = () => {
           {!ios && (
             <Button onClick={handleInstall} disabled={!deferred || busy} className="w-full">
               {busy && <Loader2 className="h-4 w-4 animate-spin" />}
-              Instalar
+              {t("installPrompt.install")}
             </Button>
           )}
           <Button variant="outline" onClick={handleLater} className="w-full">
-            Agora não
+            {t("installPrompt.later")}
           </Button>
         </DialogFooter>
       </DialogContent>

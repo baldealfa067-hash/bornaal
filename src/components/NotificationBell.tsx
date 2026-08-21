@@ -9,8 +9,11 @@ import {
 } from "@/components/ui/popover";
 import { useAuth } from "@/hooks/useAuth";
 import { useNotifications, useUnreadCount, useMarkAsRead, useMarkAllAsRead, useNotificationsRealtime, type Notification } from "@/hooks/useNotifications";
+import { useTranslation } from "react-i18next";
+import i18n from "@/i18n";
 
 export function NotificationBell() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const { data: notifications = [] } = useNotifications(user?.id ?? null);
@@ -46,15 +49,15 @@ export function NotificationBell() {
       </PopoverTrigger>
       <PopoverContent className="w-80 p-0" align="end">
         <div className="border-b border-border px-4 py-3 flex items-center justify-between">
-          <h3 className="font-semibold text-sm">Notificações</h3>
+          <h3 className="font-semibold text-sm">{t("notificationBell.notifications")}</h3>
           {unread > 0 && (
-            <span className="text-xs text-primary">{unread} nova{unread !== 1 ? "s" : ""}</span>
+            <span className="text-xs text-primary">{t("notificationBell.new", { count: unread })}</span>
           )}
         </div>
         <ScrollArea className="max-h-80">
           {notifications.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-8">
-              Sem notificações.
+              {t("notificationBell.noNotifications")}
             </p>
           ) : (
             <div className="divide-y divide-border">
@@ -96,11 +99,11 @@ export function NotificationBell() {
 function formatTimeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
   const mins = Math.floor(diff / 60000);
-  if (mins < 1) return "agora";
-  if (mins < 60) return `há ${mins}min`;
+  if (mins < 1) return i18n.t("notificationBell.now");
+  if (mins < 60) return i18n.t("notificationBell.minutesAgo", { count: mins });
   const hours = Math.floor(mins / 60);
-  if (hours < 24) return `há ${hours}h`;
+  if (hours < 24) return i18n.t("notificationBell.hoursAgo", { count: hours });
   const days = Math.floor(hours / 24);
-  if (days < 7) return `há ${days}d`;
-  return new Date(dateStr).toLocaleDateString("pt");
+  if (days < 7) return i18n.t("notificationBell.daysAgo", { count: days });
+  return new Date(dateStr).toLocaleDateString(i18n.language);
 }

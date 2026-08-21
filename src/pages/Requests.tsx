@@ -30,24 +30,13 @@ import {
 } from "@/hooks/useRequests";
 import { StarRating } from "@/components/StarRating";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
+import i18n from "@/i18n";
 
 const PAGE_SIZE = 10;
 
-const DEADLINE_OPTIONS = [
-  { value: "urgente", label: "Urgente" },
-  { value: "hoje", label: "Hoje" },
-  { value: "esta_semana", label: "Esta semana" },
-  { value: "proxima_semana", label: "Próxima semana" },
-  { value: "flexivel", label: "Flexível" },
-];
-
-const BUDGET_OPTIONS = [
-  { value: "fixo", label: "Valor fixo" },
-  { value: "negociavel", label: "Negociável" },
-  { value: "combinar", label: "A combinar" },
-];
-
 const Requests = () => {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { data: providerProfile } = useMyProvider(user?.id ?? null);
   const { data: requests = [], isLoading } = useRequests();
@@ -57,6 +46,20 @@ const Requests = () => {
   const create = useCreateRequest();
   const bidOnRequest = useBidOnRequest();
   const updateBid = useUpdateBidStatus();
+
+  const DEADLINE_OPTIONS = [
+    { value: "urgente", label: t("requests.urgent") },
+    { value: "hoje", label: t("requests.today") },
+    { value: "esta_semana", label: t("requests.thisWeek") },
+    { value: "proxima_semana", label: t("requests.nextWeek") },
+    { value: "flexivel", label: t("requests.flexible") },
+  ];
+
+  const BUDGET_OPTIONS = [
+    { value: "fixo", label: t("requests.fixedValue") },
+    { value: "negociavel", label: t("requests.negotiable") },
+    { value: "combinar", label: t("requests.toCombine") },
+  ];
 
   const [tab, setTab] = useState<"disponiveis" | "publicar" | "meus">("disponiveis");
   const [filterCategory, setFilterCategory] = useState("all");
@@ -102,25 +105,25 @@ const Requests = () => {
 
   const handlePublish = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.category) return toast.error("Selecione uma categoria");
-    if (!form.description.trim()) return toast.error("Descreva o pedido");
+    if (!form.category) return toast.error(t("requests.selectCategory"));
+    if (!form.description.trim()) return toast.error(t("requests.describeRequest"));
     try {
       await create.mutateAsync({
         category: form.category,
         description: form.description.trim(),
         location: form.location.trim() || "Bissau",
-        requester_name: form.requester_name.trim() || "Cliente",
+        requester_name: form.requester_name.trim() || t("requestsExtra.clientFallback"),
         requester_phone: form.requester_phone.trim(),
         user_id: user?.id,
         deadline: form.deadline || null,
         budget_type: form.budget_type,
         budget_amount: form.budget_amount ? Number(form.budget_amount) : null,
       });
-      toast.success("Pedido publicado!");
+      toast.success(t("requests.requestPublished"));
       setForm({ requester_name: "", requester_phone: "", category: "", location: "", description: "", deadline: "", budget_type: "combinar", budget_amount: "" });
       setTab("meus");
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Tente novamente";
+      const msg = err instanceof Error ? err.message : t("requestsExtra.tryAgain");
       toast.error(msg);
     }
   };
@@ -133,16 +136,17 @@ const Requests = () => {
         provider_id: providerProfile.id,
         message: bidForm.message || undefined,
       });
-      toast.success("Candidatura enviada!");
+      toast.success(t("requests.applicationSent"));
       // Open WhatsApp to client
       if (bidForm.requesterPhone) {
         const phone = bidForm.requesterPhone.replace(/[^\d+]/g, "");
-        const msg = `Ola ${bidForm.requesterName ?? "Cliente"}, sou ${providerProfile.name ?? "um prestador"}, vi o seu pedido "${bidForm.category}" no Bornaal e tenho interesse! ${bidForm.message ? "\n\nMensagem: " + bidForm.message : ""}`;
+        const messageSuffix = bidForm.message ? "\n\nMensagem: " + bidForm.message : "";
+        const msg = t("requestsExtra.whatsappBidMsg", { name: bidForm.requesterName ?? t("requestsExtra.clientFallback"), providerName: providerProfile.name ?? t("requestsExtra.providerFallback"), category: bidForm.category, message: messageSuffix });
         window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, "_blank");
       }
       setBidForm(null);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Já se candidatou a este pedido";
+      const msg = err instanceof Error ? err.message : t("requests.alreadyApplied");
       toast.error(msg);
     }
   };
@@ -150,9 +154,9 @@ const Requests = () => {
   const handleBidStatus = async (bidId: string, status: "aceite" | "recusado") => {
     try {
       await updateBid.mutateAsync({ id: bidId, status });
-      toast.success(status === "aceite" ? "Candidatura aceite!" : "Candidatura recusada");
+      toast.success(status === "aceite" ? t("requests.applicationAccepted") : t("requests.applicationRejected"));
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Erro";
+      const msg = err instanceof Error ? err.message : t("requestsExtra.error");
       toast.error(msg);
     }
   };
@@ -160,9 +164,9 @@ const Requests = () => {
   const handleMarkCompleted = async (requestId: string) => {
     try {
       await markCompleted.mutateAsync(requestId);
-      toast.success("Serviço marcado como concluído! Agora pode avaliar o prestador.");
+      toast.success(t("requests.serviceCompleted"));
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Erro ao marcar como concluído";
+      const msg = err instanceof Error ? err.message : t("requests.completeError");
       toast.error(msg);
     }
   };
@@ -170,11 +174,11 @@ const Requests = () => {
   const handleSubmitReview = async () => {
     if (!reviewDialog || !user) return;
     if (reviewRating < 1) {
-      toast.error("Selecione uma avaliação em estrelas");
+      toast.error(t("requests.selectStars"));
       return;
     }
     if (!reviewName.trim()) {
-      toast.error("Indique o seu nome");
+      toast.error(t("requests.enterName"));
       return;
     }
     try {
@@ -186,26 +190,26 @@ const Requests = () => {
         reviewer_name: reviewName.trim(),
         user_id: user.id,
       });
-      toast.success("Avaliação enviada com sucesso e será exibida após validação.");
+      toast.success(t("requests.reviewSent"));
       setReviewDialog(null);
       setReviewRating(0);
       setReviewComment("");
       setReviewName("");
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Erro ao enviar avaliação";
+      const msg = err instanceof Error ? err.message : t("requests.reviewError");
       toast.error(msg);
     }
   };
 
   return (
     <div className="max-w-lg mx-auto px-4 pt-6">
-      <h1 className="text-xl font-bold mb-4">Pedidos de Serviço</h1>
+      <h1 className="text-xl font-bold mb-4">{t("requests.title")}</h1>
 
       <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)}>
         <TabsList className="grid grid-cols-3 w-full mb-4">
-          <TabsTrigger value="disponiveis" className="whitespace-nowrap">Disponíveis</TabsTrigger>
-          <TabsTrigger value="publicar" className="whitespace-nowrap">Publicar</TabsTrigger>
-          <TabsTrigger value="meus" className="whitespace-nowrap">Os Meus</TabsTrigger>
+          <TabsTrigger value="disponiveis" className="whitespace-nowrap">{t("requests.available")}</TabsTrigger>
+          <TabsTrigger value="publicar" className="whitespace-nowrap">{t("requests.publish")}</TabsTrigger>
+          <TabsTrigger value="meus" className="whitespace-nowrap">{t("requests.mine")}</TabsTrigger>
         </TabsList>
 
         {/* ─── TAB: Disponíveis (feed) ─── */}
@@ -213,10 +217,10 @@ const Requests = () => {
           <div className="flex flex-col gap-3 mb-3">
             <Select value={filterCategory} onValueChange={setFilterCategory}>
               <SelectTrigger className="h-9 text-sm bg-card">
-                <SelectValue placeholder="Todas as categorias" />
+                <SelectValue placeholder={t("requests.allCategories")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todas as categorias</SelectItem>
+                <SelectItem value="all">{t("requests.allCategories")}</SelectItem>
                 {categories.map((c) => (
                   <SelectItem key={c} value={c}>{c}</SelectItem>
                 ))}
@@ -224,10 +228,10 @@ const Requests = () => {
             </Select>
             <Select value={filterLocation} onValueChange={setFilterLocation}>
               <SelectTrigger className="h-9 text-sm bg-card">
-                <SelectValue placeholder="Todas as localizações" />
+                <SelectValue placeholder={t("requests.allLocations")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todas as localizações</SelectItem>
+                <SelectItem value="all">{t("requests.allLocations")}</SelectItem>
                 {bairroOptions.map((b) => (
                   <SelectItem key={b} value={b}>{b}</SelectItem>
                 ))}
@@ -236,12 +240,12 @@ const Requests = () => {
           </div>
 
           {isLoading ? (
-            <p className="text-sm text-muted-foreground text-center py-8">A carregar...</p>
+            <p className="text-sm text-muted-foreground text-center py-8">{t("requests.loading")}</p>
           ) : filtered.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-12">
               {openRequests.length === 0
-                ? "Ainda não há pedidos publicados."
-                : "Nenhum pedido para estes filtros."}
+                ? t("requests.noRequests")
+                : t("requests.noFilteredRequests")}
             </p>
           ) : (
             <>
@@ -267,19 +271,19 @@ const Requests = () => {
         <TabsContent value="publicar">
           <form onSubmit={handlePublish} className="flex flex-col gap-3">
             <Input
-              placeholder="O seu nome (opcional)"
+              placeholder={t("requests.yourName")}
               value={form.requester_name}
               onChange={(e) => setForm({ ...form, requester_name: e.target.value })}
               maxLength={80}
             />
             <Input
-              placeholder="Telefone (WhatsApp)"
+              placeholder={t("requests.phoneWhatsapp")}
               value={form.requester_phone}
               onChange={(e) => setForm({ ...form, requester_phone: e.target.value })}
               maxLength={25}
             />
             <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
-              <SelectTrigger><SelectValue placeholder="Categoria do serviço *" /></SelectTrigger>
+              <SelectTrigger><SelectValue placeholder={t("requests.serviceCategory")} /></SelectTrigger>
               <SelectContent>
                 {categories.map((c) => (
                   <SelectItem key={c} value={c}>{c}</SelectItem>
@@ -287,7 +291,7 @@ const Requests = () => {
               </SelectContent>
             </Select>
             <Select value={form.location} onValueChange={(v) => setForm({ ...form, location: v })}>
-              <SelectTrigger><SelectValue placeholder="Localização / Bairro" /></SelectTrigger>
+              <SelectTrigger><SelectValue placeholder={t("requests.locationNeighborhood")} /></SelectTrigger>
               <SelectContent>
                 {bairroOptions.map((b) => (
                   <SelectItem key={b} value={b}>{b}</SelectItem>
@@ -295,7 +299,7 @@ const Requests = () => {
               </SelectContent>
             </Select>
             <Textarea
-              placeholder="Descreva o que precisa (mín. 10 caracteres)..."
+              placeholder={t("requests.describeNeed")}
               value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
               maxLength={500}
@@ -303,7 +307,7 @@ const Requests = () => {
             />
 
             <div className="border-t border-border pt-3">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Prazo</p>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">{t("requests.deadline")}</p>
               <div className="flex flex-wrap gap-2">
                 {DEADLINE_OPTIONS.map((opt) => (
                   <Badge
@@ -319,7 +323,7 @@ const Requests = () => {
             </div>
 
             <div className="border-t border-border pt-3">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Orçamento</p>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">{t("requests.budget")}</p>
               <div className="flex flex-wrap gap-2 mb-2">
                 {BUDGET_OPTIONS.map((opt) => (
                   <Badge
@@ -336,7 +340,7 @@ const Requests = () => {
                 <Input
                   type="number"
                   min="0"
-                  placeholder="Valor em CFA (ex: 15000)"
+                  placeholder={t("requests.cfaPlaceholder")}
                   value={form.budget_amount}
                   onChange={(e) => setForm({ ...form, budget_amount: e.target.value })}
                 />
@@ -344,7 +348,7 @@ const Requests = () => {
             </div>
 
             <Button type="submit" disabled={create.isPending} className="w-full mt-2">
-              {create.isPending ? "A publicar..." : "Publicar Pedido"}
+              {create.isPending ? t("requests.publishing") : t("requests.publishRequest")}
             </Button>
           </form>
         </TabsContent>
@@ -353,17 +357,17 @@ const Requests = () => {
         <TabsContent value="meus">
           {!user ? (
             <div className="text-center py-12">
-              <p className="text-sm text-muted-foreground mb-4">Faça login para ver os seus pedidos.</p>
+              <p className="text-sm text-muted-foreground mb-4">{t("requests.loginToSee")}</p>
               <Link to="/login">
-                <Button size="sm">Entrar</Button>
+                <Button size="sm">{t("requests.login")}</Button>
               </Link>
             </div>
           ) : myRequests.length === 0 ? (
             <div className="text-center py-12 text-sm text-muted-foreground">
-              Ainda não publicou nenhum pedido.
+              {t("requests.noPublished")}
               <div className="mt-4">
                 <Button size="sm" onClick={() => setTab("publicar")}>
-                  <Plus className="h-4 w-4 mr-1" /> Publicar pedido
+                  <Plus className="h-4 w-4 mr-1" /> {t("requests.publishRequestAction")}
                 </Button>
               </div>
             </div>
@@ -391,17 +395,17 @@ const Requests = () => {
       <Dialog open={!!bidForm} onOpenChange={(open) => { if (!open) setBidForm(null); }}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Candidatar-se ao pedido</DialogTitle>
+            <DialogTitle>{t("requests.applyTitle")}</DialogTitle>
           </DialogHeader>
           <Textarea
-            placeholder="Mensagem opcional: explique porquê deve escolhê-lo..."
+            placeholder={t("requests.applyMessage")}
             value={bidForm?.message ?? ""}
             onChange={(e) => setBidForm(bidForm ? { ...bidForm, message: e.target.value } : null)}
             rows={3}
           />
           <DialogFooter>
             <Button onClick={handleBid} disabled={bidOnRequest.isPending} className="w-full">
-              {bidOnRequest.isPending ? "A enviar..." : "Enviar candidatura"}
+              {bidOnRequest.isPending ? t("requests.sending") : t("requests.sendApplication")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -411,20 +415,20 @@ const Requests = () => {
       <Dialog open={!!reviewDialog} onOpenChange={(open) => { if (!open) setReviewDialog(null); }}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Avaliar {reviewDialog?.providerName}</DialogTitle>
+            <DialogTitle>{t("requests.rateProvider", { name: reviewDialog?.providerName ?? "" })}</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
-            <p className="text-sm text-muted-foreground">A sua avaliação será publicada após validação pela nossa equipa.</p>
+            <p className="text-sm text-muted-foreground">{t("requests.rateHint")}</p>
             <div className="flex items-center gap-2">
               <StarRating rating={reviewRating} onChange={setReviewRating} size="md" />
             </div>
             <Input
-              placeholder="O seu nome"
+              placeholder={t("requests.yourNameLabel")}
               value={reviewName}
               onChange={(e) => setReviewName(e.target.value)}
             />
             <Textarea
-              placeholder="Comentário (opcional)"
+              placeholder={t("requests.commentOptional")}
               value={reviewComment}
               onChange={(e) => setReviewComment(e.target.value)}
               rows={3}
@@ -432,7 +436,7 @@ const Requests = () => {
           </div>
           <DialogFooter>
             <Button onClick={handleSubmitReview} disabled={submitReview.isPending} className="w-full">
-              {submitReview.isPending ? "A enviar..." : "Enviar avaliação"}
+              {submitReview.isPending ? t("requests.sending") : t("requests.sendReview")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -451,21 +455,34 @@ function RequestCard({
   bidOnRequest,
 }: {
   request: ServiceRequest;
-  providerProfile: { id: string } | null;
+  providerProfile: { id: string; name?: string } | null;
   expanded: boolean;
   onToggle: () => void;
   onBid: () => void;
   bidOnRequest: { isPending: boolean };
 }) {
+  const { t } = useTranslation();
   const { data: myBid } = useMyBidOnRequest(r.id, providerProfile?.id ?? null);
-  const deadlineLabel = DEADLINE_OPTIONS.find((d) => d.value === r.deadline)?.label;
+  const deadlineMap: Record<string, string> = {
+    urgente: t("requests.urgent"),
+    hoje: t("requests.today"),
+    esta_semana: t("requests.thisWeek"),
+    proxima_semana: t("requests.nextWeek"),
+    flexivel: t("requests.flexible"),
+  };
+  const deadlineLabel = r.deadline ? deadlineMap[r.deadline] : undefined;
+  const budgetLabelMap: Record<string, string> = {
+    fixo: t("requests.fixedValue"),
+    negociavel: t("requests.negotiable"),
+    combinar: t("requests.toCombine"),
+  };
 
   return (
     <Card className="border-border/60">
       <CardContent className="p-4">
         <div className="flex items-start justify-between gap-2 mb-2">
           <div className="min-w-0">
-            <h3 className="font-semibold text-sm">{r.requester_name ?? "Cliente"}</h3>
+            <h3 className="font-semibold text-sm">{r.requester_name ?? t("admin.client")}</h3>
             <div className="flex flex-wrap items-center gap-2 mt-1 text-xs text-muted-foreground">
               <span className="flex items-center gap-1"><Tag className="h-3 w-3" />{r.category}</span>
               <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{r.location}</span>
@@ -477,14 +494,14 @@ function RequestCard({
           <Badge variant={r.budget_type === "fixo" ? "default" : "secondary"} className="text-[10px] shrink-0">
             {r.budget_type === "fixo" && r.budget_amount
               ? formatCFA(r.budget_amount)
-              : BUDGET_OPTIONS.find((b) => b.value === r.budget_type)?.label ?? r.budget_type}
+              : budgetLabelMap[r.budget_type] ?? r.budget_type}
           </Badge>
         </div>
 
         <p className="text-sm text-foreground/90 mb-3 whitespace-pre-wrap">{r.description}</p>
 
         <div className="flex items-center gap-2 text-[11px] text-muted-foreground mb-3">
-          <span>Publicado {new Date(r.created_at).toLocaleDateString("pt")}</span>
+          <span>{t("requests.published", { date: new Date(r.created_at).toLocaleDateString(i18n.language) })}</span>
         </div>
 
         {providerProfile ? (
@@ -497,15 +514,15 @@ function RequestCard({
                   : "bg-muted text-muted-foreground"
             }`}>
               {myBid.status === "aceite" ? <CheckCircle2 className="h-4 w-4" /> : myBid.status === "recusado" ? <XCircle className="h-4 w-4" /> : null}
-              {myBid.status === "pendente" ? "Candidatura enviada — aguarde resposta" : myBid.status === "aceite" ? "Candidatura aceite!" : "Candidatura recusada"}
+              {myBid.status === "pendente" ? t("requests.applicationPending") : myBid.status === "aceite" ? t("requests.applicationAcceptedLabel") : t("requests.applicationRejectedLabel")}
               {myBid.status === "aceite" && r.requester_phone && (
                 <a
-                  href={`https://wa.me/${r.requester_phone.replace(/[^\d+]/g, "")}?text=${encodeURIComponent(`Ola ${r.requester_name ?? "Cliente"}, sou ${providerProfile.name ?? "um prestador"}, o seu pedido "${r.category}" foi aceite no Bornaal!`)}`}
+                  href={`https://wa.me/${r.requester_phone.replace(/[^\d+]/g, "")}?text=${encodeURIComponent(t("requestsExtra.whatsappAcceptMsg", { name: r.requester_name ?? t("requestsExtra.clientFallback"), providerName: providerProfile.name ?? t("requestsExtra.providerFallback"), category: r.category }))}`}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
                   <Button size="sm" className="ml-2 bg-[#25D366] hover:bg-[#1ebe57] text-white gap-1 h-7 text-[11px]">
-                    <MessageCircle className="h-3 w-3" /> WhatsApp
+                    <MessageCircle className="h-3 w-3" /> {t("requests.whatsapp")}
                   </Button>
                 </a>
               )}
@@ -518,16 +535,16 @@ function RequestCard({
                 className="flex-1"
                 variant="outline"
               >
-                Tenho interesse
+                {t("requests.interested")}
               </Button>
               {r.requester_phone && (
                 <a
-                  href={`https://wa.me/${r.requester_phone.replace(/[^\d+]/g, "")}?text=${encodeURIComponent(`Ola ${r.requester_name ?? "Cliente"}, sou um prestador de ${r.category}, vi o seu pedido no Bornaal e tenho interesse!`)}`}
+                  href={`https://wa.me/${r.requester_phone.replace(/[^\d+]/g, "")}?text=${encodeURIComponent(t("requestsExtra.whatsappBidShort", { name: r.requester_name ?? t("requestsExtra.clientFallback"), category: r.category }))}`}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
                   <Button className="bg-[#25D366] hover:bg-[#1ebe57] text-white gap-1">
-                    <MessageCircle className="h-4 w-4" /> WhatsApp
+                    <MessageCircle className="h-4 w-4" /> {t("requests.whatsapp")}
                   </Button>
                 </a>
               )}
@@ -535,21 +552,21 @@ function RequestCard({
           )
         ) : (
           <Link to="/login" className="block">
-            <Button variant="outline" className="w-full" size="sm">Faça login para se candidatar</Button>
+            <Button variant="outline" className="w-full" size="sm">{t("requests.loginToApply")}</Button>
           </Link>
         )}
 
         <button onClick={onToggle} className="flex items-center gap-1 text-xs text-muted-foreground mt-3 hover:text-foreground transition-colors">
           {expanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-          {expanded ? "Recolher" : "Mais detalhes"}
+          {expanded ? t("requests.collapse") : t("requests.moreDetails")}
         </button>
         {expanded && (
           <div className="mt-2 text-xs text-muted-foreground space-y-1">
-            <p><span className="font-medium text-foreground">Categoria:</span> {r.category}</p>
-            <p><span className="font-medium text-foreground">Localização:</span> {r.location}</p>
-            {deadlineLabel && <p><span className="font-medium text-foreground">Prazo:</span> {deadlineLabel}</p>}
-            <p><span className="font-medium text-foreground">Orçamento:</span>{" "}
-              {r.budget_type === "fixo" && r.budget_amount ? formatCFA(r.budget_amount) : BUDGET_OPTIONS.find((b) => b.value === r.budget_type)?.label}
+            <p><span className="font-medium text-foreground">{t("requests.categoryLabel")}</span> {r.category}</p>
+            <p><span className="font-medium text-foreground">{t("requests.locationLabel")}</span> {r.location}</p>
+            {deadlineLabel && <p><span className="font-medium text-foreground">{t("requests.deadlineLabel")}</span> {deadlineLabel}</p>}
+            <p><span className="font-medium text-foreground">{t("requests.budgetLabel")}</span>{" "}
+              {r.budget_type === "fixo" && r.budget_amount ? formatCFA(r.budget_amount) : budgetLabelMap[r.budget_type]}
             </p>
           </div>
         )}
@@ -574,8 +591,16 @@ function MyRequestCard({
   onMarkCompleted: (requestId: string) => void;
   onReview: (requestId: string, providerId: string, providerName: string) => void;
 }) {
+  const { t } = useTranslation();
   const { data: bids = [], isLoading: loadingBids } = useBidsForRequest(r.id);
-  const deadlineLabel = DEADLINE_OPTIONS.find((d) => d.value === r.deadline)?.label;
+  const deadlineMap: Record<string, string> = {
+    urgente: t("requests.urgent"),
+    hoje: t("requests.today"),
+    esta_semana: t("requests.thisWeek"),
+    proxima_semana: t("requests.nextWeek"),
+    flexivel: t("requests.flexible"),
+  };
+  const deadlineLabel = r.deadline ? deadlineMap[r.deadline] : undefined;
   const acceptedBid = bids.find((b) => b.status === "aceite");
   const isConcluded = r.status === "concluido";
   const isClosed = r.status === "closed";
@@ -595,13 +620,13 @@ function MyRequestCard({
           </div>
           <div className="flex gap-2 shrink-0">
             {isConcluded && (
-              <Badge variant="default" className="text-[10px] bg-green-600">Concluído</Badge>
+              <Badge variant="default" className="text-[10px] bg-green-600">{t("requests.completed")}</Badge>
             )}
             {isClosed && !isConcluded && (
-              <Badge variant="destructive" className="text-[10px]">Fechado</Badge>
+              <Badge variant="destructive" className="text-[10px]">{t("requests.closed")}</Badge>
             )}
             <Badge variant="secondary" className="text-[10px]">
-              {bids.length} {bids.length === 1 ? "candidatura" : "candidaturas"}
+              {t("requests.applications", { count: bids.length })}
             </Badge>
           </div>
         </div>
@@ -610,20 +635,20 @@ function MyRequestCard({
 
         <button onClick={onToggle} className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
           {expanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-          {expanded ? "Recolher" : `Ver candidaturas (${bids.length})`}
+          {expanded ? t("requests.collapse") : t("requests.applications", { count: bids.length })}
         </button>
 
         {expanded && (
           <div className="mt-3 border-t border-border pt-3">
             {loadingBids ? (
-              <p className="text-xs text-muted-foreground">A carregar candidaturas...</p>
+              <p className="text-xs text-muted-foreground">{t("requests.loadingApplications")}</p>
             ) : bids.length === 0 ? (
-              <p className="text-xs text-muted-foreground text-center py-3">Nenhuma candidatura ainda.</p>
+              <p className="text-xs text-muted-foreground text-center py-3">{t("requests.noApplications")}</p>
             ) : (
               <div className="flex flex-col gap-2">
                 {bids.map((bid) => {
                   const phone = (bid.provider?.phone ?? "").replace(/[^\d+]/g, "");
-                  const waMsg = `Ola ${bid.provider?.name ?? ""}, o seu pedido "${r.category}" foi aceite no Bornaal!`;
+                  const waMsg = t("requestsExtra.whatsappAcceptMsg", { name: bid.provider?.name ?? t("requestsExtra.providerFallback"), providerName: bid.provider?.name ?? t("requestsExtra.providerFallback"), category: r.category });
                   const wa = phone
                     ? `https://wa.me/${phone}?text=${encodeURIComponent(waMsg)}`
                     : null;
@@ -638,7 +663,7 @@ function MyRequestCard({
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">{bid.provider?.name ?? "Prestador"}</p>
+                        <p className="text-sm font-medium truncate">{bid.provider?.name ?? t("requestsExtra.providerFallback")}</p>
                         <p className="text-[11px] text-muted-foreground">{bid.provider?.category}</p>
                         {bid.message && <p className="text-xs text-muted-foreground mt-0.5 italic">"{bid.message}"</p>}
                       </div>
@@ -650,7 +675,7 @@ function MyRequestCard({
                               onClick={() => onBidStatus(bid.id, "aceite")}
                               className="h-7 text-[11px] bg-green-600 hover:bg-green-700 text-white gap-1"
                             >
-                              <CheckCircle2 className="h-3 w-3" /> Aceitar
+                              <CheckCircle2 className="h-3 w-3" /> {t("requests.accept")}
                             </Button>
                             <Button
                               size="sm"
@@ -658,19 +683,19 @@ function MyRequestCard({
                               onClick={() => onBidStatus(bid.id, "recusado")}
                               className="h-7 text-[11px] gap-1"
                             >
-                              <XCircle className="h-3 w-3" /> Recusar
+                              <XCircle className="h-3 w-3" /> {t("requests.reject")}
                             </Button>
                           </>
                         ) : (
                           <Badge variant={bid.status === "aceite" ? "default" : "secondary"} className="text-[10px]">
-                            {bid.status === "aceite" ? "Aceite" : "Recusado"}
+                            {bid.status === "aceite" ? t("requests.accepted") : t("requests.rejected")}
                           </Badge>
                         )}
                       </div>
                       {bid.status === "aceite" && wa && (
                         <a href={wa} target="_blank" rel="noopener noreferrer" className="block mt-1">
                           <Button size="sm" className="w-full bg-[#25D366] hover:bg-[#1ebe57] text-white gap-1 h-7 text-[11px]">
-                            <MessageCircle className="h-3 w-3" /> WhatsApp
+                            <MessageCircle className="h-3 w-3" /> {t("requests.whatsapp")}
                           </Button>
                         </a>
                       )}
@@ -687,18 +712,18 @@ function MyRequestCard({
                 className="w-full mt-3 bg-green-600 hover:bg-green-700 text-white gap-2"
                 size="sm"
               >
-                <CheckCircle2 className="h-4 w-4" /> Marcar como concluído
+                <CheckCircle2 className="h-4 w-4" /> {t("requests.markCompleted")}
               </Button>
             )}
 
             {isConcluded && acceptedBid && (
               <Button
-                onClick={() => onReview(r.id, acceptedBid.provider_id, acceptedBid.provider?.name ?? "Prestador")}
+                onClick={() => onReview(r.id, acceptedBid.provider_id, acceptedBid.provider?.name ?? t("requestsExtra.providerFallback"))}
                 className="w-full mt-3 gap-2"
                 size="sm"
                 variant="outline"
               >
-                <Star className="h-4 w-4" /> Avaliar prestador
+                <Star className="h-4 w-4" /> {t("requests.rateProviderAction")}
               </Button>
             )}
           </div>

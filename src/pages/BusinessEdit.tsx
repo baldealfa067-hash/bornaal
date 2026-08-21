@@ -34,13 +34,15 @@ import { canSubmitVerification, verificationDescription } from "@/lib/verificati
 import ManageList from "@/components/ManageList";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import { formatCFA } from "@/lib/format";
+import { useTranslation } from "react-i18next";
+import { LanguageSelector } from "@/components/LanguageSelector";
 
 type ConsumptionOption = "comer_no_local" | "para_levar" | "entrega";
 
-const CONSUMPTION_OPTIONS: { value: ConsumptionOption; label: string; description: string }[] = [
-  { value: "comer_no_local", label: "Comer no local", description: "Clientes podem comer no estabelecimento" },
-  { value: "para_levar", label: "Para levar", description: "Retirar no balcão" },
-  { value: "entrega", label: "Entrega", description: "O próprio estabelecimento entrega" },
+const CONSUMPTION_OPTIONS: { value: ConsumptionOption; labelKey: string; descKey: string }[] = [
+  { value: "comer_no_local", labelKey: "businessEdit.eatIn", descKey: "businessEdit.eatInDesc" },
+  { value: "para_levar", labelKey: "businessEdit.takeAway", descKey: "businessEdit.takeAwayDesc" },
+  { value: "entrega", labelKey: "businessEdit.delivery", descKey: "businessEdit.deliveryDesc" },
 ];
 
 type Form = {
@@ -67,6 +69,7 @@ type MenuCategory = { id: string; name: string };
 type MenuItem = { id: string; name: string; price: number; photo_url: string | null; category_id: string | null };
 
 const BusinessDashboard = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { user, isBusiness, isAdmin, loading, signOut } = useAuth();
   const [profileId, setProfileId] = useState<string | null>(null);
@@ -137,7 +140,7 @@ const BusinessDashboard = () => {
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !user) return;
-    if (file.size > 5 * 1024 * 1024) return toast.error("Imagem demasiado grande (máx 5MB)");
+    if (file.size > 5 * 1024 * 1024) return toast.error(t("businessEdit.imageTooLarge"));
     setUploading(true);
     const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
     const path = `${user.id}/${Date.now()}.${ext}`;
@@ -146,14 +149,14 @@ const BusinessDashboard = () => {
     const { data } = supabase.storage.from("avatars").getPublicUrl(path);
     setForm((f) => ({ ...f, photo_url: data.publicUrl }));
     setUploading(false);
-    toast.success("Foto carregada");
+    toast.success(t("businessEdit.photoUploaded"));
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const handleItemPhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !user) return;
-    if (file.size > 5 * 1024 * 1024) return toast.error("Imagem demasiado grande (máx 5MB)");
+    if (file.size > 5 * 1024 * 1024) return toast.error(t("businessEdit.imageTooLarge"));
     setItemUploading(true);
     const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
     const path = `${user.id}/menu/${Date.now()}.${ext}`;
@@ -162,16 +165,16 @@ const BusinessDashboard = () => {
     const { data } = supabase.storage.from("portfolio").getPublicUrl(path);
     setItemForm((f) => ({ ...f, photo_url: data.publicUrl }));
     setItemUploading(false);
-    toast.success("Foto do item carregada");
+    toast.success(t("businessEdit.itemPhotoUploaded"));
     if (itemFileRef.current) itemFileRef.current.value = "";
   };
 
   const submitVerification = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || !profileId) return;
-    if (!verifyDoc || !verifySelfie) return toast.error("Envie o documento de identificação e a selfie");
+    if (!verifyDoc || !verifySelfie) return toast.error(t("businessEdit.needDocs"));
     if (verifyDoc.size > 5 * 1024 * 1024 || verifySelfie.size > 5 * 1024 * 1024) {
-      return toast.error("Ficheiros demasiado grandes (máx 5MB cada)");
+      return toast.error(t("businessEdit.filesTooLarge"));
     }
     setVerifying(true);
     const ext = (f: File) => f.name.split(".").pop()?.toLowerCase() || "jpg";
@@ -194,17 +197,17 @@ const BusinessDashboard = () => {
     setVerificationReason(null);
     setVerifyDoc(null);
     setVerifySelfie(null);
-    toast.success("Verificação submetida! Aguarde a análise do administrador.");
+    toast.success(t("businessEdit.verificationSubmitted"));
   };
 
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
     if (!form.name || !form.category || !form.phone || !form.location) {
-      return toast.error("Nome, categoria, telefone e localização são obrigatórios");
+      return toast.error(t("businessEdit.requiredFields"));
     }
     if (!form.consumption_options.length) {
-      return toast.error("Selecione pelo menos uma opção de consumo");
+      return toast.error(t("businessEdit.needConsumption"));
     }
     setSaving(true);
     const payload = {
@@ -228,14 +231,14 @@ const BusinessDashboard = () => {
       setProfileId(data.id);
       await supabase.rpc("register_as_business");
     }
-    toast.success("Perfil guardado!");
+    toast.success(t("businessEdit.profileSaved"));
   };
 
   const addMenuCategory = async (name: string) => {
     if (!profileId) return;
     const { error } = await supabase.from("menu_categories").insert({ business_id: profileId, name });
     if (error) return toast.error(error.message);
-    toast.success("Categoria adicionada");
+    toast.success(t("businessEdit.categoryAdded"));
     loadMenu(profileId);
   };
 
@@ -243,7 +246,7 @@ const BusinessDashboard = () => {
     if (!profileId) return;
     const { error } = await supabase.from("menu_categories").update({ name }).eq("id", id);
     if (error) return toast.error(error.message);
-    toast.success("Categoria atualizada");
+    toast.success(t("businessEdit.categoryUpdated"));
     loadMenu(profileId);
   };
 
@@ -251,16 +254,16 @@ const BusinessDashboard = () => {
     if (!profileId) return;
     const { error } = await supabase.from("menu_categories").delete().eq("id", id);
     if (error) return toast.error(error.message);
-    toast.success("Categoria eliminada");
+    toast.success(t("businessEdit.categoryDeleted"));
     loadMenu(profileId);
   };
 
   const addMenuItem = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!profileId) return;
-    if (!itemForm.name.trim()) return toast.error("Indique o nome do prato/produto");
+    if (!itemForm.name.trim()) return toast.error(t("businessEdit.enterDishName"));
     const price = parseFloat(itemForm.price);
-    if (isNaN(price) || price < 0) return toast.error("Indique um preço válido");
+    if (isNaN(price) || price < 0) return toast.error(t("businessEdit.enterValidPrice"));
     const { error } = await supabase.from("menu_items").insert({
       business_id: profileId,
       category_id: itemForm.category_id || null,
@@ -269,7 +272,7 @@ const BusinessDashboard = () => {
       photo_url: itemForm.photo_url || null,
     });
     if (error) return toast.error(error.message);
-    toast.success("Item adicionado ao menu");
+    toast.success(t("businessEdit.itemAdded"));
     setItemForm({ name: "", price: "", category_id: "", photo_url: "" });
     loadMenu(profileId);
   };
@@ -277,14 +280,14 @@ const BusinessDashboard = () => {
   const removeMenuItem = async (id: string) => {
     const { error } = await supabase.from("menu_items").delete().eq("id", id);
     if (error) return toast.error(error.message);
-    toast.success("Item removido");
+    toast.success(t("businessEdit.itemRemoved"));
     if (profileId) loadMenu(profileId);
   };
 
-  const categoryName = (cid: string | null) => menuCategories.find((c) => c.id === cid)?.name ?? "Sem categoria";
+  const categoryName = (cid: string | null) => menuCategories.find((c) => c.id === cid)?.name ?? t("businessEdit.noCategoryLabel");
 
   if (loading || fetching) {
-    return <div className="min-h-screen flex items-center justify-center text-muted-foreground">A carregar...</div>;
+    return <div className="min-h-screen flex items-center justify-center text-muted-foreground">{t("businessEdit.loading")}</div>;
   }
 
   return (
@@ -292,14 +295,15 @@ const BusinessDashboard = () => {
       <header className="border-b">
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
           <Link to="/painel-loja" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground p-2 -m-2 rounded-md">
-            <ArrowLeft className="h-4 w-4" /> Estatísticas
+            <ArrowLeft className="h-4 w-4" /> {t("businessEdit.statistics")}
           </Link>
           <div className="flex items-center gap-2">
+            <LanguageSelector />
             {isAdmin && (
-              <Link to="/admin"><Button variant="outline" size="sm">Admin</Button></Link>
+              <Link to="/admin"><Button variant="outline" size="sm">{t("businessEdit.admin")}</Button></Link>
             )}
             <Button variant="ghost" size="sm" onClick={() => signOut().then(() => navigate("/"))} className="gap-1 min-h-11">
-              <LogOut className="h-4 w-4" /> Sair
+              <LogOut className="h-4 w-4" /> {t("businessEdit.logout")}
             </Button>
           </div>
         </div>
@@ -307,14 +311,14 @@ const BusinessDashboard = () => {
 
       <main className="max-w-2xl mx-auto px-4 py-6 pb-[calc(env(safe-area-inset-bottom))]">
         <h1 className="text-2xl font-bold mb-1 flex items-center gap-2">
-          <Store className="h-6 w-6 text-primary" /> Meu estabelecimento
+          <Store className="h-6 w-6 text-primary" /> {t("businessEdit.myBusiness")}
         </h1>
         <p className="text-sm text-muted-foreground mb-6">
-          {profileId ? "Atualize os dados, opções de consumo e o menu." : "Complete o perfil para ficar visível na plataforma."}
+          {profileId ? t("businessEdit.updateData") : t("businessEdit.completeToAppear")}
         </p>
 
         <Card>
-          <CardHeader><CardTitle className="text-base">Dados do estabelecimento</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-base">{t("businessEdit.businessData")}</CardTitle></CardHeader>
           <CardContent>
             <form onSubmit={save} className="grid gap-4">
               <div className="flex flex-col sm:flex-row sm:items-center gap-4">
@@ -340,17 +344,17 @@ const BusinessDashboard = () => {
                     className="gap-2 min-h-11 w-full sm:w-auto"
                   >
                     {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-                    Carregar Foto do Estabelecimento
+                    {t("businessEdit.uploadPhoto")}
                   </Button>
-                  <p className="text-[11px] text-muted-foreground mt-1">JPG ou PNG, máx 5MB</p>
+                  <p className="text-[11px] text-muted-foreground mt-1">{t("businessEdit.jpgPngMax")}</p>
                 </div>
               </div>
-              <Field label="Nome do estabelecimento *">
+              <Field label={t("businessEdit.nameRequired")}>
                 <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
               </Field>
-              <Field label="Categoria *">
+              <Field label={t("businessEdit.categoryRequired")}>
                 <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
-                  <SelectTrigger><SelectValue placeholder="Selecione uma categoria" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={t("businessEdit.selectCategory")} /></SelectTrigger>
                   <SelectContent>
                     {categories.map((c) => (
                       <SelectItem key={c} value={c}>{c}</SelectItem>
@@ -359,12 +363,12 @@ const BusinessDashboard = () => {
                 </Select>
               </Field>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <Field label="Telefone (WhatsApp) *">
-                  <Input placeholder="+245 955 000 000" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+                <Field label={t("businessEdit.phoneRequired")}>
+                  <Input placeholder={t("businessEdit.phonePlaceholder")} value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
                 </Field>
-                <Field label="Localização *">
+                <Field label={t("businessEdit.locationRequired")}>
                   <Select value={form.location} onValueChange={(v) => setForm({ ...form, location: v })}>
-                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectTrigger><SelectValue placeholder={t("businessEdit.select")} /></SelectTrigger>
                     <SelectContent>
                       {locationOptions.map((opt) => (
                         <SelectItem key={opt} value={opt}>{opt}</SelectItem>
@@ -373,11 +377,11 @@ const BusinessDashboard = () => {
                   </Select>
                 </Field>
               </div>
-              <Field label="Descrição">
-                <Textarea rows={4} placeholder="Fale sobre o seu estabelecimento, especialidades, horário..." value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+              <Field label={t("businessEdit.description")}>
+                <Textarea rows={4} placeholder={t("businessEdit.descriptionPlaceholder")} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
               </Field>
-              <Field label="Opções de consumo oferecidas *">
-                <p className="text-[11px] text-muted-foreground -mt-1">Pode escolher mais do que uma.</p>
+              <Field label={t("businessEdit.consumptionTitle")}>
+                <p className="text-[11px] text-muted-foreground -mt-1">{t("businessEdit.consumptionHint")}</p>
                 <div className="flex flex-col gap-2">
                   {CONSUMPTION_OPTIONS.map((opt) => {
                     const active = form.consumption_options.includes(opt.value);
@@ -405,8 +409,8 @@ const BusinessDashboard = () => {
                           {active && <span className="h-2 w-2 rounded-full bg-white" />}
                         </span>
                         <span className="min-w-0">
-                          <span className={"block text-sm font-medium " + (active ? "text-primary" : "")}>{opt.label}</span>
-                          <span className="block text-[11px] text-muted-foreground">{opt.description}</span>
+                          <span className={"block text-sm font-medium " + (active ? "text-primary" : "")}>{t(opt.labelKey)}</span>
+                          <span className="block text-[11px] text-muted-foreground">{t(opt.descKey)}</span>
                         </span>
                       </button>
                     );
@@ -414,7 +418,7 @@ const BusinessDashboard = () => {
                 </div>
               </Field>
               <Button type="submit" disabled={saving} className="w-full">
-                {saving ? "A guardar..." : profileId ? "Guardar alterações" : "Criar perfil"}
+                {saving ? t("businessEdit.saving") : profileId ? t("businessEdit.saveChanges") : t("businessEdit.createProfile")}
               </Button>
             </form>
           </CardContent>
@@ -424,41 +428,41 @@ const BusinessDashboard = () => {
           <Card className="mt-4">
             <CardHeader>
               <CardTitle className="text-base flex items-center gap-2">
-                <UtensilsCrossed className="h-5 w-5 text-primary" /> Menu
+                <UtensilsCrossed className="h-5 w-5 text-primary" /> {t("businessEdit.menuTitle")}
               </CardTitle>
               <p className="text-xs text-muted-foreground">
-                Organize o menu por categorias. Os clientes veem esta página publicamente.
+                {t("businessEdit.menuDesc")}
               </p>
             </CardHeader>
             <CardContent className="flex flex-col gap-5">
               <div>
-                <h3 className="text-sm font-semibold mb-2">Categorias do menu</h3>
+                <h3 className="text-sm font-semibold mb-2">{t("businessEdit.menuCategories")}</h3>
                 <ManageList
-                  placeholder="Nova categoria (ex: Pratos principais)"
+                  placeholder={t("businessEdit.newCategoryPlaceholder")}
                   items={menuCategories}
                   onAdd={addMenuCategory}
                   onRename={renameMenuCategory}
                   onDelete={(id) => setCategoryToDelete(menuCategories.find((c) => c.id === id) ?? null)}
-                  emptyText="Sem categorias. Crie a primeira para organizar o menu."
+                  emptyText={t("businessEdit.noCategories")}
                 />
               </div>
               <div>
-                <h3 className="text-sm font-semibold mb-2">Itens do menu ({menuItems.length})</h3>
+                <h3 className="text-sm font-semibold mb-2">{t("businessEdit.menuItems", { count: menuItems.length })}</h3>
                 <form onSubmit={addMenuItem} className="grid gap-3 rounded-lg border p-3 mb-3">
                   <div className="grid sm:grid-cols-2 gap-3">
                     <div className="space-y-1">
-                      <Label>Nome do prato/produto *</Label>
-                      <Input value={itemForm.name} onChange={(e) => setItemForm({ ...itemForm, name: e.target.value })} placeholder="ex: Arroz de marisco" />
+                      <Label>{t("businessEdit.dishNameRequired")}</Label>
+                      <Input value={itemForm.name} onChange={(e) => setItemForm({ ...itemForm, name: e.target.value })} placeholder={t("businessEdit.dishPlaceholder")} />
                     </div>
                     <div className="space-y-1">
-                      <Label>Preço (CFA) *</Label>
-                      <Input type="number" min="0" step="0.01" value={itemForm.price} onChange={(e) => setItemForm({ ...itemForm, price: e.target.value })} placeholder="ex: 4500" />
+                      <Label>{t("businessEdit.priceRequired")}</Label>
+                      <Input type="number" min="0" step="0.01" value={itemForm.price} onChange={(e) => setItemForm({ ...itemForm, price: e.target.value })} placeholder={t("businessEdit.pricePlaceholder")} />
                     </div>
                   </div>
                   <div className="space-y-1">
-                    <Label>Categoria do menu</Label>
+                    <Label>{t("businessEdit.menuCategory")}</Label>
                     <Select value={itemForm.category_id} onValueChange={(v) => setItemForm({ ...itemForm, category_id: v })}>
-                      <SelectTrigger><SelectValue placeholder="Sem categoria" /></SelectTrigger>
+                      <SelectTrigger><SelectValue placeholder={t("businessEdit.noCategory")} /></SelectTrigger>
                       <SelectContent>
                         {menuCategories.map((c) => (
                           <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
@@ -476,14 +480,14 @@ const BusinessDashboard = () => {
                     />
                     <Button type="button" variant="outline" disabled={itemUploading} onClick={() => itemFileRef.current?.click()} className="gap-2 min-h-11">
                       {itemUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-                      {itemForm.photo_url ? "Foto escolhida (trocar)" : "Foto (opcional)"}
+                      {itemForm.photo_url ? t("businessEdit.photoChosen") : t("businessEdit.photoOptional")}
                     </Button>
                     {itemForm.photo_url && (
                       <img src={itemForm.photo_url} alt="Prato" className="h-9 w-9 rounded-lg object-cover border" />
                     )}
                   </div>
                   <Button type="submit" className="gap-1 w-full">
-                    <Plus className="h-4 w-4" /> Adicionar item
+                    <Plus className="h-4 w-4" /> {t("businessEdit.addItem")}
                   </Button>
                 </form>
                 <div className="flex flex-col gap-2">
@@ -505,7 +509,7 @@ const BusinessDashboard = () => {
                       </Button>
                     </div>
                   ))}
-                  {!menuItems.length && <p className="text-sm text-muted-foreground text-center py-4">O menu ainda não tem itens.</p>}
+                  {!menuItems.length && <p className="text-sm text-muted-foreground text-center py-4">{t("businessEdit.noItems")}</p>}
                 </div>
               </div>
             </CardContent>
@@ -520,11 +524,11 @@ const BusinessDashboard = () => {
                 {verificationStatus === "pendente" && <ShieldAlert className="h-5 w-5 text-yellow-600" />}
                 {verificationStatus === "rejeitado" && <ShieldX className="h-5 w-5 text-destructive" />}
                 {verificationStatus === "none" && <ShieldCheck className="h-5 w-5 text-muted-foreground" />}
-                Verificação de Identidade
+                {t("businessEdit.verificationTitle")}
               </CardTitle>
               {verificationStatus !== "aprovado" && (
                 <p className="text-xs text-muted-foreground">
-                  Confirme a identidade do responsável para receber o selo de estabelecimento verificado.
+                  {t("businessEdit.verificationDesc")}
                 </p>
               )}
             </CardHeader>
@@ -545,7 +549,7 @@ const BusinessDashboard = () => {
               {verificationStatus === "rejeitado" && (
                 <div className="mb-3 rounded-md bg-destructive/10 p-3 text-sm text-destructive">
                   <p className="font-medium">{verificationDescription(verificationStatus)}</p>
-                  {verificationReason && <p className="mt-1">Motivo: {verificationReason}</p>}
+                  {verificationReason && <p className="mt-1">{t("businessEdit.reason", { reason: verificationReason })}</p>}
                 </div>
               )}
 
@@ -553,28 +557,28 @@ const BusinessDashboard = () => {
                 <form onSubmit={submitVerification} className="grid gap-4">
                   <div className="grid sm:grid-cols-2 gap-3">
                     <div>
-                      <Label>Documento de identificação (BI / Passaporte)</Label>
+                      <Label>{t("businessEdit.docLabel")}</Label>
                       <input ref={verifyDocRef} type="file" accept="image/*,.pdf" className="hidden" onChange={(e) => setVerifyDoc(e.target.files?.[0] ?? null)} />
                       <Button type="button" variant="outline" className="w-full justify-start gap-2" onClick={() => verifyDocRef.current?.click()}>
                         <FileCheck2 className="h-4 w-4" />
-                        {verifyDoc ? verifyDoc.name : "Escolher documento"}
+                        {verifyDoc ? verifyDoc.name : t("businessEdit.chooseDoc")}
                       </Button>
                     </div>
                     <div>
-                      <Label>Selfie (foto do responsável)</Label>
+                      <Label>{t("businessEdit.selfieLabel")}</Label>
                       <input ref={verifySelfieRef} type="file" accept="image/*" className="hidden" onChange={(e) => setVerifySelfie(e.target.files?.[0] ?? null)} />
                       <Button type="button" variant="outline" className="w-full justify-start gap-2" onClick={() => verifySelfieRef.current?.click()}>
                         <Upload className="h-4 w-4" />
-                        {verifySelfie ? verifySelfie.name : "Escolher selfie"}
+                        {verifySelfie ? verifySelfie.name : t("businessEdit.chooseSelfie")}
                       </Button>
                     </div>
                   </div>
                   <p className="text-[11px] text-muted-foreground">
-                    Apenas o administrador terá acesso aos seus ficheiros. JPG, PNG ou PDF, máx 5MB cada.
+                    {t("businessEdit.verificationHint")}
                   </p>
                   <Button type="submit" disabled={verifying} className="w-full">
                     {verifying ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-                    {verifying ? "A submeter..." : "Submeter para verificação"}
+                    {verifying ? t("businessEdit.submitting") : t("businessEdit.submitVerification")}
                   </Button>
                 </form>
               )}
@@ -585,7 +589,7 @@ const BusinessDashboard = () => {
         {profileId && (
           <div className="mt-4 flex justify-center">
             <Link to={`/loja/${profileId}`} className="text-xs text-primary hover:underline inline-flex items-center justify-center min-h-11 w-full">
-              Ver página pública do estabelecimento
+              {t("businessEdit.viewPublic")}
             </Link>
           </div>
         )}
@@ -593,9 +597,9 @@ const BusinessDashboard = () => {
         <ConfirmDialog
           open={categoryToDelete !== null}
           onOpenChange={(o) => { if (!o) setCategoryToDelete(null); }}
-          title="Eliminar categoria"
-          description="Eliminar esta categoria? Os itens ficam sem categoria."
-          confirmLabel="Eliminar"
+          title={t("businessEdit.deleteCategory")}
+          description={t("businessEdit.deleteCategoryConfirm")}
+          confirmLabel={t("businessEdit.delete")}
           destructive
           onConfirm={() => {
             if (categoryToDelete) removeMenuCategory(categoryToDelete.id);
@@ -606,9 +610,9 @@ const BusinessDashboard = () => {
         <ConfirmDialog
           open={itemToDelete !== null}
           onOpenChange={(o) => { if (!o) setItemToDelete(null); }}
-          title="Remover item"
-          description={itemToDelete ? `Remover "${itemToDelete.name}" do menu?` : ""}
-          confirmLabel="Remover"
+          title={t("businessEdit.removeItem")}
+          description={itemToDelete ? t("businessEdit.removeItemConfirm", { name: itemToDelete.name }) : ""}
+          confirmLabel={t("businessEdit.remove")}
           destructive
           onConfirm={() => {
             if (itemToDelete) removeMenuItem(itemToDelete.id);

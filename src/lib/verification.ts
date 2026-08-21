@@ -7,29 +7,31 @@ export const VERIFICATION_STATUSES: VerificationStatus[] = [
   "rejeitado",
 ];
 
+import i18n from "@/i18n";
+
 export const verificationLabel = (status: string | null | undefined): string => {
   switch (status) {
     case "aprovado":
-      return "Verificado";
+      return i18n.t("verification.verified");
     case "pendente":
-      return "Em análise";
+      return i18n.t("verification.pending");
     case "rejeitado":
-      return "Rejeitado";
+      return i18n.t("verification.rejected");
     default:
-      return "Sem verificação";
+      return i18n.t("verification.none");
   }
 };
 
 export const verificationDescription = (status: string | null | undefined): string => {
   switch (status) {
     case "aprovado":
-      return "Perfil verificado!";
+      return i18n.t("verification.verifiedDesc");
     case "pendente":
-      return "A sua verificação está em análise. Voltaremos a dar-lhe resposta em breve.";
+      return i18n.t("verification.pendingDesc");
     case "rejeitado":
-      return "A verificação foi rejeitada.";
+      return i18n.t("verification.rejectedDesc");
     default:
-      return "Envie um documento e selfie para verificar a sua identidade.";
+      return i18n.t("verification.noneDesc");
   }
 };
 

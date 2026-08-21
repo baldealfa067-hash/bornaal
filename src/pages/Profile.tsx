@@ -10,6 +10,7 @@ import { usePushSettings } from "@/hooks/usePushSettings";
 import { supabase } from "@/integrations/supabase/client";
 import { useProviderStatsQuery, useCommentCount, useCommentCountRealtime, useQualityLevel, useQualityLevelRealtime } from "@/hooks/useProviderStats";
 import { useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 
 type ProviderProfile = {
@@ -25,6 +26,7 @@ type ProviderProfile = {
 };
 
 const Profile = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { user, isProvider, isBusiness, isAdmin, roles, loading, signOut } = useAuth();
   const qc = useQueryClient();
@@ -85,7 +87,7 @@ const Profile = () => {
 
   const handleLogout = async () => {
     await signOut();
-    toast.success("Sessão encerrada");
+    toast.success(t("profile.sessionClosed"));
     navigate("/", { replace: true });
   };
 
@@ -102,11 +104,11 @@ const Profile = () => {
   if (!profile || !profile.name) {
     return (
       <div className="max-w-lg mx-auto px-4 py-8">
-        <h1 className="text-2xl font-bold mb-4">Meu Perfil</h1>
+        <h1 className="text-2xl font-bold mb-4">{t("profile.myProfile")}</h1>
         <Card>
           <CardContent className="flex flex-col items-center gap-3 py-8 text-center">
-            <p className="text-muted-foreground">Ainda não criaste o teu perfil de prestador.</p>
-            <Button onClick={() => navigate("/painel")}>Criar perfil de prestador</Button>
+            <p className="text-muted-foreground">{t("profile.noProviderProfile")}</p>
+            <Button onClick={() => navigate("/painel")}>{t("profile.createProviderProfile")}</Button>
           </CardContent>
         </Card>
       </div>
@@ -118,7 +120,7 @@ const Profile = () => {
 
   return (
     <div className="max-w-lg mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold mb-6">Meu Perfil</h1>
+      <h1 className="text-2xl font-bold mb-6">{t("profile.myProfile")}</h1>
 
       <Card>
         <CardHeader className="flex flex-row items-center gap-4">
@@ -133,7 +135,7 @@ const Profile = () => {
               {profile?.name ?? email}
             </CardTitle>
             <p className="text-sm text-muted-foreground">
-              {profile ? profile.category : roles.length > 0 ? roles.join(", ") : "cliente"}
+              {profile ? profile.category : roles.length > 0 ? roles.join(", ") : t("profile.client")}
             </p>
           </div>
         </CardHeader>
@@ -141,34 +143,34 @@ const Profile = () => {
           {isProvider && profile && (
             <div className="rounded-lg border p-4 space-y-2 text-sm">
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Telefone</span>
+                <span className="text-muted-foreground">{t("profile.phone")}</span>
                 <span className="font-medium">{profile.phone}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Localização</span>
+                <span className="text-muted-foreground">{t("profile.location")}</span>
                 <span className="font-medium">{profile.location}</span>
               </div>
               {profile.price_type === "fixo" && profile.starting_price != null && (
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Preço</span>
+                  <span className="text-muted-foreground">{t("profile.price")}</span>
                   <span className="font-medium">{profile.starting_price} FCFA</span>
                 </div>
               )}
               {profile.price_type === "negociavel" && (
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Preço</span>
-                  <span className="font-medium">Negociável</span>
+                  <span className="text-muted-foreground">{t("profile.price")}</span>
+                  <span className="font-medium">{t("common.negotiable")}</span>
                 </div>
               )}
               {profile.price_type === "combinar" && (
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Preço</span>
-                  <span className="font-medium">A combinar</span>
+                  <span className="text-muted-foreground">{t("profile.price")}</span>
+                  <span className="font-medium">{t("common.toCombine")}</span>
                 </div>
               )}
               {profile.description && (
                 <div>
-                  <span className="text-muted-foreground">Descrição</span>
+                  <span className="text-muted-foreground">{t("profile.description")}</span>
                   <p className="mt-1">{profile.description}</p>
                 </div>
               )}
@@ -176,27 +178,27 @@ const Profile = () => {
           )}
           {isProvider && (
             <div className="rounded-lg border p-4">
-              <p className="text-sm font-semibold mb-3">Estatísticas do perfil</p>
+              <p className="text-sm font-semibold mb-3">{t("profile.statsTitle")}</p>
               <div className="grid grid-cols-2 gap-2 text-sm">
                 <div className="flex items-center gap-2">
                   <Eye className="h-4 w-4 text-primary" />
-                  <span><span className="font-bold">{stats?.profile_views ?? 0}</span> <span className="text-muted-foreground">vistas</span></span>
+                  <span><span className="font-bold">{stats?.profile_views ?? 0}</span> <span className="text-muted-foreground">{t("profile.views")}</span></span>
                 </div>
                 <div className="flex items-center gap-2">
                   <MessageCircle className="h-4 w-4 text-[#25D366]" />
-                  <span><span className="font-bold">{stats?.whatsapp_clicks ?? 0}</span> <span className="text-muted-foreground">WhatsApp</span></span>
+                  <span><span className="font-bold">{stats?.whatsapp_clicks ?? 0}</span> <span className="text-muted-foreground">{t("profile.whatsapp")}</span></span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Phone className="h-4 w-4 text-secondary-foreground" />
-                  <span><span className="font-bold">{stats?.call_clicks ?? 0}</span> <span className="text-muted-foreground">ligações</span></span>
+                  <span><span className="font-bold">{stats?.call_clicks ?? 0}</span> <span className="text-muted-foreground">{t("profile.calls")}</span></span>
                 </div>
                 <div className="flex items-center gap-2">
                   <MessageSquareText className="h-4 w-4 text-muted-foreground" />
-                  <span><span className="font-bold">{commentCount}</span> <span className="text-muted-foreground">comentários</span></span>
+                  <span><span className="font-bold">{commentCount}</span> <span className="text-muted-foreground">{t("profile.comments")}</span></span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Star className="h-4 w-4 text-yellow-500" />
-                  <span><span className="font-bold">{qualityLevel ?? "média"}</span> <span className="text-muted-foreground">qualidade</span></span>
+                  <span><span className="font-bold">{qualityLevel ?? t("profile.qualityDefault")}</span> <span className="text-muted-foreground">{t("profile.quality")}</span></span>
                 </div>
               </div>
             </div>
@@ -204,18 +206,18 @@ const Profile = () => {
           {isProvider && (
             <Button variant="outline" onClick={() => navigate("/painel")} className="w-full justify-start gap-2">
               <Settings className="h-4 w-4" />
-              Editar perfil de prestador
+              {t("profile.editProvider")}
             </Button>
           )}
           {!isProvider && !isAdmin && (
             <Button variant="outline" onClick={() => navigate("/painel")} className="w-full justify-start gap-2">
               <Briefcase className="h-4 w-4" />
-              Tornar-me prestador
+              {t("profile.becomeProvider")}
             </Button>
           )}
           <Button variant="destructive" onClick={handleLogout} className="w-full justify-start gap-2">
             <LogOut className="h-4 w-4" />
-            Terminar sessão
+            {t("profile.logout")}
           </Button>
         </CardContent>
       </Card>
@@ -224,22 +226,21 @@ const Profile = () => {
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
             <BellRing className="h-4 w-4 text-primary" />
-            Notificações
+            {t("profile.notifications")}
           </CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
           {!push.supported ? (
             <p className="text-sm text-muted-foreground">
-              Notificações push não são suportadas neste navegador.
+              {t("profile.pushNotSupported")}
             </p>
           ) : (
             <>
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <p className="text-sm font-medium">Notificações push</p>
+                  <p className="text-sm font-medium">{t("profile.pushTitle")}</p>
                   <p className="text-xs text-muted-foreground">
-                    Alertas no telemóvel quando alguém vê o teu perfil, te contacta
-                    ou responde ao teu pedido.
+                    {t("profile.pushDesc")}
                   </p>
                 </div>
                 <Switch
@@ -250,15 +251,14 @@ const Profile = () => {
               </div>
               {push.permission === "denied" && (
                 <p className="text-xs text-destructive">
-                  Permissão negada no navegador. Ativa as notificações nas definições do
-                  navegador para voltar a receber alertas.
+                  {t("profile.pushDenied")}
                 </p>
               )}
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <p className="text-sm font-medium">Novidades perto de mim</p>
+                  <p className="text-sm font-medium">{t("profile.newsTitle")}</p>
                   <p className="text-xs text-muted-foreground">
-                    Aviso quando um novo prestador ou restaurante aparece na tua zona.
+                    {t("profile.newsDesc")}
                   </p>
                 </div>
                 <Switch

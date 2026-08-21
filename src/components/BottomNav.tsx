@@ -1,14 +1,15 @@
 import { Home, Search, ClipboardList, User } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
-
-const items = [
-  { to: "/inicio", icon: Home, label: "Início" },
-  { to: "/explorar", icon: Search, label: "Explorar" },
-  { to: "/pedidos", icon: ClipboardList, label: "Pedidos" },
-  { to: "/perfil", icon: User, label: "Perfil" },
-];
+import { useTranslation } from "react-i18next";
 
 export const BottomNav = () => {
+  const { t } = useTranslation();
+  const items = [
+    { to: "/inicio", icon: Home, label: t("bottomNav.home") },
+    { to: "/explorar", icon: Search, label: t("bottomNav.explore") },
+    { to: "/pedidos", icon: ClipboardList, label: t("bottomNav.requests") },
+    { to: "/perfil", icon: User, label: t("bottomNav.profile") },
+  ];
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 border-t bg-card/95 backdrop-blur-md safe-area-bottom">
       <div className="flex justify-around items-center h-16 max-w-lg mx-auto">

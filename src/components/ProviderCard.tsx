@@ -7,6 +7,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { formatCFA } from "@/lib/format";
 import { supabase } from "@/integrations/supabase/client";
+import { useTranslation } from "react-i18next";
 
 interface ProviderCardProps {
   id: string;
@@ -27,13 +28,14 @@ interface ProviderCardProps {
 export const ProviderCard = ({
   id, name, category, location, phone, photo_url, price_type, starting_price, services, is_verified, profile_type, avgRating, reviewCount
 }: ProviderCardProps) => {
+  const { t } = useTranslation();
   const isBusiness = profile_type === "business";
   const detailUrl = isBusiness ? `/loja/${id}` : `/prestador/${id}`;
   const cleanPhone = phone.replace(/\D/g, "");
   const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(
     isBusiness
-      ? `Olá ${name}, vi o vosso estabelecimento no Bornaal e gostaria de fazer um pedido.`
-      : `Olá ${name}, encontrei o seu perfil no Bornaal e gostaria de saber mais sobre os seus serviços.`
+      ? t("providerCardExtra.whatsappBusinessMsg", { name })
+      : t("providerCardExtra.whatsappProviderMsg", { name })
   )}`;
   const telUrl = `tel:${phone.replace(/\s/g, "")}`;
 
@@ -60,13 +62,13 @@ export const ProviderCard = ({
               <span className="truncate">{name}</span>
               {isBusiness && (
                 <Badge variant="default" className="text-[10px] px-1.5 py-0 h-4 shrink-0">
-                  Loja
+                  {t("providerCard.shop")}
                 </Badge>
               )}
               {is_verified && (
                 <BadgeCheck
                   className="h-4 w-4 text-primary shrink-0"
-                  aria-label="Prestador verificado"
+                  aria-label={t("providerCardExtra.verifiedLabel")}
                 />
               )}
             </h3>
@@ -98,12 +100,12 @@ export const ProviderCard = ({
             )}
             {price_type === "negociavel" && (
               <div className="mt-1 text-xs font-semibold text-primary">
-                Negociável
+                {t("common.negotiable")}
               </div>
             )}
             {price_type === "combinar" && (
               <div className="mt-1 text-xs text-muted-foreground">
-                A combinar
+                {t("common.toCombine")}
               </div>
             )}
           </div>
@@ -113,14 +115,14 @@ export const ProviderCard = ({
           href={whatsappUrl}
           target="_blank"
           rel="noopener noreferrer"
-          aria-label={`Contactar ${name} via WhatsApp`}
+          aria-label={t("providerCard.contactWhatsapp", { name })}
           onClick={() => trackContact("whatsapp")}
           >
             <Button size="icon" className="h-10 w-10 bg-[#25D366] hover:bg-[#1ebe57] text-white">
               <MessageCircle className="h-5 w-5" />
             </Button>
           </a>
-          <a href={telUrl} aria-label={`Ligar para ${name}`} onClick={() => trackContact("call")}>
+          <a href={telUrl} aria-label={t("providerCard.call", { name })} onClick={() => trackContact("call")}>
             <Button size="icon" variant="secondary" className="h-10 w-10">
               <Phone className="h-5 w-5" />
             </Button>

@@ -23,6 +23,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useProviderStatsQuery } from "@/hooks/useProviderStats";
 import { useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
+import { LanguageSelector } from "@/components/LanguageSelector";
 
 type DashboardProfile = {
   id: string;
@@ -33,6 +35,7 @@ type DashboardProfile = {
 };
 
 const BusinessDashboard = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { user, isBusiness, isAdmin, loading, signOut } = useAuth();
   const qc = useQueryClient();
@@ -99,7 +102,7 @@ const BusinessDashboard = () => {
   }, [profile?.id, qc]);
 
   if (loading || fetching) {
-    return <div className="min-h-screen flex items-center justify-center text-muted-foreground">A carregar...</div>;
+    return <div className="min-h-screen flex items-center justify-center text-muted-foreground">{t("businessDashboard.loading")}</div>;
   }
 
   const initials = (profile?.name ?? "?").slice(0, 2).toUpperCase();
@@ -109,14 +112,15 @@ const BusinessDashboard = () => {
       <header className="border-b">
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground p-2 -m-2 rounded-md">
-            <ArrowLeft className="h-4 w-4" /> Início
+            <ArrowLeft className="h-4 w-4" /> {t("common.home")}
           </Link>
           <div className="flex items-center gap-2">
+            <LanguageSelector />
             {isAdmin && (
-              <Link to="/admin"><Button variant="outline" size="sm">Admin</Button></Link>
+              <Link to="/admin"><Button variant="outline" size="sm">{t("common.admin")}</Button></Link>
             )}
             <Button variant="ghost" size="sm" onClick={() => signOut().then(() => navigate("/"))} className="gap-1 min-h-11">
-              <LogOut className="h-4 w-4" /> Sair
+              <LogOut className="h-4 w-4" /> {t("common.logout")}
             </Button>
           </div>
         </div>
@@ -127,9 +131,9 @@ const BusinessDashboard = () => {
           <Card>
             <CardContent className="flex flex-col items-center gap-3 py-10 text-center">
               <Store className="h-8 w-8 text-muted-foreground" />
-              <p className="text-muted-foreground">Ainda não criaste o teu perfil de estabelecimento.</p>
+              <p className="text-muted-foreground">{t("businessDashboard.noProfile")}</p>
               <Button onClick={() => navigate("/painel-loja/editar")} className="gap-2">
-                <Settings className="h-4 w-4" /> Criar perfil de estabelecimento
+                <Settings className="h-4 w-4" /> {t("businessDashboard.createProfile")}
               </Button>
             </CardContent>
           </Card>
@@ -146,17 +150,17 @@ const BusinessDashboard = () => {
                   {profile.category}
                   {profile.verification_status === "aprovado" && (
                     <Badge variant="secondary" className="text-[10px] px-1.5 py-0 gap-1">
-                      <ShieldCheck className="h-3 w-3 text-green-600" /> Verificado
+                      <ShieldCheck className="h-3 w-3 text-green-600" /> {t("businessDashboard.verified")}
                     </Badge>
                   )}
                   {profile.verification_status === "pendente" && (
                     <Badge variant="secondary" className="text-[10px] px-1.5 py-0 gap-1">
-                      <ShieldAlert className="h-3 w-3 text-yellow-600" /> Verificação pendente
+                      <ShieldAlert className="h-3 w-3 text-yellow-600" /> {t("businessDashboard.pendingVerification")}
                     </Badge>
                   )}
                   {profile.verification_status === "rejeitado" && (
                     <Badge variant="secondary" className="text-[10px] px-1.5 py-0 gap-1">
-                      <ShieldX className="h-3 w-3 text-destructive" /> Verificação rejeitada
+                      <ShieldX className="h-3 w-3 text-destructive" /> {t("businessDashboard.rejectedVerification")}
                     </Badge>
                   )}
                 </p>
@@ -164,42 +168,42 @@ const BusinessDashboard = () => {
             </div>
 
             <Button onClick={() => navigate("/painel-loja/editar")} className="w-full gap-2 min-h-11 mb-6">
-              <Settings className="h-4 w-4" /> Configurar estabelecimento
+              <Settings className="h-4 w-4" /> {t("businessDashboard.configure")}
             </Button>
 
             <Card>
               <CardHeader>
                 <CardTitle className="text-base flex items-center gap-2">
-                  <Store className="h-5 w-5 text-primary" /> Estatísticas do perfil
+                  <Store className="h-5 w-5 text-primary" /> {t("businessDashboard.statsTitle")}
                 </CardTitle>
-                <p className="text-xs text-muted-foreground">Como os clientes interagem com o seu estabelecimento.</p>
+                <p className="text-xs text-muted-foreground">{t("businessDashboard.statsDesc")}</p>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
                   <div className="rounded-lg border p-3 flex flex-col items-center gap-1">
                     <ShoppingCart className="h-5 w-5 text-primary" />
                     <span className="text-2xl font-bold">{orderCount}</span>
-                    <span className="text-[11px] text-muted-foreground text-center">Pedidos recebidos</span>
+                    <span className="text-[11px] text-muted-foreground text-center">{t("businessDashboard.ordersReceived")}</span>
                   </div>
                   <div className="rounded-lg border p-3 flex flex-col items-center gap-1">
                     <Eye className="h-5 w-5 text-primary" />
                     <span className="text-2xl font-bold">{stats.profile_views}</span>
-                    <span className="text-[11px] text-muted-foreground text-center">Vistas do perfil</span>
+                    <span className="text-[11px] text-muted-foreground text-center">{t("businessDashboard.profileViews")}</span>
                   </div>
                   <div className="rounded-lg border p-3 flex flex-col items-center gap-1">
                     <MessageCircle className="h-5 w-5 text-[#25D366]" />
                     <span className="text-2xl font-bold">{stats.whatsapp_clicks}</span>
-                    <span className="text-[11px] text-muted-foreground text-center">Contactos WhatsApp</span>
+                    <span className="text-[11px] text-muted-foreground text-center">{t("businessDashboard.whatsappContacts")}</span>
                   </div>
                   <div className="rounded-lg border p-3 flex flex-col items-center gap-1">
                     <Phone className="h-5 w-5 text-secondary-foreground" />
                     <span className="text-2xl font-bold">{stats.call_clicks}</span>
-                    <span className="text-[11px] text-muted-foreground text-center">Ligações</span>
+                    <span className="text-[11px] text-muted-foreground text-center">{t("businessDashboard.calls")}</span>
                   </div>
                   <div className="rounded-lg border p-3 flex flex-col items-center gap-1">
                     <MessageSquareText className="h-5 w-5 text-muted-foreground" />
                     <span className="text-2xl font-bold">{commentCount}</span>
-                    <span className="text-[11px] text-muted-foreground text-center">Comentários</span>
+                    <span className="text-[11px] text-muted-foreground text-center">{t("businessDashboard.comments")}</span>
                   </div>
                 </div>
               </CardContent>
@@ -207,7 +211,7 @@ const BusinessDashboard = () => {
 
             <div className="mt-4 flex justify-center">
               <Link to={`/loja/${profile.id}`} className="text-xs text-primary hover:underline inline-flex items-center justify-center min-h-11 w-full">
-                Ver página pública do estabelecimento
+                {t("businessDashboard.viewPublic")}
               </Link>
             </div>
           </>

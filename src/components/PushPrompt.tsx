@@ -5,6 +5,7 @@ import { Loader2, BellRing } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { useUnreadCount } from "@/hooks/useNotifications";
+import { useTranslation } from "react-i18next";
 import {
   enablePush,
   getPermission,
@@ -16,6 +17,7 @@ import {
 } from "@/lib/push";
 
 const PushPrompt = () => {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { data: unread = 0 } = useUnreadCount(user?.id ?? null);
   const [open, setOpen] = useState(false);
@@ -45,7 +47,7 @@ const PushPrompt = () => {
     try {
       const { granted, error } = await enablePush();
       if (granted) {
-        toast.success("Notificações ativadas!");
+        toast.success(t("pushPrompt.activated"));
       } else if (error) {
         toast.error(error);
       }
@@ -69,19 +71,18 @@ const PushPrompt = () => {
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 mb-1">
             <BellRing className="h-6 w-6 text-primary" />
           </div>
-          <DialogTitle className="text-center">Receber notificações?</DialogTitle>
+          <DialogTitle className="text-center">{t("pushPrompt.title")}</DialogTitle>
           <DialogDescription className="text-center">
-            Recebe um alerta no telemóvel quando alguém vê o teu perfil, te contacta
-            ou responde ao teu pedido — mesmo com a app fechada.
+            {t("pushPrompt.desc")}
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="flex-col sm:flex-col gap-2">
           <Button onClick={handleEnable} disabled={busy} className="w-full">
             {busy && <Loader2 className="h-4 w-4 animate-spin" />}
-            Ativar notificações
+            {t("pushPrompt.enable")}
           </Button>
           <Button variant="outline" onClick={handleLater} disabled={busy} className="w-full">
-            Agora não
+            {t("pushPrompt.later")}
           </Button>
         </DialogFooter>
       </DialogContent>

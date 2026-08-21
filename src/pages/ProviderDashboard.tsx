@@ -13,6 +13,8 @@ import {
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useTranslation } from "react-i18next";
+import { LanguageSelector } from "@/components/LanguageSelector";
 import { useProviderStatsQuery, useProviderActivity, useProviderActivityRealtime, useCommentCount, useCommentCountRealtime } from "@/hooks/useProviderStats";
 import { toast } from "sonner";
 import { LOCATION_OPTIONS } from "@/lib/locations";
@@ -20,6 +22,7 @@ import { canSubmitVerification, isVerifiedStatus, verificationDescription } from
 import { useCategories } from "@/hooks/useProviders";
 import { useBairros } from "@/hooks/useBairros";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
+import i18n from "@/i18n";
 
 type Form = {
   name: string;
@@ -35,6 +38,7 @@ type Form = {
 const empty: Form = { name: "", category: "", phone: "", location: "", description: "", photo_url: "", price_type: "combinar", starting_price: "" };
 
 const ProviderDashboard = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { user, isProvider, isAdmin, loading, signOut } = useAuth();
   const [profileId, setProfileId] = useState<string | null>(null);
@@ -102,7 +106,7 @@ const ProviderDashboard = () => {
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !user) return;
-    if (file.size > 5 * 1024 * 1024) return toast.error("Imagem demasiado grande (máx 5MB)");
+    if (file.size > 5 * 1024 * 1024) return toast.error(t("providerDashboard.imageTooLarge"));
     setUploading(true);
     const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
     const path = `${user.id}/${Date.now()}.${ext}`;
@@ -111,15 +115,15 @@ const ProviderDashboard = () => {
     const { data } = supabase.storage.from("avatars").getPublicUrl(path);
     setForm((f) => ({ ...f, photo_url: data.publicUrl }));
     setUploading(false);
-    toast.success("Foto carregada");
+    toast.success(t("providerDashboard.photoUploaded"));
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const handleGalleryUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !user || !profileId) return;
-    if (gallery.length >= MAX_GALLERY) return toast.error(`Máximo de ${MAX_GALLERY} fotos`);
-    if (file.size > 5 * 1024 * 1024) return toast.error("Imagem demasiado grande (máx 5MB)");
+    if (gallery.length >= MAX_GALLERY) return toast.error(t("providerDashboard.maxPhotos", {count: MAX_GALLERY}));
+    if (file.size > 5 * 1024 * 1024) return toast.error(t("providerDashboard.imageTooLarge"));
     setGalleryUploading(true);
     const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
     const path = `${user.id}/${Date.now()}.${ext}`;
@@ -132,23 +136,23 @@ const ProviderDashboard = () => {
     setGalleryUploading(false);
     if (galleryInputRef.current) galleryInputRef.current.value = "";
     if (insErr) return toast.error(insErr.message);
-    toast.success("Foto adicionada à galeria");
+    toast.success(t("providerDashboard.photoAdded"));
     loadGallery(profileId);
   };
 
   const deleteGalleryImage = async (id: string) => {
     const { error } = await supabase.from("portfolio_images").delete().eq("id", id);
     if (error) return toast.error(error.message);
-    toast.success("Foto removida");
+    toast.success(t("providerDashboard.photoRemoved"));
     if (profileId) loadGallery(profileId);
   };
 
   const submitVerification = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || !profileId) return;
-    if (!verifyDoc || !verifySelfie) return toast.error("Envie o documento de identificação e a selfie");
+    if (!verifyDoc || !verifySelfie) return toast.error(t("providerDashboard.needDocs"));
     if (verifyDoc.size > 5 * 1024 * 1024 || verifySelfie.size > 5 * 1024 * 1024) {
-      return toast.error("Ficheiros demasiado grandes (máx 5MB cada)");
+      return toast.error(t("providerDashboard.filesTooLarge"));
     }
     setVerifying(true);
     const ext = (f: File) => f.name.split(".").pop()?.toLowerCase() || "jpg";
@@ -171,14 +175,14 @@ const ProviderDashboard = () => {
     setVerificationReason(null);
     setVerifyDoc(null);
     setVerifySelfie(null);
-    toast.success("Verificação submetida! Aguarde a análise do administrador.");
+    toast.success(t("providerDashboard.verificationSubmitted"));
   };
 
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
     if (!form.name || !form.category || !form.phone || !form.location) {
-      return toast.error("Nome, categoria, telefone e localização são obrigatórios");
+      return toast.error(t("providerDashboard.requiredFields"));
     }
     setSaving(true);
     const payload = {
@@ -200,12 +204,12 @@ const ProviderDashboard = () => {
     if (data) setProfileId(data.id);
     // Garantir role de prestador (também quando o perfil já existe)
     await supabase.rpc("register_as_provider");
-    toast.success("Perfil guardado!");
+    toast.success(t("providerDashboard.profileSaved"));
     if (data?.id) loadGallery(data.id);
   };
 
   if (loading || fetching) {
-    return <div className="min-h-screen flex items-center justify-center text-muted-foreground">A carregar...</div>;
+    return <div className="min-h-screen flex items-center justify-center text-muted-foreground">{t("providerDashboard.loading")}</div>;
   }
 
   return (
@@ -213,27 +217,28 @@ const ProviderDashboard = () => {
       <header className="border-b">
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground p-2 -m-2 rounded-md">
-            <ArrowLeft className="h-4 w-4" /> Início
+            <ArrowLeft className="h-4 w-4" /> {t("common.home")}
           </Link>
           <div className="flex items-center gap-2">
+            <LanguageSelector />
             {isAdmin && (
-              <Link to="/admin"><Button variant="outline" size="sm">Admin</Button></Link>
+              <Link to="/admin"><Button variant="outline" size="sm">{t("common.admin")}</Button></Link>
             )}
             <Button variant="ghost" size="sm" onClick={() => signOut().then(() => navigate("/"))} className="gap-1 min-h-11">
-              <LogOut className="h-4 w-4" /> Sair
+              <LogOut className="h-4 w-4" /> {t("common.logout")}
             </Button>
           </div>
         </div>
       </header>
 
       <main className="max-w-2xl mx-auto px-4 py-6 pb-[calc(env(safe-area-inset-bottom))]">
-        <h1 className="text-2xl font-bold mb-1">Meu perfil profissional</h1>
+        <h1 className="text-2xl font-bold mb-1">{t("providerDashboard.myBusinessProfile")}</h1>
         <p className="text-sm text-muted-foreground mb-6">
-          {profileId ? "Atualize os seus dados." : "Complete o perfil para aparecer no diretório."}
+          {profileId ? t("providerDashboard.updateData") : t("providerDashboard.completeToAppear")}
         </p>
 
         <Card>
-          <CardHeader><CardTitle className="text-base">Dados</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-base">{t("providerDashboard.data")}</CardTitle></CardHeader>
           <CardContent>
             <form onSubmit={save} className="grid gap-4">
               <div className="flex flex-col sm:flex-row sm:items-center gap-4">
@@ -259,17 +264,17 @@ const ProviderDashboard = () => {
                     className="gap-2 min-h-11 w-full sm:w-auto"
                   >
                     {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-                    Carregar Foto de Perfil / Trabalho
+                    {t("providerDashboard.uploadPhoto")}
                   </Button>
-                  <p className="text-[11px] text-muted-foreground mt-1">JPG ou PNG, máx 5MB</p>
+                  <p className="text-[11px] text-muted-foreground mt-1">{t("providerDashboard.jpgPngMax")}</p>
                 </div>
               </div>
-              <Field label="Nome *">
+              <Field label={t("providerDashboard.nameRequired")}>
                 <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
               </Field>
-              <Field label="Categoria *">
+              <Field label={t("providerDashboard.categoryRequired")}>
                 <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
-                  <SelectTrigger><SelectValue placeholder="Selecione uma categoria" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={t("providerDashboard.selectCategory")} /></SelectTrigger>
                   <SelectContent>
                     {categories.map((c) => (
                       <SelectItem key={c} value={c}>{c}</SelectItem>
@@ -278,12 +283,12 @@ const ProviderDashboard = () => {
                 </Select>
               </Field>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <Field label="Telefone (WhatsApp) *">
-                  <Input placeholder="+245 955 000 000" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+                <Field label={t("providerDashboard.phoneRequired")}>
+                  <Input placeholder={t("providerDashboard.phonePlaceholder")} value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
                 </Field>
-                <Field label="Localização *">
+                <Field label={t("providerDashboard.locationRequired")}>
                   <Select value={form.location} onValueChange={(v) => setForm({ ...form, location: v })}>
-                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectTrigger><SelectValue placeholder={t("common.select")} /></SelectTrigger>
                     <SelectContent>
                       {locationOptions.map((opt) => (
                         <SelectItem key={opt} value={opt}>{opt}</SelectItem>
@@ -292,12 +297,12 @@ const ProviderDashboard = () => {
                   </Select>
                 </Field>
               </div>
-              <Field label="Preço">
+              <Field label={t("providerDashboard.price")}>
                 <div className="flex flex-wrap gap-2 mb-2">
                   {[
-                    { value: "fixo", label: "Valor fixo" },
-                    { value: "negociavel", label: "Negociável" },
-                    { value: "combinar", label: "A combinar" },
+                    { value: "fixo", label: t("providerDashboard.fixedValue") },
+                    { value: "negociavel", label: t("providerDashboard.negotiable") },
+                    { value: "combinar", label: t("providerDashboard.toCombine") },
                   ].map((opt) => (
                     <Badge
                       key={opt.value}
@@ -310,18 +315,18 @@ const ProviderDashboard = () => {
                   ))}
                 </div>
                 {form.price_type === "fixo" && (
-                  <Input type="number" min="0" placeholder="Valor em CFA (ex: 15000)" value={form.starting_price} onChange={(e) => setForm({ ...form, starting_price: e.target.value })} />
+                  <Input type="number" min="0" placeholder={t("providerDashboard.cfaPlaceholder")} value={form.starting_price} onChange={(e) => setForm({ ...form, starting_price: e.target.value })} />
                 )}
               </Field>
-              <Field label="Descrição">
-                <Textarea rows={4} placeholder="Fale sobre o seu trabalho, experiência, serviços..." value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+              <Field label={t("providerDashboard.description")}>
+                <Textarea rows={4} placeholder={t("providerDashboard.descriptionPlaceholder")} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
               </Field>
               <Button type="submit" disabled={saving} className="w-full">
-                {saving ? "A guardar..." : profileId ? "Guardar alterações" : "Criar perfil"}
+                {saving ? t("providerDashboard.saving") : profileId ? t("providerDashboard.saveChanges") : t("providerDashboard.createProfile")}
               </Button>
               {profileId && (
                 <Link to={`/prestador/${profileId}`} className="text-xs text-center text-primary hover:underline inline-flex items-center justify-center min-h-11 w-full">
-                  Ver perfil público
+                  {t("providerDashboard.viewPublic")}
                 </Link>
               )}
             </form>
@@ -331,21 +336,22 @@ const ProviderDashboard = () => {
         {profileId && (
           <Card className="mt-4">
             <CardHeader>
-              <CardTitle className="text-base">Galeria de Trabalhos (Opcional)</CardTitle>
+              <CardTitle className="text-base">{t("providerDashboard.galleryTitle")}</CardTitle>
               <p className="text-xs text-muted-foreground">
-                Adicione até {MAX_GALLERY} fotos dos seus trabalhos anteriores. Ajuda clientes a confiar no seu serviço.
+                {t("providerDashboard.galleryDesc", {count: MAX_GALLERY})}
               </p>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
                 {gallery.map((img) => (
                   <div key={img.id} className="relative aspect-square rounded-lg overflow-hidden border bg-muted group">
-                    <img src={img.image_url} alt="Trabalho" className="w-full h-full object-cover" />
+                    <img src={img.image_url} alt={t("providerDetailExtra.workAlt")} className="w-full h-full object-cover" />
                     <button
                       type="button"
                       onClick={() => setGalleryDeleteId(img.id)}
                       className="absolute top-1 right-1 p-2 rounded-md bg-background/90 hover:bg-destructive hover:text-destructive-foreground transition-colors"
-                      aria-label="Remover foto"
+                      aria-label={t("providerDashboard.removePhoto")}
+                      title={t("providerDashboard.removePhoto")}
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>
@@ -363,7 +369,7 @@ const ProviderDashboard = () => {
                     ) : (
                       <>
                         <ImagePlus className="h-5 w-5" />
-                        <span className="text-[11px]">Adicionar</span>
+                        <span className="text-[11px]">{t("common.add")}</span>
                       </>
                     )}
                   </button>
@@ -376,7 +382,7 @@ const ProviderDashboard = () => {
                 className="hidden"
                 onChange={handleGalleryUpload}
               />
-              <p className="text-[11px] text-muted-foreground">JPG ou PNG, máx 5MB cada · {gallery.length}/{MAX_GALLERY}</p>
+              <p className="text-[11px] text-muted-foreground">{t("providerDashboard.galleryCount", {current: gallery.length, max: MAX_GALLERY})}</p>
             </CardContent>
           </Card>
         )}
@@ -384,9 +390,9 @@ const ProviderDashboard = () => {
         <ConfirmDialog
           open={galleryDeleteId !== null}
           onOpenChange={(o) => { if (!o) setGalleryDeleteId(null); }}
-          title="Remover foto"
-          description="Remover esta foto da galeria?"
-          confirmLabel="Remover"
+          title={t("providerDashboard.removePhoto")}
+          description={t("providerDashboard.removePhotoConfirm")}
+          confirmLabel={t("common.remove")}
           destructive
           onConfirm={() => {
             if (galleryDeleteId) deleteGalleryImage(galleryDeleteId);
@@ -402,11 +408,11 @@ const ProviderDashboard = () => {
                 {verificationStatus === "pendente" && <ShieldAlert className="h-5 w-5 text-yellow-600" />}
                 {verificationStatus === "rejeitado" && <ShieldX className="h-5 w-5 text-destructive" />}
                 {verificationStatus === "none" && <ShieldCheck className="h-5 w-5 text-muted-foreground" />}
-                Verificação de Identidade
+                {t("providerDashboard.verificationTitle")}
               </CardTitle>
               {verificationStatus !== "aprovado" && (
                 <p className="text-xs text-muted-foreground">
-                  Confirme a sua identidade para receber o selo de perfil verificado e ganhar a confiança dos clientes.
+                  {t("providerDashboard.verificationDesc")}
                 </p>
               )}
             </CardHeader>
@@ -427,7 +433,7 @@ const ProviderDashboard = () => {
               {verificationStatus === "rejeitado" && (
                 <div className="mb-3 rounded-md bg-destructive/10 p-3 text-sm text-destructive">
                   <p className="font-medium">{verificationDescription(verificationStatus)}</p>
-                  {verificationReason && <p className="mt-1">Motivo: {verificationReason}</p>}
+                  {verificationReason && <p className="mt-1">{t("providerDashboard.reason", {reason: verificationReason})}</p>}
                 </div>
               )}
 
@@ -435,28 +441,28 @@ const ProviderDashboard = () => {
                 <form onSubmit={submitVerification} className="grid gap-4">
                   <div className="grid sm:grid-cols-2 gap-3">
                     <div>
-                      <Label>Documento de identificação (BI / Passaporte)</Label>
+                      <Label>{t("providerDashboard.docLabel")}</Label>
                       <input ref={verifyDocRef} type="file" accept="image/*,.pdf" className="hidden" onChange={(e) => setVerifyDoc(e.target.files?.[0] ?? null)} />
                       <Button type="button" variant="outline" className="w-full justify-start gap-2" onClick={() => verifyDocRef.current?.click()}>
                         <FileCheck2 className="h-4 w-4" />
-                        {verifyDoc ? verifyDoc.name : "Escolher documento"}
+                        {verifyDoc ? verifyDoc.name : t("providerDashboard.chooseDoc")}
                       </Button>
                     </div>
                     <div>
-                      <Label>Selfie (foto do seu rosto)</Label>
+                      <Label>{t("providerDashboard.selfieLabel")}</Label>
                       <input ref={verifySelfieRef} type="file" accept="image/*" className="hidden" onChange={(e) => setVerifySelfie(e.target.files?.[0] ?? null)} />
                       <Button type="button" variant="outline" className="w-full justify-start gap-2" onClick={() => verifySelfieRef.current?.click()}>
                         <Upload className="h-4 w-4" />
-                        {verifySelfie ? verifySelfie.name : "Escolher selfie"}
+                        {verifySelfie ? verifySelfie.name : t("providerDashboard.chooseSelfie")}
                       </Button>
                     </div>
                   </div>
                   <p className="text-[11px] text-muted-foreground">
-                    Apenas o administrador terá acesso aos seus ficheiros. JPG, PNG ou PDF, máx 5MB cada.
+                    {t("providerDashboard.verificationHint")}
                   </p>
                   <Button type="submit" disabled={verifying} className="w-full">
                     {verifying ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-                    {verifying ? "A submeter..." : "Submeter para verificação"}
+                    {verifying ? t("providerDashboard.submitting") : t("providerDashboard.submitVerification")}
                   </Button>
                 </form>
               )}
@@ -467,30 +473,30 @@ const ProviderDashboard = () => {
         {profileId && (
           <Card className="mt-4">
             <CardHeader>
-              <CardTitle className="text-base">Estatísticas do perfil</CardTitle>
-              <p className="text-xs text-muted-foreground">Como os clientes interagem com o seu perfil.</p>
+              <CardTitle className="text-base">{t("providerDashboard.statsTitle")}</CardTitle>
+              <p className="text-xs text-muted-foreground">{t("providerDashboard.statsDesc")}</p>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <div className="rounded-lg border p-3 flex flex-col items-center gap-1">
                   <Eye className="h-5 w-5 text-primary" />
                   <span className="text-2xl font-bold">{stats.profile_views}</span>
-                  <span className="text-[11px] text-muted-foreground text-center">Vistas do perfil</span>
+                  <span className="text-[11px] text-muted-foreground text-center">{t("providerDashboard.profileViews")}</span>
                 </div>
                 <div className="rounded-lg border p-3 flex flex-col items-center gap-1">
                   <MessageCircle className="h-5 w-5 text-[#25D366]" />
                   <span className="text-2xl font-bold">{stats.whatsapp_clicks}</span>
-                  <span className="text-[11px] text-muted-foreground text-center">Contactos WhatsApp</span>
+                  <span className="text-[11px] text-muted-foreground text-center">{t("providerDashboard.whatsappContacts")}</span>
                 </div>
                 <div className="rounded-lg border p-3 flex flex-col items-center gap-1">
                   <Phone className="h-5 w-5 text-secondary-foreground" />
                   <span className="text-2xl font-bold">{stats.call_clicks}</span>
-                  <span className="text-[11px] text-muted-foreground text-center">Ligações</span>
+                  <span className="text-[11px] text-muted-foreground text-center">{t("providerDashboard.calls")}</span>
                 </div>
                 <div className="rounded-lg border p-3 flex flex-col items-center gap-1">
                   <MessageSquareText className="h-5 w-5 text-muted-foreground" />
                   <span className="text-2xl font-bold">{commentCount}</span>
-                  <span className="text-[11px] text-muted-foreground text-center">Comentários</span>
+                  <span className="text-[11px] text-muted-foreground text-center">{t("providerDashboard.comments")}</span>
                 </div>
               </div>
             </CardContent>
@@ -500,13 +506,13 @@ const ProviderDashboard = () => {
         {profileId && (
           <Card className="mt-4">
             <CardHeader>
-              <CardTitle className="text-base">Atividade recente</CardTitle>
-              <p className="text-xs text-muted-foreground">Últimas visitas e contactos, em tempo real.</p>
+              <CardTitle className="text-base">{t("providerDashboard.recentActivity")}</CardTitle>
+              <p className="text-xs text-muted-foreground">{t("providerDashboard.recentActivityDesc")}</p>
             </CardHeader>
             <CardContent>
               {activity.length === 0 ? (
                 <p className="text-sm text-muted-foreground">
-                  Ainda sem atividade. Quando alguém visitar o seu perfil ou entrar em contacto, aparece aqui em tempo real.
+                  {t("providerDashboard.noActivity")}
                 </p>
               ) : (
                 <ul className="divide-y">
@@ -517,13 +523,13 @@ const ProviderDashboard = () => {
                         {a.activity_type === "whatsapp" && <MessageCircle className="h-4 w-4 text-[#25D366]" />}
                         {a.activity_type === "call" && <Phone className="h-4 w-4 text-secondary-foreground" />}
                         <span>
-                          {a.activity_type === "vista" && "Vista do perfil"}
-                          {a.activity_type === "whatsapp" && "Contacto via WhatsApp"}
-                          {a.activity_type === "call" && "Ligação telefónica"}
+                          {a.activity_type === "vista" && t("providerDashboard.profileView")}
+                          {a.activity_type === "whatsapp" && t("providerDashboard.whatsappContact")}
+                          {a.activity_type === "call" && t("providerDashboard.phoneCall")}
                         </span>
                       </span>
                       <span className="text-xs text-muted-foreground">
-                        {new Date(a.created_at).toLocaleString("pt-PT")}
+                        {new Date(a.created_at).toLocaleString(i18n.language)}
                       </span>
                     </li>
                   ))}

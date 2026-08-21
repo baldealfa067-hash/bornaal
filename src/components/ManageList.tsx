@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus, Trash2, Pencil, Check, X } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface ManageListProps {
   placeholder: string;
@@ -14,6 +15,7 @@ interface ManageListProps {
 }
 
 const ManageList = ({ placeholder, items, onAdd, onRename, onDelete, emptyText }: ManageListProps) => {
+  const { t } = useTranslation();
   const [newName, setNewName] = useState("");
   const [editing, setEditing] = useState<{ id: string; name: string } | null>(null);
 
@@ -40,7 +42,7 @@ const ManageList = ({ placeholder, items, onAdd, onRename, onDelete, emptyText }
           onKeyDown={(e) => e.key === "Enter" && submitAdd()}
         />
         <Button onClick={submitAdd} className="gap-1 shrink-0">
-          <Plus className="h-4 w-4" /> Adicionar
+          <Plus className="h-4 w-4" /> {t("common.add")}
         </Button>
       </div>
       {items.map((item) => (

@@ -35,3 +35,4 @@ imagem.png/
 # Supabase CLI link temp files
 supabase/.temp/
 .supabase/
+vite.config.ts.timestamp-*.mjs

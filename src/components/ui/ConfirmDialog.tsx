@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Loader2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface ConfirmDialogInput {
   label: string;
@@ -32,13 +33,17 @@ const ConfirmDialog = ({
   onOpenChange,
   title,
   description,
-  confirmLabel = "Confirmar",
-  cancelLabel = "Cancelar",
+  confirmLabel,
+  cancelLabel,
   destructive,
   busy,
   input,
   onConfirm,
-}: ConfirmDialogProps) => (
+}: ConfirmDialogProps) => {
+  const { t } = useTranslation();
+  const _confirmLabel = confirmLabel ?? t("common.confirm");
+  const _cancelLabel = cancelLabel ?? t("common.cancel");
+  return (
   <Dialog open={open} onOpenChange={(o) => { if (!busy) onOpenChange(o); }}>
     <DialogContent>
       <DialogHeader>
@@ -67,7 +72,7 @@ const ConfirmDialog = ({
       )}
       <DialogFooter>
         <Button variant="outline" disabled={busy} onClick={() => onOpenChange(false)}>
-          {cancelLabel}
+          {_cancelLabel}
         </Button>
         <Button
           variant={destructive ? "destructive" : "default"}
@@ -75,11 +80,12 @@ const ConfirmDialog = ({
           onClick={onConfirm}
         >
           {busy && <Loader2 className="h-4 w-4 animate-spin" />}
-          {confirmLabel}
+          {_confirmLabel}
         </Button>
       </DialogFooter>
     </DialogContent>
   </Dialog>
-);
+  );
+};
 
 export default ConfirmDialog;

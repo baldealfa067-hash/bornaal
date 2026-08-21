@@ -1,54 +1,62 @@
 import { Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { LanguageSelector } from "@/components/LanguageSelector";
 
-const Privacy = () => (
+const Privacy = () => {
+  const { t } = useTranslation();
+  return (
   <div className="min-h-screen bg-background">
+    <div className="absolute top-4 right-4">
+      <LanguageSelector />
+    </div>
     <div className="max-w-lg mx-auto px-4 py-8">
       <Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground mb-6 hover:text-foreground transition-colors">
-        <ArrowLeft className="h-4 w-4" /> Voltar
+        <ArrowLeft className="h-4 w-4" /> {t("common.back")}
       </Link>
 
-      <h1 className="text-2xl font-bold mb-6">Política de Privacidade</h1>
-      <p className="text-xs text-muted-foreground mb-6">Última actualização: Março 2026</p>
+      <h1 className="text-2xl font-bold mb-6">{t("privacyPage.title")}</h1>
+      <p className="text-xs text-muted-foreground mb-6">{t("privacyPage.lastUpdate")}</p>
 
       <div className="space-y-6 text-sm text-muted-foreground leading-relaxed">
         <section>
-          <h2 className="text-base font-semibold text-foreground mb-2">1. Informações que Recolhemos</h2>
-          <p>Recolhemos as informações que nos fornece directamente: nome, email, telefone, localização e descrição dos serviços (para prestadores). Também recolhemos dados de utilização como avaliações e mensagens enviadas através da plataforma.</p>
+          <h2 className="text-base font-semibold text-foreground mb-2">{t("privacyPage.s1Title")}</h2>
+          <p>{t("privacyPage.s1Desc")}</p>
         </section>
 
         <section>
-          <h2 className="text-base font-semibold text-foreground mb-2">2. Como Utilizamos as Informações</h2>
-          <p>Utilizamos as suas informações para: criar e gerir a sua conta, facilitar a ligação entre clientes e prestadores, mostrar perfis de prestadores publicamente, enviar notificações sobre a sua conta e melhorar os nossos serviços.</p>
+          <h2 className="text-base font-semibold text-foreground mb-2">{t("privacyPage.s2Title")}</h2>
+          <p>{t("privacyPage.s2Desc")}</p>
         </section>
 
         <section>
-          <h2 className="text-base font-semibold text-foreground mb-2">3. Partilha de Informações</h2>
-          <p>Os perfis dos prestadores são visíveis publicamente, incluindo nome, categoria, localização, telefone e avaliações. Não vendemos nem partilhamos os seus dados pessoais com terceiros para fins comerciais.</p>
+          <h2 className="text-base font-semibold text-foreground mb-2">{t("privacyPage.s3Title")}</h2>
+          <p>{t("privacyPage.s3Desc")}</p>
         </section>
 
         <section>
-          <h2 className="text-base font-semibold text-foreground mb-2">4. Segurança dos Dados</h2>
-          <p>Implementamos medidas de segurança para proteger as suas informações contra acesso não autorizado. Os dados são armazenados em servidores seguros com encriptação.</p>
+          <h2 className="text-base font-semibold text-foreground mb-2">{t("privacyPage.s4Title")}</h2>
+          <p>{t("privacyPage.s4Desc")}</p>
         </section>
 
         <section>
-          <h2 className="text-base font-semibold text-foreground mb-2">5. Os Seus Direitos</h2>
-          <p>Tem o direito de aceder, corrigir ou eliminar os seus dados pessoais. Pode solicitar a eliminação da sua conta a qualquer momento contactando-nos directamente.</p>
+          <h2 className="text-base font-semibold text-foreground mb-2">{t("privacyPage.s5Title")}</h2>
+          <p>{t("privacyPage.s5Desc")}</p>
         </section>
 
         <section>
-          <h2 className="text-base font-semibold text-foreground mb-2">6. Cookies e Armazenamento Local</h2>
-          <p>Utilizamos armazenamento local do navegador para manter a sua sessão activa. Não utilizamos cookies de rastreamento de terceiros.</p>
+          <h2 className="text-base font-semibold text-foreground mb-2">{t("privacyPage.s6Title")}</h2>
+          <p>{t("privacyPage.s6Desc")}</p>
         </section>
 
         <section>
-          <h2 className="text-base font-semibold text-foreground mb-2">7. Contacto</h2>
-          <p>Para questões sobre privacidade, contacte-nos em contacto@notarbadja.gw.</p>
+          <h2 className="text-base font-semibold text-foreground mb-2">{t("privacyPage.s7Title")}</h2>
+          <p>{t("privacyPage.s7Desc")}</p>
         </section>
       </div>
     </div>
   </div>
-);
+  );
+};
 
 export default Privacy;

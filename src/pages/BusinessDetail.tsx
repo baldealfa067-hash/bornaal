@@ -15,20 +15,23 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
+import i18n from "@/i18n";
 
-const REPORT_REASONS = [
-  "Comida/produto não corresponde ao anunciado",
-  "Cobrança indevida",
-  "Comportamento inadequado",
-  "Perfil falso/enganoso",
-  "Condições de higiene",
-  "Outro",
-] as const;
+type ReportReasonKey = "food" | "charge" | "behaviour" | "fake" | "hygiene" | "other";
+const REPORT_REASONS: { key: ReportReasonKey; labelKey: string }[] = [
+  { key: "food", labelKey: "businessDetail.reportReasons.food" },
+  { key: "charge", labelKey: "businessDetail.reportReasons.charge" },
+  { key: "behaviour", labelKey: "businessDetail.reportReasons.behaviour" },
+  { key: "fake", labelKey: "businessDetail.reportReasons.fake" },
+  { key: "hygiene", labelKey: "businessDetail.reportReasons.hygiene" },
+  { key: "other", labelKey: "businessDetail.reportReasons.other" },
+];
 
-const CONSUMPTION_LABELS: Record<string, string> = {
-  comer_no_local: "Comer no local",
-  para_levar: "Para levar",
-  entrega: "Entrega",
+const CONSUMPTION_LABEL_KEYS: Record<string, string> = {
+  comer_no_local: "businessDetail.consumption.eatIn",
+  para_levar: "businessDetail.consumption.takeAway",
+  entrega: "businessDetail.consumption.delivery",
 };
 
 type MenuCategory = { id: string; name: string };
@@ -36,6 +39,7 @@ type MenuItem = { id: string; name: string; price: number; photo_url: string | n
 type Review = { id: string; rating: number; comment: string | null; created_at: string; reviewer_name: string | null };
 
 const BusinessDetail = () => {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
@@ -79,11 +83,11 @@ const BusinessDetail = () => {
   }, [id]);
 
   if (loading) {
-    return <div className="flex items-center justify-center min-h-screen text-muted-foreground">A carregar...</div>;
+    return <div className="flex items-center justify-center min-h-screen text-muted-foreground">{t("businessDetail.loading")}</div>;
   }
 
   if (!business || business.profile_type !== "business") {
-    return <div className="flex items-center justify-center min-h-screen text-muted-foreground">Estabelecimento não encontrado.</div>;
+    return <div className="flex items-center justify-center min-h-screen text-muted-foreground">{t("businessDetail.notFound")}</div>;
   }
 
   const name = String(business.name ?? "");
@@ -103,7 +107,7 @@ const BusinessDetail = () => {
   const cartCount = cartItems.reduce((sum, i) => sum + (cart[i.id] ?? 0), 0);
 
   const whatsappUrl = `https://wa.me/${phone.replace(/\D/g, "")}?text=${encodeURIComponent(
-    `Olá ${name}, encontrei o seu estabelecimento no Bornaal e gostaria de saber mais.`
+    t("businessDetailExtra.whatsappMsg", { name })
   )}`;
 
   const trackWhatsapp = () => {
@@ -134,20 +138,20 @@ const BusinessDetail = () => {
 
   const sendOrder = async () => {
     if (!id) return;
-    if (!cartItems.length) return toast.error("Adicione itens ao pedido.");
-    if (!activeConsumption) return toast.error("Escolha a opção de consumo.");
+    if (!cartItems.length) return toast.error(t("businessDetail.addItems"));
+    if (!activeConsumption) return toast.error(t("businessDetail.chooseConsumption"));
     if (activeConsumption === "entrega" && !address.trim()) {
-      return toast.error("Indique a morada de entrega.");
+      return toast.error(t("businessDetail.enterAddress"));
     }
     setSending(true);
     const lines = cartItems
       .map((i) => `• ${i.name} x${cart[i.id]} — ${formatCFA(i.price * (cart[i.id] ?? 0))}`)
       .join("\n");
-    const consumptionLabel = CONSUMPTION_LABELS[activeConsumption] ?? activeConsumption;
-    const addressLine = activeConsumption === "entrega" ? `\nMorada de entrega: ${address.trim()}` : "";
+    const consumptionLabel = activeConsumption ? t(CONSUMPTION_LABEL_KEYS[activeConsumption] ?? activeConsumption) : activeConsumption;
+    const addressLine = activeConsumption === "entrega" ? `\n${t("businessDetailExtra.deliveryAddressLine", { address: address.trim() })}` : "";
     const message =
-      `Olá ${name}! Gostaria de fazer um pedido pelo Bornaal:\n\n${lines}\n\n` +
-      `Opção de consumo: ${consumptionLabel}${addressLine}\nTotal estimado: ${formatCFA(cartTotal)}`;
+      `${t("businessDetailExtra.orderGreeting", { name })}\n\n${lines}\n\n` +
+      `${t("businessDetailExtra.orderConsumption", { option: consumptionLabel })}${addressLine}\n${t("businessDetailExtra.orderTotal", { total: formatCFA(cartTotal) })}`;
     const waUrl = `https://wa.me/${phone.replace(/\D/g, "")}?text=${encodeURIComponent(message)}`;
     const { error } = await supabase.rpc("record_business_order", {
       p_business_id: id,
@@ -159,10 +163,10 @@ const BusinessDetail = () => {
     setSending(false);
     if (error) {
       console.error("[order] error:", error.message);
-      return toast.error("Erro ao registar o pedido. Abre o WhatsApp na mesma?");
+      return toast.error(t("businessDetail.orderError"));
     }
     window.open(waUrl, "_blank");
-    toast.success("Pedido registado! A abrir o WhatsApp...");
+    toast.success(t("businessDetail.orderSuccess"));
     setCart({});
     setAddress("");
   };
@@ -181,7 +185,7 @@ const BusinessDetail = () => {
   const submitReport = async () => {
     if (!id) return;
     if (!reportReason.trim() || !reportDescription.trim()) {
-      toast.error("Escolhe um motivo e escreve uma descrição.");
+      toast.error(t("businessDetail.chooseReasonDesc"));
       return;
     }
     setComplaining(true);
@@ -196,13 +200,13 @@ const BusinessDetail = () => {
       });
       if (error) {
         console.error("[complaints] error:", error.message);
-        toast.error("Erro ao enviar a denúncia. Tenta novamente.");
+        toast.error(t("businessDetail.reportError"));
       } else {
         setReportStep("success");
       }
     } catch (e) {
       console.error("[complaints] exception:", e);
-      toast.error("Erro ao enviar a denúncia. Tenta novamente.");
+      toast.error(t("businessDetail.reportError"));
     } finally {
       setComplaining(false);
     }
@@ -223,7 +227,7 @@ const BusinessDetail = () => {
           <h1 className="text-xl font-bold flex items-center gap-1.5">
             {name}
             {isVerified && (
-              <BadgeCheck className="h-5 w-5 text-primary" aria-label="Estabelecimento verificado" />
+              <BadgeCheck className="h-5 w-5 text-primary" aria-label={t("businessDetailExtra.verifiedLabel")} />
             )}
           </h1>
           <Badge variant="secondary" className="mt-1 flex items-center gap-1">
@@ -232,7 +236,7 @@ const BusinessDetail = () => {
           {consumptionOptions.length > 0 && (
             <div className="flex flex-wrap gap-1 mt-2">
               {consumptionOptions.map((o) => (
-                <Badge key={o} variant="outline" className="text-[11px]">{CONSUMPTION_LABELS[o] ?? o}</Badge>
+                <Badge key={o} variant="outline" className="text-[11px]">{t(CONSUMPTION_LABEL_KEYS[o] ?? o)}</Badge>
               ))}
             </div>
           )}
@@ -257,14 +261,14 @@ const BusinessDetail = () => {
         {String(business.id ?? "") !== user?.id && (
           <Button variant="outline" className="w-full gap-2" onClick={openReport}>
             <AlertCircle className="h-5 w-5" />
-            Denunciar
+            {t("businessDetail.report")}
           </Button>
         )}
       </div>
 
       {description && (
         <div className="mb-6">
-          <h2 className="font-semibold mb-1">Sobre</h2>
+          <h2 className="font-semibold mb-1">{t("businessDetail.about")}</h2>
           <p className="text-sm text-muted-foreground">{description}</p>
         </div>
       )}
@@ -272,7 +276,7 @@ const BusinessDetail = () => {
       {menuItems.length > 0 && (
         <div className="mb-6">
           <h2 className="font-semibold mb-3 flex items-center gap-2">
-            <UtensilsCrossed className="h-5 w-5 text-primary" /> Menu
+            <UtensilsCrossed className="h-5 w-5 text-primary" /> {t("businessDetail.menu")}
           </h2>
           <div className="flex flex-col gap-4">
             {menuCategories.map((cat) => {
@@ -291,7 +295,7 @@ const BusinessDetail = () => {
             })}
             {uncategorized.length > 0 && (
               <div>
-                <h3 className="text-sm font-semibold text-primary mb-2 border-b pb-1">Outros</h3>
+                <h3 className="text-sm font-semibold text-primary mb-2 border-b pb-1">{t("businessDetail.others")}</h3>
                 <div className="flex flex-col gap-2">
                   {uncategorized.map((item) => (
                     <MenuItemRow key={item.id} item={item} qty={cart[item.id] ?? 0} onAdd={() => addToCart(item.id)} onRemove={() => removeFromCart(item.id)} />
@@ -307,7 +311,7 @@ const BusinessDetail = () => {
         <Card className="mb-6 border-primary/40">
           <CardContent className="p-4">
             <h2 className="font-semibold mb-2 flex items-center gap-2">
-              <ShoppingCart className="h-5 w-5 text-primary" /> O seu pedido ({cartCount})
+              <ShoppingCart className="h-5 w-5 text-primary" /> {t("businessDetail.orderTitle", { count: cartCount })}
             </h2>
             <div className="flex flex-col gap-1.5 mb-3">
               {cartItems.map((i) => (
@@ -317,14 +321,14 @@ const BusinessDetail = () => {
                 </div>
               ))}
               <div className="flex items-center justify-between text-sm font-bold border-t pt-1.5">
-                <span>Total estimado</span>
+                <span>{t("businessDetail.estimatedTotal")}</span>
                 <span>{formatCFA(cartTotal)}</span>
               </div>
             </div>
 
             {consumptionOptions.length > 0 && (
               <div className="mb-3">
-                <Label className="text-xs">Opção de consumo</Label>
+                <Label className="text-xs">{t("businessDetail.consumptionOption")}</Label>
                 <div className="flex flex-wrap gap-1.5 mt-1.5">
                   {consumptionOptions.map((o) => (
                     <Badge
@@ -333,7 +337,7 @@ const BusinessDetail = () => {
                       className="cursor-pointer px-3 py-1.5 text-xs"
                       onClick={() => setConsumptionOption(o)}
                     >
-                      {CONSUMPTION_LABELS[o] ?? o}
+                      {t(CONSUMPTION_LABEL_KEYS[o] ?? o)}
                     </Badge>
                   ))}
                 </div>
@@ -342,10 +346,10 @@ const BusinessDetail = () => {
 
             {activeConsumption === "entrega" && (
               <div className="mb-3">
-                <Label htmlFor="order-address">Morada de entrega *</Label>
+                <Label htmlFor="order-address">{t("businessDetail.deliveryAddress")}</Label>
                 <Input
                   id="order-address"
-                  placeholder="Ex: Quelele, rua 2, casa 15"
+                  placeholder={t("businessDetail.addressPlaceholder")}
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
                   className="mt-1.5"
@@ -355,10 +359,10 @@ const BusinessDetail = () => {
 
             <Button onClick={sendOrder} disabled={sending} className="w-full bg-[#25D366] hover:bg-[#1ebe57] text-white gap-2">
               {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <MessageCircle className="h-5 w-5" />}
-              {sending ? "A registar..." : "Enviar pedido por WhatsApp"}
+              {sending ? t("businessDetail.registering") : t("businessDetail.sendOrder")}
             </Button>
             <p className="text-[11px] text-muted-foreground text-center mt-2">
-              O pedido abre no WhatsApp do estabelecimento, sem pagamento na app.
+              {t("businessDetail.orderHint")}
             </p>
           </CardContent>
         </Card>
@@ -368,19 +372,19 @@ const BusinessDetail = () => {
         <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="block" onClick={trackWhatsapp}>
           <Button className="w-full bg-[#25D366] hover:bg-[#1ebe57] text-white gap-2">
             <MessageCircle className="h-5 w-5" />
-            WhatsApp
+            {t("common.whatsapp")}
           </Button>
         </a>
         <a href={`tel:${phone.replace(/\s/g, "")}`} className="block" onClick={trackCall}>
           <Button variant="secondary" className="w-full gap-2">
             <Phone className="h-5 w-5" />
-            Ligar
+            {t("common.call")}
           </Button>
         </a>
       </div>
 
       <section>
-        <h2 className="font-semibold mb-3">Avaliações ({reviews.length})</h2>
+        <h2 className="font-semibold mb-3">{t("businessDetail.reviewsCount", { count: reviews.length })}</h2>
         {reviews.length > 0 ? (
           <div className="flex flex-col gap-3">
             {reviews.map((r) => (
@@ -391,13 +395,13 @@ const BusinessDetail = () => {
                 )}
                 {r.comment && <p className="text-sm mt-1">{r.comment}</p>}
                 <p className="text-[11px] text-muted-foreground mt-1">
-                  {new Date(r.created_at).toLocaleDateString("pt")}
+                  {new Date(r.created_at).toLocaleDateString(i18n.language)}
                 </p>
               </div>
             ))}
           </div>
         ) : (
-          <p className="text-sm text-muted-foreground">Ainda sem avaliações.</p>
+          <p className="text-sm text-muted-foreground">{t("businessDetail.noReviews")}</p>
         )}
       </section>
 
@@ -406,52 +410,52 @@ const BusinessDetail = () => {
           {reportStep === "form" && (
             <>
               <DialogHeader>
-                <DialogTitle>Denunciar {name}</DialogTitle>
+                <DialogTitle>{t("businessDetail.reportTitle", { name })}</DialogTitle>
                 <DialogDescription>
-                  As denúncias são analisadas pela nossa equipa antes de qualquer ação. O estabelecimento não vê esta denúncia.
+                  {t("businessDetail.reportDesc")}
                 </DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-2">
                 <div className="grid gap-2">
-                  <Label htmlFor="report-reason">Motivo</Label>
+                  <Label htmlFor="report-reason">{t("businessDetail.reason")}</Label>
                   <Select value={reportReason} onValueChange={setReportReason}>
                     <SelectTrigger id="report-reason">
-                      <SelectValue placeholder="Seleciona o motivo" />
+                      <SelectValue placeholder={t("businessDetail.selectReason")} />
                     </SelectTrigger>
                     <SelectContent>
                       {REPORT_REASONS.map((r) => (
-                        <SelectItem key={r} value={r}>{r}</SelectItem>
+                        <SelectItem key={r.key} value={t(r.labelKey)}>{t(r.labelKey)}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="report-description">Descrição</Label>
+                  <Label htmlFor="report-description">{t("businessDetail.description")}</Label>
                   <Textarea
                     id="report-description"
-                    placeholder="Explica o que aconteceu (obrigatório)"
+                    placeholder={t("businessDetail.descriptionPlaceholder")}
                     value={reportDescription}
                     onChange={(e) => setReportDescription(e.target.value)}
                     rows={4}
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="report-contact">Contacto (opcional)</Label>
+                  <Label htmlFor="report-contact">{t("businessDetail.contactOptional")}</Label>
                   <Input
                     id="report-contact"
                     type="tel"
-                    placeholder="Telemóvel/WhatsApp para confirmarmos a denúncia"
+                    placeholder={t("businessDetail.contactPlaceholder")}
                     value={reportContact}
                     onChange={(e) => setReportContact(e.target.value)}
                   />
                   <p className="text-xs text-muted-foreground">
-                    Deixa o teu contacto se quiseres que a nossa equipa te ligue para confirmar a denúncia.
+                    {t("businessDetail.contactHint")}
                   </p>
                 </div>
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setReportOpen(false)}>
-                  Cancelar
+                  {t("common.cancel")}
                 </Button>
                 <Button
                   onClick={submitReport}
@@ -459,7 +463,7 @@ const BusinessDetail = () => {
                   className="gap-2"
                 >
                   <ShieldAlert className="h-4 w-4" />
-                  {complaining ? "A enviar..." : "Submeter denúncia"}
+                  {complaining ? t("businessDetail.sending") : t("businessDetail.submitReport")}
                 </Button>
               </DialogFooter>
             </>
@@ -470,14 +474,14 @@ const BusinessDetail = () => {
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2">
                   <CheckCircle2 className="h-5 w-5 text-green-600" />
-                  Denúncia enviada
+                  {t("businessDetail.reportSent")}
                 </DialogTitle>
                 <DialogDescription>
-                  A tua denúncia foi enviada e será analisada pela nossa equipa.
+                  {t("businessDetail.reportSentDesc")}
                 </DialogDescription>
               </DialogHeader>
               <DialogFooter>
-                <Button onClick={() => setReportOpen(false)}>Fechar</Button>
+                <Button onClick={() => setReportOpen(false)}>{t("common.close")}</Button>
               </DialogFooter>
             </>
           )}
@@ -487,7 +491,9 @@ const BusinessDetail = () => {
   );
 };
 
-const MenuItemRow = ({ item, qty, onAdd, onRemove }: { item: MenuItem; qty: number; onAdd: () => void; onRemove: () => void }) => (
+const MenuItemRow = ({ item, qty, onAdd, onRemove }: { item: MenuItem; qty: number; onAdd: () => void; onRemove: () => void }) => {
+  const { t } = useTranslation();
+  return (
   <div className="flex items-center gap-3 rounded-lg border bg-card p-2.5">
     {item.photo_url ? (
       <img src={item.photo_url} alt={item.name} className="h-14 w-14 rounded-lg object-cover shrink-0" />
@@ -502,7 +508,7 @@ const MenuItemRow = ({ item, qty, onAdd, onRemove }: { item: MenuItem; qty: numb
     </div>
     {qty === 0 ? (
       <Button size="sm" variant="outline" className="shrink-0 gap-1" onClick={onAdd}>
-        <Plus className="h-3.5 w-3.5" /> Adicionar
+        <Plus className="h-3.5 w-3.5" /> {t("common.add")}
       </Button>
     ) : (
       <div className="flex items-center gap-1 shrink-0">
@@ -516,6 +522,7 @@ const MenuItemRow = ({ item, qty, onAdd, onRemove }: { item: MenuItem; qty: numb
       </div>
     )}
   </div>
-);
+  );
+};
 
 export default BusinessDetail;

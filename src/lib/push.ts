@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import i18n from "@/i18n";
 
 export const VAPID_PUBLIC_KEY =
   import.meta.env.VITE_VAPID_PUBLIC_KEY ??
@@ -118,14 +119,14 @@ export const enablePush = async (options: {
   pushEnabled?: boolean;
   novidades?: boolean;
 } = {}): Promise<{ granted: boolean; error?: string }> => {
-  if (!isPushSupported()) return { granted: false, error: "Push não é suportado neste navegador." };
+  if (!isPushSupported()) return { granted: false, error: i18n.t("pushErrors.notSupported") };
   let permission = Notification.permission;
   if (permission === "default") {
     permission = await Notification.requestPermission().catch(() => "denied" as NotificationPermission);
   }
   if (permission !== "granted") {
     markAsked();
-    return { granted: false, error: "Permissão de notificações negada." };
+    return { granted: false, error: i18n.t("pushErrors.permissionDenied") };
   }
   try {
     // Se já existe uma subscrição mas com a chave VAPID errada (cache antiga),
@@ -137,13 +138,13 @@ export const enablePush = async (options: {
     } else if (!subscription) {
       subscription = await subscribeToPush();
     }
-    if (!subscription) return { granted: false, error: "Não foi possível criar a subscrição push." };
+    if (!subscription) return { granted: false, error: i18n.t("pushErrors.createFailed") };
     await saveSubscription(subscription, {
       pushEnabled: options.pushEnabled ?? true,
       novidades: options.novidades ?? false,
     });
   } catch (err) {
-    return { granted: false, error: `Erro ao ativar notificações: ${(err as Error)?.message ?? "desconhecido"}` };
+    return { granted: false, error: i18n.t("pushErrors.activateFailed", { msg: (err as Error)?.message ?? i18n.t("pushErrors.unknown") }) };
   }
   markAsked();
   return { granted: true };

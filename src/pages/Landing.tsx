@@ -3,10 +3,13 @@ import { Link, useNavigate } from "react-router-dom";
 import { Search, Star, Phone, ArrowRight, CheckCircle2, Shield, Clock, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useTranslation } from "react-i18next";
+import { LanguageSelector } from "@/components/LanguageSelector";
 import heroBg from "@/assets/hero-bg.jpg";
 import logo from "@/assets/logo.png";
 
 const Landing = () => {
+  const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
 
@@ -23,31 +26,48 @@ const Landing = () => {
     {
       number: "01",
       icon: Search,
-      title: "Pesquise o serviço",
-      desc: "Navegue por categorias como electricistas, canalizadores, cabeleireiras e muito mais. Filtre por localização para encontrar profissionais perto de si.",
+      title: t("landing.step1Title"),
+      desc: t("landing.step1Desc"),
     },
     {
       number: "02",
       icon: Phone,
-      title: "Contacte directamente",
-      desc: "Ligue ou envie mensagem ao prestador. Sem intermediários, sem taxas escondidas. Comunicação directa e transparente.",
+      title: t("landing.step2Title"),
+      desc: t("landing.step2Desc"),
     },
     {
       number: "03",
       icon: Star,
-      title: "Avalie o serviço",
-      desc: "Após o serviço, deixe a sua avaliação. Ajude outros utilizadores a escolher os melhores profissionais da comunidade.",
+      title: t("landing.step3Title"),
+      desc: t("landing.step3Desc"),
     },
   ];
 
   const benefits = [
-    { icon: Shield, title: "Confiança", desc: "Avaliações reais de clientes verificados" },
-    { icon: Clock, title: "Rapidez", desc: "Encontre o profissional certo em minutos" },
-    { icon: Users, title: "Comunidade", desc: "Rede crescente de prestadores locais" },
+    { icon: Shield, title: t("landing.trust"), desc: t("landing.trustDesc") },
+    { icon: Clock, title: t("landing.speed"), desc: t("landing.speedDesc") },
+    { icon: Users, title: t("landing.community"), desc: t("landing.communityDesc") },
   ];
 
   return (
     <div className="min-h-screen bg-background font-sans">
+      {/* Header */}
+      <header className="absolute top-0 left-0 right-0 z-20">
+        <div className="max-w-5xl mx-auto flex items-center justify-between px-6 py-4">
+          <Link to="/" className="flex items-center gap-2">
+            <img src={logo} alt="Bornaal" className="h-8 w-auto" />
+            <span className="text-white font-bold text-sm hidden sm:inline">{t("landing.bornaal")}</span>
+          </Link>
+          <nav className="flex items-center gap-2 sm:gap-4">
+            <Link to="/sobre" className="text-xs sm:text-sm text-white/80 hover:text-white transition-colors hidden sm:inline">{t("landing.about")}</Link>
+            <Link to="/termos" className="text-xs sm:text-sm text-white/80 hover:text-white transition-colors hidden sm:inline">{t("landing.terms")}</Link>
+            <Link to="/privacidade" className="text-xs sm:text-sm text-white/80 hover:text-white transition-colors hidden sm:inline">{t("landing.privacy")}</Link>
+            <Link to="/login" className="text-xs sm:text-sm text-white/80 hover:text-white transition-colors">{t("landing.login")}</Link>
+            <LanguageSelector />
+          </nav>
+        </div>
+      </header>
+
       {/* Hero */}
       <section className="relative overflow-hidden min-h-[85vh] flex items-center">
         <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${heroBg})` }} />
@@ -55,13 +75,13 @@ const Landing = () => {
         <div className="relative w-full max-w-2xl mx-auto px-6 py-20 text-center">
           <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/15 rounded-full px-4 py-1.5 mb-8">
             <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-            <span className="text-white/80 text-xs font-medium tracking-wide uppercase">Plataforma de serviços</span>
+            <span className="text-white/80 text-xs font-medium tracking-wide uppercase">{t("landing.platform")}</span>
           </div>
           <h1 className="text-5xl md:text-6xl font-extrabold text-white mb-5 tracking-tight drop-shadow-lg">
             Born<span className="text-primary">aal</span>
           </h1>
           <p className="text-white/70 text-lg md:text-xl mb-8 max-w-md mx-auto leading-relaxed">
-            A forma mais simples de encontrar prestadores de serviços de confiança na Guiné-Bissau.
+            {t("landing.heroTitle")}
           </p>
 
           {/* Search bar */}
@@ -71,7 +91,7 @@ const Landing = () => {
               <Input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Pesquisar electricista, canalizador, cabeleireira..."
+                placeholder={t("landing.searchPlaceholder")}
                 className="pl-12 pr-24 h-13 rounded-full bg-white/95 backdrop-blur-sm border-0 text-foreground text-sm shadow-xl"
               />
               <Button
@@ -79,7 +99,7 @@ const Landing = () => {
                 size="sm"
                 className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded-full px-5"
               >
-                Buscar
+                {t("landing.search")}
               </Button>
             </div>
           </form>
@@ -87,7 +107,7 @@ const Landing = () => {
           <div className="flex justify-center">
             <Link to="/inicio">
               <Button size="lg" className="rounded-full px-8 gap-2 text-base font-semibold shadow-xl">
-                Encontrar prestadores
+                {t("landing.findProviders")}
                 <ArrowRight className="h-4 w-4" />
               </Button>
             </Link>
@@ -99,7 +119,7 @@ const Landing = () => {
                 variant="outline"
                 className="rounded-full px-8 gap-2 text-base font-semibold bg-white/10 backdrop-blur-sm border-white/40 text-white hover:bg-white hover:text-foreground"
               >
-                Sou prestador — cadastrar
+                {t("landing.becomeProvider")}
               </Button>
             </Link>
           </div>
@@ -128,10 +148,10 @@ const Landing = () => {
       {/* How it works */}
       <section className="max-w-2xl mx-auto px-6 py-20">
         <div className="text-center mb-14">
-          <span className="text-xs font-semibold text-primary tracking-widest uppercase">Processo</span>
-          <h2 className="text-3xl font-bold text-foreground mt-2">Como funciona</h2>
+          <span className="text-xs font-semibold text-primary tracking-widest uppercase">{t("landing.process")}</span>
+          <h2 className="text-3xl font-bold text-foreground mt-2">{t("landing.howItWorks")}</h2>
           <p className="text-muted-foreground mt-3 max-w-md mx-auto">
-            Em três passos simples, conecte-se com profissionais qualificados perto de si.
+            {t("landing.howItWorksDesc")}
           </p>
         </div>
 
@@ -162,17 +182,17 @@ const Landing = () => {
       <section className="bg-card border-y border-border">
         <div className="max-w-2xl mx-auto px-6 py-20">
           <div className="text-center mb-12">
-            <span className="text-xs font-semibold text-primary tracking-widest uppercase">Vantagens</span>
-            <h2 className="text-3xl font-bold text-foreground mt-2">Porquê Bornaal?</h2>
+            <span className="text-xs font-semibold text-primary tracking-widest uppercase">{t("landing.benefits")}</span>
+            <h2 className="text-3xl font-bold text-foreground mt-2">{t("landing.whyBornaal")}</h2>
           </div>
           <div className="grid gap-4">
             {[
-              "Sem taxas de intermediação — contacto directo",
-              "Avaliações verificadas por utilizadores reais",
-              "Focado exclusivamente na Guiné-Bissau",
-              "Interface simples, pensada para todos",
-              "Registo gratuito para prestadores e clientes",
-              "Suporte para múltiplas categorias de serviço",
+              t("landing.benefit1"),
+              t("landing.benefit2"),
+              t("landing.benefit3"),
+              t("landing.benefit4"),
+              t("landing.benefit5"),
+              t("landing.benefit6"),
             ].map((text) => (
               <div key={text} className="flex items-start gap-3 p-4 rounded-xl bg-background border border-border/50">
                 <CheckCircle2 className="h-5 w-5 text-primary shrink-0 mt-0.5" />
@@ -186,15 +206,15 @@ const Landing = () => {
       {/* CTA */}
       <section className="max-w-2xl mx-auto px-6 py-20 text-center">
         <h2 className="text-3xl font-bold text-foreground mb-3">
-          Pronto para começar?
+          {t("landing.ready")}
         </h2>
         <p className="text-muted-foreground mb-8 max-w-sm mx-auto">
-          Junte-se à comunidade de prestadores e clientes na Guiné-Bissau. Registo rápido e gratuito.
+          {t("landing.readyDesc")}
         </p>
         <div className="flex justify-center">
           <Link to="/inicio">
             <Button size="lg" className="rounded-full px-8 gap-2 font-semibold shadow-lg">
-              Explorar prestadores <ArrowRight className="h-4 w-4" />
+              {t("landing.exploreProviders")} <ArrowRight className="h-4 w-4" />
             </Button>
           </Link>
         </div>
@@ -206,15 +226,15 @@ const Landing = () => {
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-4">
             <img src={logo} alt="Bornaal" className="h-8 w-auto" />
             <div className="flex gap-4 text-xs">
-              <Link to="/sobre" className="text-muted-foreground hover:text-foreground transition-colors">Sobre</Link>
-              <Link to="/termos" className="text-muted-foreground hover:text-foreground transition-colors">Termos de Uso</Link>
-              <Link to="/privacidade" className="text-muted-foreground hover:text-foreground transition-colors">Privacidade</Link>
-              <Link to="/login" className="text-muted-foreground hover:text-foreground transition-colors">Entrar</Link>
+              <Link to="/sobre" className="text-muted-foreground hover:text-foreground transition-colors">{t("landing.about")}</Link>
+              <Link to="/termos" className="text-muted-foreground hover:text-foreground transition-colors">{t("landing.terms")}</Link>
+              <Link to="/privacidade" className="text-muted-foreground hover:text-foreground transition-colors">{t("landing.privacy")}</Link>
+              <Link to="/login" className="text-muted-foreground hover:text-foreground transition-colors">{t("landing.login")}</Link>
               <Link to="/admin-moderacao" className="text-muted-foreground/50 hover:text-foreground transition-colors">·</Link>
             </div>
           </div>
           <p className="text-xs text-muted-foreground text-center sm:text-left">
-            © 2026 Todos os direitos reservados
+            {t("landing.copyright")}
           </p>
         </div>
       </footer>
