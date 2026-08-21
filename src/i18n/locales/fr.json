@@ -394,7 +394,16 @@
     "reportSent": "Signalement envoyé",
     "reportSentDesc": "Votre signalement a été envoyé et sera examiné par notre équipe.",
     "close": "Fermer",
-    "add": "Ajouter"
+    "add": "Ajouter",
+    "leaveReview": "Laissez votre avis",
+    "yourName": "Votre nom",
+    "commentOptional": "Commentaire (optionnel)",
+    "submitReview": "Envoyer l'avis",
+    "loginToReview": "Connectez-vous pour laisser un avis",
+    "reviewSent": "Avis envoyé avec succès, il sera affiché après validation.",
+    "reviewError": "Erreur lors de l'envoi de l'avis",
+    "selectStars": "Veuillez choisir une note",
+    "enterName": "Veuillez indiquer votre nom"
   },
   "providerDetail": {
     "loading": "Chargement...",
@@ -431,7 +440,16 @@
     "sending": "Envoi...",
     "reportSent": "Signalement envoyé",
     "reportSentDesc": "Votre signalement a été envoyé et sera examiné par notre équipe.",
-    "close": "Fermer"
+    "close": "Fermer",
+    "leaveReview": "Laissez votre avis",
+    "yourName": "Votre nom",
+    "commentOptional": "Commentaire (optionnel)",
+    "submitReview": "Envoyer l'avis",
+    "loginToReview": "Connectez-vous pour laisser un avis",
+    "reviewSent": "Avis envoyé avec succès, il sera affiché après validation.",
+    "reviewError": "Erreur lors de l'envoi de l'avis",
+    "selectStars": "Veuillez choisir une note",
+    "enterName": "Veuillez indiquer votre nom"
   },
   "admin": {
     "loading": "Chargement...",

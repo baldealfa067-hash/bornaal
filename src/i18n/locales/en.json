@@ -394,7 +394,16 @@
     "reportSent": "Report sent",
     "reportSentDesc": "Your report has been sent and will be reviewed by our team.",
     "close": "Close",
-    "add": "Add"
+    "add": "Add",
+    "leaveReview": "Leave your review",
+    "yourName": "Your name",
+    "commentOptional": "Comment (optional)",
+    "submitReview": "Submit review",
+    "loginToReview": "Log in to leave a review",
+    "reviewSent": "Review sent successfully and will be shown after validation.",
+    "reviewError": "Error sending review",
+    "selectStars": "Please select a star rating",
+    "enterName": "Please enter your name"
   },
   "providerDetail": {
     "loading": "Loading...",
@@ -431,7 +440,16 @@
     "sending": "Sending...",
     "reportSent": "Report sent",
     "reportSentDesc": "Your report has been sent and will be reviewed by our team.",
-    "close": "Close"
+    "close": "Close",
+    "leaveReview": "Leave your review",
+    "yourName": "Your name",
+    "commentOptional": "Comment (optional)",
+    "submitReview": "Submit review",
+    "loginToReview": "Log in to leave a review",
+    "reviewSent": "Review sent successfully and will be shown after validation.",
+    "reviewError": "Error sending review",
+    "selectStars": "Please select a star rating",
+    "enterName": "Please enter your name"
   },
   "admin": {
     "loading": "Loading...",

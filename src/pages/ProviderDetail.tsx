@@ -17,6 +17,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import i18n from "@/i18n";
+import { useQueryClient } from "@tanstack/react-query";
 
 type ReportReasonKey = "notDone" | "charge" | "behaviour" | "fake" | "other";
 const REPORT_REASONS: { key: ReportReasonKey; labelKey: string }[] = [
@@ -40,6 +41,11 @@ const ProviderDetail = () => {
   const [reportReason, setReportReason] = useState("");
   const [reportDescription, setReportDescription] = useState("");
   const [reportContact, setReportContact] = useState("");
+  const queryClient = useQueryClient();
+  const [rating, setRating] = useState(0);
+  const [reviewerName, setReviewerName] = useState("");
+  const [comment, setComment] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -89,6 +95,42 @@ const ProviderDetail = () => {
     setReportContact("");
     setReportStep("form");
     setReportOpen(true);
+  };
+
+  const submitDirectReview = async () => {
+    if (!id) return;
+    if (rating < 1) {
+      toast.error(t("providerDetail.selectStars"));
+      return;
+    }
+    if (!reviewerName.trim()) {
+      toast.error(t("providerDetail.enterName"));
+      return;
+    }
+    if (!user) {
+      toast.error(t("providerDetail.loginToReview"));
+      return;
+    }
+    setSubmitting(true);
+    const { error } = await supabase.from("reviews").insert({
+      provider_id: id,
+      rating,
+      comment: comment.trim() || null,
+      reviewer_name: reviewerName.trim(),
+      user_id: user.id,
+      request_id: null,
+    } as never);
+    setSubmitting(false);
+    if (error) {
+      toast.error(t("providerDetail.reviewError") + ": " + error.message);
+      return;
+    }
+    toast.success(t("providerDetail.reviewSent"));
+    setRating(0);
+    setReviewerName("");
+    setComment("");
+    queryClient.invalidateQueries({ queryKey: ["provider", id] });
+    queryClient.invalidateQueries({ queryKey: ["providers"] });
   };
 
   const submitReport = async () => {
@@ -235,6 +277,31 @@ const ProviderDetail = () => {
 
       <section>
         <h2 className="font-semibold mb-3">{t("providerDetail.reviewsCount", { count: provider.reviewCount })}</h2>
+
+        <div className="p-4 rounded-lg border bg-card mb-4 space-y-3">
+          <p className="text-sm font-medium">{t("providerDetail.leaveReview")}</p>
+          <div className="flex items-center gap-2">
+            <StarRating rating={rating} onChange={setRating} size="md" />
+          </div>
+          <Input
+            placeholder={t("providerDetail.yourName")}
+            value={reviewerName}
+            onChange={(e) => setReviewerName(e.target.value)}
+          />
+          <Textarea
+            placeholder={t("providerDetail.commentOptional")}
+            value={comment}
+            onChange={(e) => setComment(e.target.value)}
+            rows={3}
+          />
+          {user ? (
+            <Button onClick={submitDirectReview} disabled={submitting} className="w-full">
+              {submitting ? t("providerDetail.sending") : t("providerDetail.submitReview")}
+            </Button>
+          ) : (
+            <p className="text-sm text-muted-foreground text-center">{t("providerDetail.loginToReview")}</p>
+          )}
+        </div>
 
         {provider.reviews && provider.reviews.length > 0 ? (
           <div className="flex flex-col gap-3">

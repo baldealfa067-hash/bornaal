@@ -394,7 +394,16 @@
     "reportSent": "Denúncia enviada",
     "reportSentDesc": "A tua denúncia foi enviada e será analisada pela nossa equipa.",
     "close": "Fechar",
-    "add": "Adicionar"
+    "add": "Adicionar",
+    "leaveReview": "Deixe a sua avaliação",
+    "yourName": "O seu nome",
+    "commentOptional": "Comentário (opcional)",
+    "submitReview": "Enviar avaliação",
+    "loginToReview": "Faça login para avaliar",
+    "reviewSent": "Avaliação enviada com sucesso e será exibida após validação.",
+    "reviewError": "Erro ao enviar avaliação",
+    "selectStars": "Selecione uma avaliação em estrelas",
+    "enterName": "Indique o seu nome"
   },
   "providerDetail": {
     "loading": "A carregar...",
@@ -431,7 +440,16 @@
     "sending": "A enviar...",
     "reportSent": "Denúncia enviada",
     "reportSentDesc": "A tua denúncia foi enviada e será analisada pela nossa equipa.",
-    "close": "Fechar"
+    "close": "Fechar",
+    "leaveReview": "Deixe a sua avaliação",
+    "yourName": "O seu nome",
+    "commentOptional": "Comentário (opcional)",
+    "submitReview": "Enviar avaliação",
+    "loginToReview": "Faça login para avaliar",
+    "reviewSent": "Avaliação enviada com sucesso e será exibida após validação.",
+    "reviewError": "Erro ao enviar avaliação",
+    "selectStars": "Selecione uma avaliação em estrelas",
+    "enterName": "Indique o seu nome"
   },
   "admin": {
     "loading": "A carregar...",
