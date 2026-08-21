@@ -646,7 +646,15 @@
     "accepted": "Accepted",
     "rejected": "Rejected",
     "markCompleted": "Mark as completed",
-    "rateProviderAction": "Rate provider"
+    "rateProviderAction": "Rate provider",
+    "anonWarningTitle": "No account?",
+    "anonWarningDesc": "Without an account, you won't be able to track replies to your request.",
+    "createAccount": "Create account",
+    "continueWithoutAccount": "Continue without account",
+    "phoneRequiredAnon": "Please enter your phone to publish without an account",
+    "spamLimitAnon": "Limit of 3 requests per day reached for this number. Create an account or try tomorrow.",
+    "spamLimitAuth": "Limit of 10 requests per day reached. Try again tomorrow.",
+    "publishEmptyButton": "Publish a request"
   },
   "landing": {
     "platform": "Service platform",

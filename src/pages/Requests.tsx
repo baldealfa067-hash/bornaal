@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { MapPin, MessageCircle, Plus, Tag, Clock, ChevronDown, ChevronUp, Users, CheckCircle2, XCircle, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
@@ -32,11 +32,13 @@ import { StarRating } from "@/components/StarRating";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import i18n from "@/i18n";
+import { supabase } from "@/integrations/supabase/client";
 
 const PAGE_SIZE = 10;
 
 const Requests = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { data: providerProfile } = useMyProvider(user?.id ?? null);
   const { data: requests = [], isLoading } = useRequests();
@@ -46,6 +48,7 @@ const Requests = () => {
   const create = useCreateRequest();
   const bidOnRequest = useBidOnRequest();
   const updateBid = useUpdateBidStatus();
+  const [showAnonWarning, setShowAnonWarning] = useState(false);
 
   const DEADLINE_OPTIONS = [
     { value: "urgente", label: t("requests.urgent") },
@@ -87,6 +90,27 @@ const Requests = () => {
   const [reviewComment, setReviewComment] = useState("");
   const [reviewName, setReviewName] = useState("");
 
+  // Pré-preencher nome/telefone se logado
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase.from("profiles").select("name, phone").eq("user_id", user.id).maybeSingle();
+      if (cancelled) return;
+      if (data?.name || data?.phone) {
+        setForm((f) => ({
+          ...f,
+          requester_name: f.requester_name || (data.name ?? ""),
+          requester_phone: f.requester_phone || (data.phone ?? ""),
+        }));
+      } else if (user.email) {
+        const emailName = user.email.split("@")[0];
+        setForm((f) => ({ ...f, requester_name: f.requester_name || emailName }));
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [user]);
+
   const openRequests = requests.filter((r) => r.status === "open");
   const myRequests = user ? requests.filter((r) => r.user_id === user.id) : [];
 
@@ -103,10 +127,27 @@ const Requests = () => {
     setPage(1);
   }, [filterCategory, filterLocation]);
 
-  const handlePublish = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!form.category) return toast.error(t("requests.selectCategory"));
-    if (!form.description.trim()) return toast.error(t("requests.describeRequest"));
+  const executePublish = async () => {
+    const phone = form.requester_phone.trim();
+    if (!user) {
+      if (!phone) {
+        toast.error(t("requests.phoneRequiredAnon"));
+        return;
+      }
+      const start = new Date(); start.setHours(0,0,0,0);
+      const { count } = await supabase.from("service_requests").select("id", { count: "exact", head: true }).eq("requester_phone", phone).is("user_id", null).gte("created_at", start.toISOString());
+      if (count !== null && count >= 3) {
+        toast.error(t("requests.spamLimitAnon"));
+        return;
+      }
+    } else {
+      const start = new Date(); start.setHours(0,0,0,0);
+      const { count } = await supabase.from("service_requests").select("id", { count: "exact", head: true }).eq("user_id", user.id).gte("created_at", start.toISOString());
+      if (count !== null && count >= 10) {
+        toast.error(t("requests.spamLimitAuth"));
+        return;
+      }
+    }
     try {
       await create.mutateAsync({
         category: form.category,
@@ -120,12 +161,25 @@ const Requests = () => {
         budget_amount: form.budget_amount ? Number(form.budget_amount) : null,
       });
       toast.success(t("requests.requestPublished"));
-      setForm({ requester_name: "", requester_phone: "", category: "", location: "", description: "", deadline: "", budget_type: "combinar", budget_amount: "" });
+      setForm((f) => ({ ...f, category: "", location: "", description: "", deadline: "", budget_type: "combinar", budget_amount: "" }));
+      // manter nome/telefone pré-preenchidos se logado
+      setShowAnonWarning(false);
       setTab("meus");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : t("requestsExtra.tryAgain");
       toast.error(msg);
     }
+  };
+
+  const handlePublish = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.category) return toast.error(t("requests.selectCategory"));
+    if (!form.description.trim()) return toast.error(t("requests.describeRequest"));
+    if (!user) {
+      setShowAnonWarning(true);
+      return;
+    }
+    await executePublish();
   };
 
   const handleBid = async () => {
@@ -242,11 +296,18 @@ const Requests = () => {
           {isLoading ? (
             <p className="text-sm text-muted-foreground text-center py-8">{t("requests.loading")}</p>
           ) : filtered.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-12">
-              {openRequests.length === 0
-                ? t("requests.noRequests")
-                : t("requests.noFilteredRequests")}
-            </p>
+            <div className="text-center py-12">
+              <p className="text-sm text-muted-foreground">
+                {openRequests.length === 0
+                  ? t("requests.noRequests")
+                  : t("requests.noFilteredRequests")}
+              </p>
+              {openRequests.length === 0 && (
+                <Button size="sm" className="mt-4 gap-1" onClick={() => setTab("publicar")}>
+                  <Plus className="h-4 w-4" /> {t("requests.publishEmptyButton")}
+                </Button>
+              )}
+            </div>
           ) : (
             <>
             <div className="flex flex-col gap-3">
@@ -439,6 +500,24 @@ const Requests = () => {
               {submitReview.isPending ? t("requests.sending") : t("requests.sendReview")}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ─── Dialog: Aviso sem conta ─── */}
+      <Dialog open={showAnonWarning} onOpenChange={setShowAnonWarning}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t("requests.anonWarningTitle")}</DialogTitle>
+            <DialogDescription>{t("requests.anonWarningDesc")}</DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-2">
+            <Button onClick={() => { setShowAnonWarning(false); navigate("/login"); }} className="w-full">
+              {t("requests.createAccount")}
+            </Button>
+            <Button variant="outline" onClick={() => executePublish()} className="w-full">
+              {t("requests.continueWithoutAccount")}
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

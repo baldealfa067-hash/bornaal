@@ -646,7 +646,15 @@
     "accepted": "Aceite",
     "rejected": "Recusado",
     "markCompleted": "Marcar como concluído",
-    "rateProviderAction": "Avaliar prestador"
+    "rateProviderAction": "Avaliar prestador",
+    "anonWarningTitle": "Sem conta?",
+    "anonWarningDesc": "Sem conta, não vais conseguir acompanhar se alguém respondeu a este pedido.",
+    "createAccount": "Criar conta",
+    "continueWithoutAccount": "Continuar sem conta",
+    "phoneRequiredAnon": "Indique o telefone para publicar sem conta",
+    "spamLimitAnon": "Limite de 3 pedidos por dia atingido para este número. Cria conta ou tenta amanhã.",
+    "spamLimitAuth": "Limite de 10 pedidos por dia atingido. Tenta amanhã.",
+    "publishEmptyButton": "Publicar um pedido"
   },
   "landing": {
     "platform": "Plataforma de serviços",

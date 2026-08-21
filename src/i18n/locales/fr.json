@@ -646,7 +646,15 @@
     "accepted": "Acceptée",
     "rejected": "Refusée",
     "markCompleted": "Marquer comme terminé",
-    "rateProviderAction": "Noter le prestataire"
+    "rateProviderAction": "Noter le prestataire",
+    "anonWarningTitle": "Sans compte ?",
+    "anonWarningDesc": "Sans compte, vous ne pourrez pas suivre les réponses à votre demande.",
+    "createAccount": "Créer un compte",
+    "continueWithoutAccount": "Continuer sans compte",
+    "phoneRequiredAnon": "Veuillez indiquer votre téléphone pour publier sans compte",
+    "spamLimitAnon": "Limite de 3 demandes par jour atteinte pour ce numéro. Créez un compte ou réessayez demain.",
+    "spamLimitAuth": "Limite de 10 demandes par jour atteinte. Réessayez demain.",
+    "publishEmptyButton": "Publier une demande"
   },
   "landing": {
     "platform": "Plateforme de services",
