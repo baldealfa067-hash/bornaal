@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import i18n from "@/i18n";
 import { useQueryClient } from "@tanstack/react-query";
+import { sanitizeName, sanitizeComment, sanitizeReason, sanitizeDescription, sanitizeContact } from "@/lib/sanitize";
 
 type ReportReasonKey = "food" | "charge" | "behaviour" | "fake" | "hygiene" | "other";
 const REPORT_REASONS: { key: ReportReasonKey; labelKey: string }[] = [
@@ -194,7 +195,8 @@ const BusinessDetail = () => {
       toast.error(t("businessDetail.selectStars"));
       return;
     }
-    if (!reviewerName.trim()) {
+    const cleanName = sanitizeName(reviewerName);
+    if (!cleanName) {
       toast.error(t("businessDetail.enterName"));
       return;
     }
@@ -202,12 +204,13 @@ const BusinessDetail = () => {
       toast.error(t("businessDetail.loginToReview"));
       return;
     }
+    const cleanComment = sanitizeComment(comment) || null;
     setSubmitting(true);
     const { error } = await supabase.from("reviews").insert({
       provider_id: id,
       rating,
-      comment: comment.trim() || null,
-      reviewer_name: reviewerName.trim(),
+      comment: cleanComment,
+      reviewer_name: cleanName,
       user_id: user.id,
       request_id: null,
     } as never);
@@ -225,18 +228,21 @@ const BusinessDetail = () => {
 
   const submitReport = async () => {
     if (!id) return;
-    if (!reportReason.trim() || !reportDescription.trim()) {
+    const cleanReason = sanitizeReason(reportReason);
+    const cleanDesc = sanitizeDescription(reportDescription);
+    if (!cleanReason || !cleanDesc) {
       toast.error(t("businessDetail.chooseReasonDesc"));
       return;
     }
+    const cleanContact = sanitizeContact(reportContact) || null;
     setComplaining(true);
     try {
       const { error } = await supabase.from("complaints").insert({
         provider_id: id,
         client_id: user?.id ?? null,
-        reason: reportReason.trim(),
-        description: reportDescription.trim(),
-        contact: reportContact.trim() || null,
+        reason: cleanReason,
+        description: cleanDesc,
+        contact: cleanContact,
         status: "pendente",
       });
       if (error) {
@@ -299,7 +305,7 @@ const BusinessDetail = () => {
           <Phone className="h-4 w-4" />
           <span>{phone}</span>
         </div>
-        {String(business.id ?? "") !== user?.id && (
+        {String((business as Record<string, unknown>).user_id ?? "") !== (user?.id ?? "") && (
           <Button variant="outline" className="w-full gap-2" onClick={openReport}>
             <AlertCircle className="h-5 w-5" />
             {t("businessDetail.report")}

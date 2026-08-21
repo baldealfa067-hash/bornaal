@@ -16,7 +16,6 @@ dist-ssr
 .env
 .env.*
 !.env.example
-!.env.production
 
 # Source logo files (processed logo at src/assets/logo.png)
 imagem.png/

@@ -9,6 +9,7 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import InstallPrompt from "./components/InstallPrompt";
 import PushPrompt from "./components/PushPrompt";
 import PushRepair from "./components/PushRepair";
+import RequireAdmin from "./components/RequireAdmin";
 import { Loader2 } from "lucide-react";
 
 const Landing = lazy(() => import("./pages/Landing"));
@@ -61,8 +62,8 @@ const App = () => (
               <Route path="/login" element={<Login />} />
               <Route path="/esqueci-senha" element={<ForgotPassword />} />
               <Route path="/redefinir-senha" element={<ResetPassword />} />
-              <Route path="/admin" element={<AdminDashboard />} />
-              <Route path="/admin-moderacao" element={<AdminDashboard />} />
+              <Route path="/admin" element={<RequireAdmin><AdminDashboard /></RequireAdmin>} />
+              <Route path="/admin-moderacao" element={<RequireAdmin><AdminDashboard /></RequireAdmin>} />
               <Route path="/models" element={<Models />} />
               <Route path="/painel" element={<ProviderDashboard />} />
               <Route path="/painel-loja" element={<BusinessDashboard />} />
