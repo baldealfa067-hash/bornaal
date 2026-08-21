@@ -194,7 +194,7 @@
     "categoryRequired": "Categoria *",
     "selectCategory": "Selecione uma categoria",
     "phoneRequired": "Telefone (WhatsApp) *",
-    "phonePlaceholder": "+245 955 000 000",
+    "phonePlaceholder": "+245 957107795",
     "locationRequired": "Localização *",
     "select": "Selecione",
     "price": "Preço",
@@ -289,7 +289,7 @@
     "categoryRequired": "Categoria *",
     "selectCategory": "Selecione uma categoria",
     "phoneRequired": "Telefone (WhatsApp) *",
-    "phonePlaceholder": "+245 955 000 000",
+    "phonePlaceholder": "+245 957107795",
     "locationRequired": "Localização *",
     "select": "Selecione",
     "description": "Descrição",
@@ -786,7 +786,7 @@
     "s7Title": "7. Alterações aos Termos",
     "s7Desc": "Reservamo-nos o direito de alterar estes termos a qualquer momento. As alterações entram em vigor após a publicação na plataforma. A continuação do uso constitui aceitação dos novos termos.",
     "s8Title": "8. Contacto",
-    "s8Desc": "Para questões sobre estes termos, contacte-nos em contacto@bornaal.gw."
+    "s8Desc": "Para questões sobre estes termos, contacte-nos em bornaal.com@gmail.com."
   },
   "privacyPage": {
     "title": "Política de Privacidade",
@@ -804,7 +804,7 @@
     "s6Title": "6. Cookies e Armazenamento Local",
     "s6Desc": "Utilizamos armazenamento local do navegador para manter a sua sessão activa. Não utilizamos cookies de rastreamento de terceiros.",
     "s7Title": "7. Contacto",
-    "s7Desc": "Para questões sobre privacidade, contacte-nos em contacto@notarbadja.gw."
+    "s7Desc": "Para questões sobre privacidade, contacte-nos em bornaal.com@gmail.com."
   },
   "modelsPage": {
     "home": "Início",

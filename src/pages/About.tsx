@@ -60,11 +60,11 @@ const About = () => {
         <div className="space-y-3 text-sm">
           <div className="flex items-center gap-3 text-muted-foreground">
             <Mail className="h-4 w-4 text-primary" />
-            <span>contacto@bornaal.gw</span>
+            <span>bornaal.com@gmail.com</span>
           </div>
           <div className="flex items-center gap-3 text-muted-foreground">
             <Phone className="h-4 w-4 text-primary" />
-            <span>+245 955 000 000</span>
+            <span>+245 957107795</span>
           </div>
           <div className="flex items-center gap-3 text-muted-foreground">
             <MapPin className="h-4 w-4 text-primary" />

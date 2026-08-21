@@ -194,7 +194,7 @@
     "categoryRequired": "Category *",
     "selectCategory": "Select a category",
     "phoneRequired": "Phone (WhatsApp) *",
-    "phonePlaceholder": "+245 955 000 000",
+    "phonePlaceholder": "+245 957107795",
     "locationRequired": "Location *",
     "select": "Select",
     "price": "Price",
@@ -289,7 +289,7 @@
     "categoryRequired": "Category *",
     "selectCategory": "Select a category",
     "phoneRequired": "Phone (WhatsApp) *",
-    "phonePlaceholder": "+245 955 000 000",
+    "phonePlaceholder": "+245 957107795",
     "locationRequired": "Location *",
     "select": "Select",
     "description": "Description",
@@ -786,7 +786,7 @@
     "s7Title": "7. Changes to Terms",
     "s7Desc": "We may change these terms at any time. Changes take effect after publication. Continued use constitutes acceptance.",
     "s8Title": "8. Contact",
-    "s8Desc": "For questions about these terms, contact us at contacto@bornaal.gw."
+    "s8Desc": "For questions about these terms, contact us at bornaal.com@gmail.com."
   },
   "privacyPage": {
     "title": "Privacy Policy",
@@ -804,7 +804,7 @@
     "s6Title": "6. Cookies and Local Storage",
     "s6Desc": "We use browser local storage to keep your session active. We do not use third-party tracking cookies.",
     "s7Title": "7. Contact",
-    "s7Desc": "For privacy questions, contact us at contacto@notarbadja.gw."
+    "s7Desc": "For privacy questions, contact us at bornaal.com@gmail.com."
   },
   "modelsPage": {
     "home": "Home",
