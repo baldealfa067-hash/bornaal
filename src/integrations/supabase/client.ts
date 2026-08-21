@@ -2,13 +2,14 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-// VITE_ vars são públicas (anon/publishable) mas vêm do ambiente (Vercel/Supabase).
-// Não há fallback hard-coded para evitar expor project_id/chave no Git.
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string | undefined;
-const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined;
-if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
-  console.warn("[supabase] VITE_SUPABASE_URL ou VITE_SUPABASE_PUBLISHABLE_KEY em falta - verifica .env / Vercel env");
-}
+// VITE_ vars são públicas (anon/publishable). Fallback hard-coded garante build
+// funciona mesmo se Vercel env falhar — anon é pública por design (RLS protege).
+const SUPABASE_URL =
+  (import.meta.env.VITE_SUPABASE_URL as string | undefined) ||
+  "https://pfvuqehchkamhgjlugqn.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY =
+  (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined) ||
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBmdnVxZWhjaGthbWhnamx1Z3FuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY4OTM2MjgsImV4cCI6MjEwMjQ2OTYyOH0.cGAHjlkhF89jpMBEiX9YujcUqYYBYXeQncn0oFLw5fs";
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
