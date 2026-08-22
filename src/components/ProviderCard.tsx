@@ -66,11 +66,6 @@ export const ProviderCard = ({
           <div className="flex-1 min-w-0">
             <h3 className="font-semibold text-foreground flex items-center gap-1 min-w-0">
               <span className="truncate">{name}</span>
-              {isBusiness && (
-                <Badge variant="default" className="text-[10px] px-1.5 py-0 h-4 shrink-0">
-                  {t("providerCard.shop")}
-                </Badge>
-              )}
               {is_verified && (
                 <BadgeCheck
                   className="h-4 w-4 text-primary shrink-0"
