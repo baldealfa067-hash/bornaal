@@ -1,4 +1,4 @@
-# AUDITORIA — BissauService / Bornaal
+# AUDITORIA — Bornaal / Bornaal
 **Data:** 2026-08-21 · **Âmbito:** projeto completo `remix-of-remix-of-n-tarbadja-connect` + `*.sql` raiz + `supabase/migrations/*` · **Método:** leitura estática de código, sem execução de correções
 
 > NOTA: Esta auditoria NÃO corrigiu nada — apenas reporta. Todas as referências incluem `ficheiro:linha` para navegação direta.
