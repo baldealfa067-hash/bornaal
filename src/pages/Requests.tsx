@@ -165,7 +165,8 @@ const Requests = () => {
       setForm((f) => ({ ...f, category: "", location: "", description: "", deadline: "", budget_type: "combinar", budget_amount: "" }));
       // manter nome/telefone pré-preenchidos se logado
       setShowAnonWarning(false);
-      setTab("meus");
+      // sem conta não há "Meus": volta ao feed em vez da tab que pede login
+      setTab(user ? "meus" : "disponiveis");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : t("requestsExtra.tryAgain");
       toast.error(msg);

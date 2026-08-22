@@ -648,7 +648,7 @@
     "markCompleted": "Marquer comme terminé",
     "rateProviderAction": "Noter le prestataire",
     "anonWarningTitle": "Sans compte ?",
-    "anonWarningDesc": "Sans compte, vous ne pourrez pas suivre les réponses à votre demande.",
+    "anonWarningDesc": "Cette demande ne sera associée à aucun compte : vous ne pourrez pas la retrouver dans Mes demandes ni suivre les réponses. Créez un compte gratuit pour la gérer.",
     "createAccount": "Créer un compte",
     "continueWithoutAccount": "Continuer sans compte",
     "phoneRequiredAnon": "Veuillez indiquer votre téléphone pour publier sans compte",

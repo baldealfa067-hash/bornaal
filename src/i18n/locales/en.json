@@ -648,7 +648,7 @@
     "markCompleted": "Mark as completed",
     "rateProviderAction": "Rate provider",
     "anonWarningTitle": "No account?",
-    "anonWarningDesc": "Without an account, you won't be able to track replies to your request.",
+    "anonWarningDesc": "This request will not be linked to any account: you will not find it again under Mine or follow replies. Create a free account to manage it.",
     "createAccount": "Create account",
     "continueWithoutAccount": "Continue without account",
     "phoneRequiredAnon": "Please enter your phone to publish without an account",

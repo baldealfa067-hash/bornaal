@@ -648,7 +648,7 @@
     "markCompleted": "Marcar como concluído",
     "rateProviderAction": "Avaliar prestador",
     "anonWarningTitle": "Sem conta?",
-    "anonWarningDesc": "Sem conta, não vais conseguir acompanhar se alguém respondeu a este pedido.",
+    "anonWarningDesc": "Este pedido não fica associado a nenhuma conta: não o vais conseguir voltar a ver em «Os Meus» nem acompanhar respostas. Cria uma conta gratuita para o poder gerir.",
     "createAccount": "Criar conta",
     "continueWithoutAccount": "Continuar sem conta",
     "phoneRequiredAnon": "Indique o telefone para publicar sem conta",
