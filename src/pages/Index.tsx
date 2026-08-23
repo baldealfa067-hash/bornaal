@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Search, MapPin, Loader2 } from "lucide-react";
 import { ProviderCard } from "@/components/ProviderCard";
 import { Pagination } from "@/components/Pagination";
-import { useProviders, useCategories, useBusinessCategories } from "@/hooks/useProviders";
+import { useProviders, useCategories, useBusinessCategories, useBeautyCategories } from "@/hooks/useProviders";
 import { useBairros } from "@/hooks/useBairros";
 import { BAIRROS_FILTER } from "@/lib/locations";
 import { getPageCount, paginateArray } from "@/lib/pagination";
@@ -15,13 +15,14 @@ import { getCategoryName } from "@/lib/categoryI18n";
 
 const PAGE_SIZE = 10;
 
-type SectionKey = "servicos" | "lojas";
+type SectionKey = "servicos" | "lojas" | "beleza";
 
 const Index = () => {
   const { t, i18n } = useTranslation();
   const SECTIONS = [
     { key: "servicos" as const, label: t("home.providersTitle"), short: t("home.providersShort") },
     { key: "lojas" as const, label: t("home.shopsTitle"), short: t("home.shopsShort") },
+    { key: "beleza" as const, label: t("home.belezaTitle"), short: t("home.belezaShort") },
   ] as const;
   const [searchParams, setSearchParams] = useSearchParams();
   const section = (searchParams.get("tipo") as SectionKey) || "servicos";
@@ -32,15 +33,16 @@ const Index = () => {
   const [page, setPage] = useState(1);
 
   const { data: providers = [], isLoading: loadingProviders, error: providersError } = useProviders(
-    section === "lojas" ? "business" : "provider"
+    section === "lojas" ? "business" : section === "beleza" ? "beleza" : "provider"
   );
   const { data: serviceCategories = [] } = useCategories();
   const { data: businessCategories = [] } = useBusinessCategories();
+  const { data: beautyCategories = [] } = useBeautyCategories();
   const { data: bairros = [] } = useBairros();
   const bairroOptions = bairros.length ? [BAIRROS_FILTER[0], ...bairros] : BAIRROS_FILTER;
   const displayBairro = (loc: string) => (loc === BAIRROS_FILTER[0] ? t("common.allNeighborhoods") : loc);
 
-  const categories = section === "lojas" ? businessCategories : serviceCategories;
+  const categories = section === "lojas" ? businessCategories : section === "beleza" ? beautyCategories : serviceCategories;
 
   // Sync q param to search state on mount
   useEffect(() => {

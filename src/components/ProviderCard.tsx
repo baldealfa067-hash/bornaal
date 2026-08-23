@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { formatCFA } from "@/lib/format";
 import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from "react-i18next";
-import { useCategories, useBusinessCategories } from "@/hooks/useProviders";
+import { useCategories, useBusinessCategories, useBeautyCategories } from "@/hooks/useProviders";
 import { translateCategoryName } from "@/lib/categoryI18n";
 
 interface ProviderCardProps {
@@ -33,13 +33,16 @@ export const ProviderCard = ({
   const { t, i18n } = useTranslation();
   const { data: serviceCats = [] } = useCategories();
   const { data: businessCats = [] } = useBusinessCategories();
-  const isBusiness = profile_type === "business";
-  const catList = (isBusiness ? businessCats : serviceCats) as { id: string; name: string; name_en: string | null; name_fr: string | null }[];
+  const { data: beautyCats = [] } = useBeautyCategories();
+  const catList = (
+    profile_type === "business" ? businessCats : profile_type === "beleza" ? beautyCats : serviceCats
+  ) as { id: string; name: string; name_en: string | null; name_fr: string | null }[];
   const displayCategory = translateCategoryName(category, catList, i18n.language);
-  const detailUrl = isBusiness ? `/loja/${id}` : `/prestador/${id}`;
+  const detailUrl =
+    profile_type === "business" ? `/loja/${id}` : profile_type === "beleza" ? `/beleza/${id}` : `/prestador/${id}`;
   const cleanPhone = phone.replace(/\D/g, "");
   const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(
-    isBusiness
+    profile_type !== "provider"
       ? t("providerCardExtra.whatsappBusinessMsg", { name })
       : t("providerCardExtra.whatsappProviderMsg", { name })
   )}`;

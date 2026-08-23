@@ -22,6 +22,7 @@ import {
   Images,
   ChevronRight,
   Store,
+  Scissors,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -74,6 +75,7 @@ type MenuKey =
   | "requests"
   | "categories"
   | "lojas-categorias"
+  | "beleza-categorias"
   | "bairros"
   | "stats"
   | "settings";
@@ -155,6 +157,7 @@ const AdminDashboard = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [bairros, setBairros] = useState<Bairro[]>([]);
   const [businessCategories, setBusinessCategories] = useState<Category[]>([]);
+  const [beautyCategories, setBeautyCategories] = useState<Category[]>([]);
   const [activity, setActivity] = useState<Record<string, ActivitySeries>>({});
   const [portfolioCount, setPortfolioCount] = useState<Record<string, number>>({});
   const [quality, setQuality] = useState<Record<string, { level: string; score: number }>>({});
@@ -168,6 +171,7 @@ const AdminDashboard = () => {
   const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(null);
   const [bairroToDelete, setBairroToDelete] = useState<Bairro | null>(null);
   const [bizCategoryToDelete, setBizCategoryToDelete] = useState<Category | null>(null);
+  const [belezaCategoryToDelete, setBelezaCategoryToDelete] = useState<Category | null>(null);
 
   useEffect(() => {
     if (loading) return;
@@ -189,6 +193,7 @@ const AdminDashboard = () => {
       { data: pf },
       { data: ql },
       { data: bc },
+      { data: bl },
     ] = await Promise.all([
       supabase.from("profiles").select("id, name, category, phone, location, price_type, starting_price, photo_url, profile_type, is_verified, verification_status, verification_reason, verification_doc_url, verification_selfie_url").order("name"),
       supabase.from("service_requests").select("id, requester_name, category, location, description, status, created_at").order("created_at", { ascending: false }),
@@ -201,6 +206,7 @@ const AdminDashboard = () => {
       supabase.from("portfolio_images").select("provider_id"),
       supabase.from("quality_levels").select("provider_id, level, score"),
       supabase.from("business_categories").select("id, name, name_en, name_fr").order("name"),
+      supabase.from("beauty_categories").select("id, name, name_en, name_fr").order("name"),
     ]);
     const statsMap: Record<string, { profile_views: number; whatsapp_clicks: number; call_clicks: number }> = {};
     (st ?? []).forEach((s) => {
@@ -221,6 +227,7 @@ const AdminDashboard = () => {
     setCategories((c ?? []) as Category[]);
     setBairros((b ?? []) as Bairro[]);
     setBusinessCategories((bc ?? []) as Category[]);
+    setBeautyCategories((bl ?? []) as Category[]);
     setActivity(buildActivityMap((act ?? []) as { provider_id: string; activity_type: string; created_at: string }[]));
     setPortfolioCount(pfMap);
     setQuality(qlMap);
@@ -241,6 +248,7 @@ const AdminDashboard = () => {
       .on("postgres_changes", { event: "*", schema: "public", table: "portfolio_images" }, () => loadAll())
       .on("postgres_changes", { event: "*", schema: "public", table: "categories" }, () => loadAll())
       .on("postgres_changes", { event: "*", schema: "public", table: "business_categories" }, () => loadAll())
+      .on("postgres_changes", { event: "*", schema: "public", table: "beauty_categories" }, () => loadAll())
       .on("postgres_changes", { event: "*", schema: "public", table: "bairros" }, () => loadAll())
       .subscribe();
     return () => {
@@ -375,8 +383,29 @@ const AdminDashboard = () => {
     loadAll();
   };
 
+  const addBelezaCategory = async (data: { name: string; name_en: string | null; name_fr: string | null }) => {
+    const { error } = await supabase.from("beauty_categories").insert({ name: data.name, name_en: data.name_en, name_fr: data.name_fr });
+    if (error) return toast.error(error.message);
+    toast.success(t("admin.belezaCategoryAdded"));
+    loadAll();
+  };
+
+  const renameBelezaCategory = async (id: string, data: { name: string; name_en: string | null; name_fr: string | null }) => {
+    const { error } = await supabase.from("beauty_categories").update({ name: data.name, name_en: data.name_en, name_fr: data.name_fr }).eq("id", id);
+    if (error) return toast.error(error.message);
+    toast.success(t("admin.belezaCategoryUpdated"));
+    loadAll();
+  };
+
+  const removeBelezaCategory = async (id: string) => {
+    const { error } = await supabase.from("beauty_categories").delete().eq("id", id);
+    if (error) return toast.error(error.message);
+    toast.success(t("admin.belezaCategoryDeleted"));
+    loadAll();
+  };
+
   const providerName = (pid: string) => providers.find((p) => p.id === pid)?.name ?? t("admin.client");
-  const profileUrl = (p: Provider) => (p.profile_type === "business" ? `/loja/${p.id}` : `/prestador/${p.id}`);
+  const profileUrl = (p: Provider) => (p.profile_type === "business" ? `/loja/${p.id}` : p.profile_type === "beleza" ? `/beleza/${p.id}` : `/prestador/${p.id}`);
   const providerLink = (pid: string) => {
     const p = providers.find((x) => x.id === pid);
     return p ? profileUrl(p) : `/prestador/${pid}`;
@@ -544,6 +573,7 @@ const AdminDashboard = () => {
     { key: "requests", label: t("admin.requests"), icon: <ClipboardList className="h-4 w-4" />, count: requests.length },
     { key: "categories", label: t("admin.categories"), icon: <Tag className="h-4 w-4" />, count: categories.length },
     { key: "lojas-categorias", label: t("admin.shopCategories"), icon: <Store className="h-4 w-4" />, count: businessCategories.length },
+    { key: "beleza-categorias", label: t("admin.belezaCategories"), icon: <Scissors className="h-4 w-4" />, count: beautyCategories.length },
     { key: "bairros", label: t("admin.neighborhoods"), icon: <MapPin className="h-4 w-4" />, count: bairros.length },
     { key: "stats", label: t("admin.statistics"), icon: <BarChart3 className="h-4 w-4" /> },
     { key: "settings", label: t("admin.settings"), icon: <Settings className="h-4 w-4" /> },
@@ -922,6 +952,25 @@ const AdminDashboard = () => {
             </div>
           )}
 
+          {menu === "beleza-categorias" && (
+            <div className="flex flex-col gap-4">
+              <h1 className="text-2xl font-bold">{t("admin.belezaCategories")}</h1>
+              <p className="text-xs text-muted-foreground">
+                {t("admin.belezaCategoriesDesc")}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Tradução: preencha EN e FR para cada subcategoria. Exibida conforme o idioma do utilizador.
+              </p>
+              <ManageCategoryList
+                items={beautyCategories}
+                onAdd={addBelezaCategory}
+                onRename={renameBelezaCategory}
+                onDelete={(id) => setBelezaCategoryToDelete(beautyCategories.find((c) => c.id === id) ?? null)}
+                emptyText={t("admin.noBelezaCategories")}
+              />
+            </div>
+          )}
+
           {menu === "bairros" && (
             <div className="flex flex-col gap-4">
               <h1 className="text-2xl font-bold">{t("admin.neighborhoods")}</h1>
@@ -1058,6 +1107,19 @@ const AdminDashboard = () => {
         onConfirm={() => {
           if (bizCategoryToDelete) removeBusinessCategory(bizCategoryToDelete.id);
           setBizCategoryToDelete(null);
+        }}
+      />
+
+      <ConfirmDialog
+        open={belezaCategoryToDelete !== null}
+        onOpenChange={(o) => { if (!o) setBelezaCategoryToDelete(null); }}
+        title={t("admin.deleteBelezaCategory")}
+        description={belezaCategoryToDelete ? t("admin.deleteCategoryConfirm", { name: belezaCategoryToDelete.name }) : ""}
+        confirmLabel={t("admin.delete")}
+        destructive
+        onConfirm={() => {
+          if (belezaCategoryToDelete) removeBelezaCategory(belezaCategoryToDelete.id);
+          setBelezaCategoryToDelete(null);
         }}
       />
 

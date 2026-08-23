@@ -82,17 +82,21 @@
     "providersTitle": "Prestadores de Serviço",
     "shopsTitle": "Restaurantes",
     "providersShort": "Prestadores",
-    "shopsShort": "Restaurantes"
+    "shopsShort": "Restaurantes",
+    "belezaTitle": "Beleza & Estética",
+    "belezaShort": "Beleza"
   },
   "explore": {
     "providersTitle": "Prestadores de Serviço",
     "shopsTitle": "Restaurantes",
     "providersShort": "Prestadores",
-    "shopsShort": "Restaurantes"
+    "shopsShort": "Restaurantes",
+    "belezaTitle": "Beleza & Estética",
+    "belezaShort": "Beleza"
   },
   "auth": {
     "accessTitle": "Acesso",
-    "accessSubtitle": "Para administradores, prestadores de serviços e restaurantes.",
+    "accessSubtitle": "Para administradores, prestadores de serviços, restaurantes e negócios de beleza.",
     "loginTab": "Entrar",
     "signupTab": "Registar",
     "email": "Email",
@@ -114,7 +118,11 @@
     "enterName": "Indique o seu nome",
     "registerError": "Erro no registo",
     "loginSuccess": "Sessão iniciada",
-    "accountCreated": "Conta criada. A entrar..."
+    "accountCreated": "Conta criada. A entrar...",
+    "belezaProfile": "Beleza & Estética",
+    "belezaName": "Nome do negócio",
+    "createBelezaAccount": "Criar conta de Beleza & Estética",
+    "afterBeleza": "Depois de entrar, complete o perfil do seu negócio e adicione o catálogo de serviços."
   },
   "forgotPassword": {
     "title": "Recuperar palavra-passe",
@@ -566,7 +574,15 @@
     "deleteCategoryConfirm": "Eliminar a categoria \"{{name}}\"?",
     "deleteShopCategory": "Eliminar categoria de restaurante",
     "deleteNeighborhood": "Eliminar bairro",
-    "deleteNeighborhoodConfirm": "Eliminar o bairro \"{{name}}\"?"
+    "deleteNeighborhoodConfirm": "Eliminar o bairro \"{{name}}\"?",
+    "belezaCategories": "Categorias de Beleza & Estética",
+    "belezaCategoriesDesc": "Subcategorias de negócios de beleza & estética — aparecem na secção «Beleza» do Explorar",
+    "belezaCategoryAdded": "Categoria de beleza adicionada",
+    "belezaCategoryUpdated": "Categoria de beleza atualizada",
+    "belezaCategoryDeleted": "Categoria de beleza eliminada",
+    "newBelezaCategoryPlaceholder": "Nova subcategoria (ex: Barbearia)",
+    "noBelezaCategories": "Sem categorias de beleza & estética.",
+    "deleteBelezaCategory": "Eliminar categoria de beleza & estética"
   },
   "requests": {
     "selectCategory": "Selecione uma categoria",
@@ -839,5 +855,37 @@
   "notFoundPage": {
     "notFound": "Oops! Página não encontrada",
     "home": "Início"
+  },
+  "beautyDashboard": {
+    "noProfile": "Ainda não criaste o teu perfil de beleza & estética.",
+    "createProfile": "Criar perfil de beleza & estética",
+    "configure": "Configurar negócio"
+  },
+  "beautyEdit": {
+    "myBusiness": "Meu negócio",
+    "completeToAppear": "Complete o perfil para ficar visível na plataforma.",
+    "updateData": "Atualize os dados e o catálogo de serviços.",
+    "businessData": "Dados do negócio",
+    "uploadPhoto": "Carregar Foto do Negócio",
+    "nameRequired": "Nome do negócio *",
+    "subcategoryRequired": "Subcategoria *",
+    "selectSubcategory": "Selecione uma subcategoria",
+    "descriptionPlaceholder": "Fale sobre o seu espaço, especialidades, horário...",
+    "catalogTitle": "Catálogo de Serviços",
+    "catalogDesc": "Lista simples de itens/serviços com foto e preço. Os clientes veem esta página publicamente.",
+    "itemNameRequired": "Nome do serviço/item *",
+    "itemPlaceholder": "ex: Corte simples",
+    "priceType": "Tipo de preço *",
+    "priceFixed": "Preço fixo",
+    "priceFixedDesc": "Introduz um valor para este item",
+    "negotiableDesc": "Sem valor fixo — mostra «A combinar» ao cliente",
+    "noItems": "O catálogo ainda não tem itens.",
+    "enterItemName": "Indique o nome do serviço/item",
+    "itemAdded": "Item adicionado ao catálogo",
+    "viewPublic": "Ver página pública do negócio"
+  },
+  "beautyDetail": {
+    "notFound": "Negócio não encontrado.",
+    "catalogTitle": "Catálogo"
   }
 }

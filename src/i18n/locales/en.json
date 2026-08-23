@@ -82,17 +82,21 @@
     "providersTitle": "Service Providers",
     "shopsTitle": "Restaurants",
     "providersShort": "Providers",
-    "shopsShort": "Restaurants"
+    "shopsShort": "Restaurants",
+    "belezaTitle": "Beauty & Aesthetics",
+    "belezaShort": "Beauty"
   },
   "explore": {
     "providersTitle": "Service Providers",
     "shopsTitle": "Restaurants",
     "providersShort": "Providers",
-    "shopsShort": "Restaurants"
+    "shopsShort": "Restaurants",
+    "belezaTitle": "Beauty & Aesthetics",
+    "belezaShort": "Beauty"
   },
   "auth": {
     "accessTitle": "Access",
-    "accessSubtitle": "For administrators, service providers and restaurants.",
+    "accessSubtitle": "For administrators, service providers, restaurants and beauty businesses.",
     "loginTab": "Log in",
     "signupTab": "Sign up",
     "email": "Email",
@@ -114,7 +118,11 @@
     "enterName": "Please enter your name",
     "registerError": "Registration error",
     "loginSuccess": "Signed in",
-    "accountCreated": "Account created. Signing in..."
+    "accountCreated": "Account created. Signing in...",
+    "belezaProfile": "Beauty & Aesthetics",
+    "belezaName": "Business name",
+    "createBelezaAccount": "Create Beauty & Aesthetics account",
+    "afterBeleza": "After signing in, complete your business profile and add your services catalog."
   },
   "forgotPassword": {
     "title": "Recover password",
@@ -566,7 +574,15 @@
     "deleteCategoryConfirm": "Delete category \"{{name}}\"?",
     "deleteShopCategory": "Delete restaurant category",
     "deleteNeighborhood": "Delete neighborhood",
-    "deleteNeighborhoodConfirm": "Delete neighborhood \"{{name}}\"?"
+    "deleteNeighborhoodConfirm": "Delete neighborhood \"{{name}}\"?",
+    "belezaCategories": "Beauty & Aesthetics Categories",
+    "belezaCategoriesDesc": "Beauty & aesthetics business subcategories — shown in the «Beauty» section of Explore",
+    "belezaCategoryAdded": "Beauty category added",
+    "belezaCategoryUpdated": "Beauty category updated",
+    "belezaCategoryDeleted": "Beauty category deleted",
+    "newBelezaCategoryPlaceholder": "New subcategory (e.g. Barbershop)",
+    "noBelezaCategories": "No beauty & aesthetics categories.",
+    "deleteBelezaCategory": "Delete beauty & aesthetics category"
   },
   "requests": {
     "selectCategory": "Please select a category",
@@ -839,5 +855,37 @@
   "notFoundPage": {
     "notFound": "Oops! Page not found",
     "home": "Home"
+  },
+  "beautyDashboard": {
+    "noProfile": "You haven't created your beauty & aesthetics profile yet.",
+    "createProfile": "Create beauty & aesthetics profile",
+    "configure": "Configure business"
+  },
+  "beautyEdit": {
+    "myBusiness": "My business",
+    "completeToAppear": "Complete the profile to become visible on the platform.",
+    "updateData": "Update your details and services catalog.",
+    "businessData": "Business details",
+    "uploadPhoto": "Upload business photo",
+    "nameRequired": "Business name *",
+    "subcategoryRequired": "Subcategory *",
+    "selectSubcategory": "Select a subcategory",
+    "descriptionPlaceholder": "Tell us about your space, specialties and opening hours...",
+    "catalogTitle": "Services Catalog",
+    "catalogDesc": "A simple list of items/services with photo and price. Clients see this page publicly.",
+    "itemNameRequired": "Service/item name *",
+    "itemPlaceholder": "e.g. Simple cut",
+    "priceType": "Price type *",
+    "priceFixed": "Fixed price",
+    "priceFixedDesc": "Set a value for this item",
+    "negotiableDesc": "No fixed value — clients see “To be agreed”",
+    "noItems": "The catalog has no items yet.",
+    "enterItemName": "Enter the service/item name",
+    "itemAdded": "Item added to catalog",
+    "viewPublic": "View public business page"
+  },
+  "beautyDetail": {
+    "notFound": "Business not found.",
+    "catalogTitle": "Catalog"
   }
 }

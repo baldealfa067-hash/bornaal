@@ -20,7 +20,7 @@ export interface ProviderWithRating {
   reviewCount: number;
 }
 
-export const useProviders = (profileType?: "provider" | "business") =>
+export const useProviders = (profileType?: "provider" | "business" | "beleza") =>
   useQuery({
     queryKey: ["providers", profileType ?? "all"],
     queryFn: async (): Promise<ProviderWithRating[]> => {
@@ -28,7 +28,7 @@ export const useProviders = (profileType?: "provider" | "business") =>
         .from("profiles")
         .select("*")
         .neq("category", "")
-        .in("profile_type", ["provider", "business"]);
+        .in("profile_type", ["provider", "business", "beleza"]);
       if (profileType) q = q.eq("profile_type", profileType);
       const { data: profiles, error } = await q;
       if (error) throw error;
@@ -124,5 +124,15 @@ export const useBusinessCategoryNames = () =>
       const { data, error } = await supabase.from("business_categories").select("name");
       if (error) throw error;
       return (data ?? []).map((c) => c.name).sort();
+    },
+  });
+
+export const useBeautyCategories = () =>
+  useQuery({
+    queryKey: ["beauty-categories"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("beauty_categories").select("id, name, name_en, name_fr");
+      if (error) throw error;
+      return (data ?? []) as { id: string; name: string; name_en: string | null; name_fr: string | null }[];
     },
   });

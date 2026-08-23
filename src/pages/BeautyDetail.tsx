@@ -1,0 +1,432 @@
+import { useParams } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
+import { useEffect, useRef, useState } from "react";
+import { AlertCircle, MapPin, Phone, MessageCircle, BadgeCheck, CheckCircle2, ShieldAlert, Scissors, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { StarRating } from "@/components/StarRating";
+import { formatCFA } from "@/lib/format";
+import { supabase } from "@/integrations/supabase/client";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
+import i18n from "@/i18n";
+import { useQueryClient } from "@tanstack/react-query";
+import { sanitizeName, sanitizeComment, sanitizeReason, sanitizeDescription, sanitizeContact } from "@/lib/sanitize";
+import { useBeautyCategories } from "@/hooks/useProviders";
+import { translateCategoryName } from "@/lib/categoryI18n";
+
+type ReportReasonKey = "food" | "charge" | "behaviour" | "fake" | "hygiene" | "other";
+const REPORT_REASONS: { key: ReportReasonKey; labelKey: string }[] = [
+  { key: "food", labelKey: "businessDetail.reportReasons.food" },
+  { key: "behaviour", labelKey: "businessDetail.reportReasons.behaviour" },
+  { key: "fake", labelKey: "businessDetail.reportReasons.fake" },
+  { key: "hygiene", labelKey: "businessDetail.reportReasons.hygiene" },
+  { key: "other", labelKey: "businessDetail.reportReasons.other" },
+];
+
+type BeautyItem = { id: string; name: string; price_type: string; price: number | null; photo_url: string | null };
+type Review = { id: string; rating: number; comment: string | null; created_at: string; reviewer_name: string | null };
+
+const BeautyDetail = () => {
+  const { t } = useTranslation();
+  const { id } = useParams<{ id: string }>();
+  const { user } = useAuth();
+  const { data: beautyCats = [] } = useBeautyCategories();
+  const [loading, setLoading] = useState(true);
+  const [business, setBusiness] = useState<Record<string, unknown> | null>(null);
+  const [items, setItems] = useState<BeautyItem[]>([]);
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const viewLogged = useRef(false);
+  const [complaining, setComplaining] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
+  const [reportStep, setReportStep] = useState<"form" | "success">("form");
+  const [reportReason, setReportReason] = useState("");
+  const [reportDescription, setReportDescription] = useState("");
+  const [reportContact, setReportContact] = useState("");
+  const queryClient = useQueryClient();
+  const [rating, setRating] = useState(0);
+  const [reviewerName, setReviewerName] = useState("");
+  const [comment, setComment] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (!id) return;
+    if (!viewLogged.current) {
+      viewLogged.current = true;
+      supabase.rpc("increment_provider_view", { p_provider_id: id }).then(({ error }) => {
+        if (error) console.error("[stats] increment_provider_view error:", error.message);
+      });
+    }
+    (async () => {
+      const [{ data: profile }, { data: its }, { data: revs }] = await Promise.all([
+        supabase.from("profiles").select("*").eq("id", id).maybeSingle(),
+        supabase.from("beauty_items").select("id, name, price_type, price, photo_url").eq("business_id", id).order("name"),
+        supabase.from("reviews").select("id, rating, comment, created_at, reviewer_name").eq("provider_id", id).eq("status", "aprovado").order("created_at", { ascending: false }),
+      ]);
+      setBusiness(profile as Record<string, unknown> | null);
+      setItems((its ?? []) as BeautyItem[]);
+      setReviews((revs ?? []) as Review[]);
+      setLoading(false);
+    })();
+  }, [id]);
+
+  if (loading) {
+    return <div className="flex items-center justify-center min-h-screen text-muted-foreground">{t("common.loading")}</div>;
+  }
+
+  if (!business || business.profile_type !== "beleza") {
+    return <div className="flex items-center justify-center min-h-screen text-muted-foreground">{t("beautyDetail.notFound")}</div>;
+  }
+
+  const name = String(business.name ?? "");
+  const phone = String(business.phone ?? "");
+  const category = String(business.category ?? "");
+  const location = String(business.location ?? "");
+  const description = (business.description as string | null) ?? null;
+  const photoUrl = (business.photo_url as string | null) ?? null;
+  const isVerified = Boolean(business.is_verified);
+  const avgRating = reviews.length ? Math.round((reviews.reduce((s, r) => s + r.rating, 0) / reviews.length) * 10) / 10 : 0;
+
+  const whatsappUrl = `https://wa.me/${phone.replace(/\D/g, "")}?text=${encodeURIComponent(
+    t("businessDetailExtra.whatsappMsg", { name })
+  )}`;
+
+  const trackWhatsapp = () => {
+    if (!id) return;
+    supabase.rpc("record_provider_contact", { p_provider_id: id, contact_type: "whatsapp" }).then(({ error }) => {
+      if (error) console.error("[stats] record whatsapp error:", error.message);
+    });
+  };
+
+  const trackCall = () => {
+    if (!id) return;
+    supabase.rpc("record_provider_contact", { p_provider_id: id, contact_type: "call" }).then(({ error }) => {
+      if (error) console.error("[stats] record call error:", error.message);
+    });
+  };
+
+  const openReport = () => {
+    setReportReason("");
+    setReportDescription("");
+    setReportContact("");
+    setReportStep("form");
+    setReportOpen(true);
+  };
+
+  const submitDirectReview = async () => {
+    if (!id) return;
+    if (rating < 1) {
+      toast.error(t("businessDetail.selectStars"));
+      return;
+    }
+    const cleanName = sanitizeName(reviewerName);
+    if (!cleanName) {
+      toast.error(t("businessDetail.enterName"));
+      return;
+    }
+    if (!user) {
+      toast.error(t("businessDetail.loginToReview"));
+      return;
+    }
+    const cleanComment = sanitizeComment(comment) || null;
+    setSubmitting(true);
+    const { error } = await supabase.from("reviews").insert({
+      provider_id: id,
+      rating,
+      comment: cleanComment,
+      reviewer_name: cleanName,
+      user_id: user.id,
+      request_id: null,
+    } as never);
+    setSubmitting(false);
+    if (error) {
+      toast.error(t("businessDetail.reviewError") + ": " + error.message);
+      return;
+    }
+    toast.success(t("businessDetail.reviewSent"));
+    setRating(0);
+    setReviewerName("");
+    setComment("");
+    queryClient.invalidateQueries({ queryKey: ["provider", id] });
+  };
+
+  const submitReport = async () => {
+    if (!id) return;
+    const cleanReason = sanitizeReason(reportReason);
+    const cleanDesc = sanitizeDescription(reportDescription);
+    if (!cleanReason || !cleanDesc) {
+      toast.error(t("businessDetail.chooseReasonDesc"));
+      return;
+    }
+    const cleanContact = sanitizeContact(reportContact) || null;
+    setComplaining(true);
+    try {
+      const { error } = await supabase.from("complaints").insert({
+        provider_id: id,
+        client_id: user?.id ?? null,
+        reason: cleanReason,
+        description: cleanDesc,
+        contact: cleanContact,
+        status: "pendente",
+      });
+      if (error) {
+        console.error("[complaints] error:", error.message);
+        toast.error(t("businessDetail.reportError"));
+      } else {
+        setReportStep("success");
+      }
+    } catch (e) {
+      console.error("[complaints] exception:", e);
+      toast.error(t("businessDetail.reportError"));
+    } finally {
+      setComplaining(false);
+    }
+  };
+
+  return (
+    <div className="max-w-lg mx-auto px-4 pt-6">
+      <div className="flex items-start gap-4 mb-6">
+        <Avatar className="h-20 w-20 rounded-xl">
+          {photoUrl ? (
+            <AvatarImage src={photoUrl} alt={name} className="object-cover" />
+          ) : null}
+          <AvatarFallback className="rounded-xl bg-primary/10 text-primary text-2xl font-bold">
+            {name.charAt(0)}
+          </AvatarFallback>
+        </Avatar>
+        <div className="flex-1">
+          <h1 className="text-xl font-bold flex items-center gap-1.5">
+            {name}
+            {isVerified && (
+              <BadgeCheck className="h-5 w-5 text-primary" aria-label={t("businessDetailExtra.verifiedLabel")} />
+            )}
+          </h1>
+          <Badge variant="secondary" className="mt-1 flex items-center gap-1">
+            <Scissors className="h-3 w-3" /> {translateCategoryName(category, beautyCats as { id: string; name: string; name_en: string | null; name_fr: string | null }[], i18n.language)}
+          </Badge>
+          <div className="flex items-center gap-2 mt-2">
+            <StarRating rating={Math.round(avgRating)} size="md" />
+            <span className="text-sm text-muted-foreground">
+              {avgRating.toFixed(1)} ({reviews.length})
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div className="space-y-2 mb-6 text-sm">
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <MapPin className="h-4 w-4" />
+          <span>{location}</span>
+        </div>
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <Phone className="h-4 w-4" />
+          <span>{phone}</span>
+        </div>
+        {String((business as Record<string, unknown>).user_id ?? "") !== (user?.id ?? "") && (
+          <Button variant="outline" className="w-full gap-2" onClick={openReport}>
+            <AlertCircle className="h-5 w-5" />
+            {t("businessDetail.report")}
+          </Button>
+        )}
+      </div>
+
+      {description && (
+        <div className="mb-6">
+          <h2 className="font-semibold mb-1">{t("businessDetail.about")}</h2>
+          <p className="text-sm text-muted-foreground">{description}</p>
+        </div>
+      )}
+
+      {items.length > 0 && (
+        <div className="mb-6">
+          <h2 className="font-semibold mb-3 flex items-center gap-2">
+            <Scissors className="h-5 w-5 text-primary" /> {t("beautyDetail.catalogTitle")}
+          </h2>
+          <div className="flex flex-col gap-2">
+            {items.map((item) => (
+              <ItemRow key={item.id} item={item} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="mb-8 grid grid-cols-2 gap-2">
+        <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="block" onClick={trackWhatsapp}>
+          <Button className="w-full bg-[#25D366] hover:bg-[#1ebe57] text-white gap-2">
+            <MessageCircle className="h-5 w-5" />
+            {t("common.whatsapp")}
+          </Button>
+        </a>
+        <a href={`tel:${phone.replace(/\s/g, "")}`} className="block" onClick={trackCall}>
+          <Button variant="secondary" className="w-full gap-2">
+            <Phone className="h-5 w-5" />
+            {t("common.call")}
+          </Button>
+        </a>
+      </div>
+
+      <section>
+        <h2 className="font-semibold mb-3">{t("businessDetail.reviewsCount", { count: reviews.length })}</h2>
+
+        <div className="p-4 rounded-lg border bg-card mb-4 space-y-3">
+          <p className="text-sm font-medium">{t("businessDetail.leaveReview")}</p>
+          <div className="flex items-center gap-2">
+            <StarRating rating={rating} onChange={setRating} size="md" />
+          </div>
+          <Input
+            placeholder={t("businessDetail.yourName")}
+            value={reviewerName}
+            onChange={(e) => setReviewerName(e.target.value)}
+          />
+          <Textarea
+            placeholder={t("businessDetail.commentOptional")}
+            value={comment}
+            onChange={(e) => setComment(e.target.value)}
+            rows={3}
+          />
+          {user ? (
+            <Button onClick={submitDirectReview} disabled={submitting} className="w-full">
+              {submitting ? t("businessDetail.sending") : t("businessDetail.submitReview")}
+            </Button>
+          ) : (
+            <p className="text-sm text-muted-foreground text-center">{t("businessDetail.loginToReview")}</p>
+          )}
+        </div>
+
+        {reviews.length > 0 ? (
+          <div className="flex flex-col gap-3">
+            {reviews.map((r) => (
+              <div key={r.id} className="p-3 rounded-lg border bg-card">
+                <StarRating rating={r.rating} />
+                {r.reviewer_name && (
+                  <p className="text-sm font-medium mt-1">{r.reviewer_name}</p>
+                )}
+                {r.comment && <p className="text-sm mt-1">{r.comment}</p>}
+                <p className="text-[11px] text-muted-foreground mt-1">
+                  {new Date(r.created_at).toLocaleDateString(i18n.language)}
+                </p>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground">{t("businessDetail.noReviews")}</p>
+        )}
+      </section>
+
+      <Dialog open={reportOpen} onOpenChange={setReportOpen}>
+        <DialogContent>
+          {reportStep === "form" && (
+            <>
+              <DialogHeader>
+                <DialogTitle>{t("businessDetail.reportTitle", { name })}</DialogTitle>
+                <DialogDescription>
+                  {t("businessDetail.reportDesc")}
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-2">
+                <div className="grid gap-2">
+                  <Label htmlFor="report-reason">{t("businessDetail.reason")}</Label>
+                  <Select value={reportReason} onValueChange={setReportReason}>
+                    <SelectTrigger id="report-reason">
+                      <SelectValue placeholder={t("businessDetail.selectReason")} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {REPORT_REASONS.map((r) => (
+                        <SelectItem key={r.key} value={t(r.labelKey)}>{t(r.labelKey)}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="report-description">{t("businessDetail.description")}</Label>
+                  <Textarea
+                    id="report-description"
+                    placeholder={t("businessDetail.descriptionPlaceholder")}
+                    value={reportDescription}
+                    onChange={(e) => setReportDescription(e.target.value)}
+                    rows={4}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="report-contact">{t("businessDetail.contactOptional")}</Label>
+                  <Input
+                    id="report-contact"
+                    type="tel"
+                    placeholder={t("businessDetail.contactPlaceholder")}
+                    value={reportContact}
+                    onChange={(e) => setReportContact(e.target.value)}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    {t("businessDetail.contactHint")}
+                  </p>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setReportOpen(false)}>
+                  {t("common.cancel")}
+                </Button>
+                <Button
+                  onClick={submitReport}
+                  disabled={complaining || !reportReason || !reportDescription.trim()}
+                  className="gap-2"
+                >
+                  <ShieldAlert className="h-4 w-4" />
+                  {complaining ? t("businessDetail.sending") : t("businessDetail.submitReport")}
+                </Button>
+              </DialogFooter>
+            </>
+          )}
+
+          {reportStep === "success" && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <CheckCircle2 className="h-5 w-5 text-green-600" />
+                  {t("businessDetail.reportSent")}
+                </DialogTitle>
+                <DialogDescription>
+                  {t("businessDetail.reportSentDesc")}
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter>
+                <Button onClick={() => setReportOpen(false)}>{t("common.close")}</Button>
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+};
+
+const ItemRow = ({ item }: { item: BeautyItem }) => {
+  const { t } = useTranslation();
+  const isFixed = item.price_type === "fixo" && item.price != null;
+  return (
+    <div className="flex items-center gap-3 rounded-lg border bg-card p-2.5">
+      {item.photo_url ? (
+        <img src={item.photo_url} alt={item.name} className="h-14 w-14 rounded-lg object-cover shrink-0" />
+      ) : (
+        <div className="h-14 w-14 rounded-lg bg-muted flex items-center justify-center text-muted-foreground shrink-0">
+          <Scissors className="h-5 w-5" />
+        </div>
+      )}
+      <div className="min-w-0 flex-1">
+        <div className="text-sm font-medium">{item.name}</div>
+        {isFixed ? (
+          <div className="text-sm font-semibold text-primary">{formatCFA(item.price!)}</div>
+        ) : (
+          <Badge variant="secondary" className="text-[11px] mt-0.5">{t("common.toCombine")}</Badge>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default BeautyDetail;

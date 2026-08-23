@@ -27,6 +27,9 @@ const ProviderDashboard = lazy(() => import("./pages/ProviderDashboard"));
 const BusinessDashboard = lazy(() => import("./pages/BusinessDashboard"));
 const BusinessEdit = lazy(() => import("./pages/BusinessEdit"));
 const BusinessDetail = lazy(() => import("./pages/BusinessDetail"));
+const BeautyDashboard = lazy(() => import("./pages/BeautyDashboard"));
+const BeautyEdit = lazy(() => import("./pages/BeautyEdit"));
+const BeautyDetail = lazy(() => import("./pages/BeautyDetail"));
 const Requests = lazy(() => import("./pages/Requests"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Models = lazy(() => import("./pages/Models"));
@@ -68,6 +71,8 @@ const App = () => (
               <Route path="/painel" element={<ProviderDashboard />} />
               <Route path="/painel-loja" element={<BusinessDashboard />} />
               <Route path="/painel-loja/editar" element={<BusinessEdit />} />
+              <Route path="/painel-beleza" element={<BeautyDashboard />} />
+              <Route path="/painel-beleza/editar" element={<BeautyEdit />} />
               <Route element={<Layout />}>
                 <Route path="/inicio" element={<Index />} />
                 <Route path="/explorar" element={<Explore />} />
@@ -75,6 +80,7 @@ const App = () => (
                 <Route path="/perfil" element={<Profile />} />
                 <Route path="/prestador/:id" element={<ProviderDetail />} />
                 <Route path="/loja/:id" element={<BusinessDetail />} />
+                <Route path="/beleza/:id" element={<BeautyDetail />} />
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>

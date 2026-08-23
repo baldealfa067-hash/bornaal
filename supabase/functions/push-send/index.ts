@@ -206,7 +206,8 @@ Deno.serve(async (req) => {
       }
       subscriptions = filtered;
       const isBusiness = payload.profile_type === "business";
-      const what = isBusiness ? "restaurante/loja" : "prestador";
+      const isBeleza = payload.profile_type === "beleza";
+      const what = isBeleza ? "negócio de beleza & estética" : isBusiness ? "restaurante/loja" : "prestador";
       pushes = [
         {
           title: "Novidade perto de ti",

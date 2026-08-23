@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Store, Wrench } from "lucide-react";
+import { Store, Wrench, Scissors } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -14,13 +14,13 @@ import { useTranslation } from "react-i18next";
 import { LanguageSelector } from "@/components/LanguageSelector";
 import logo from "@/assets/logo.png";
 
-type ProfileType = "provider" | "business";
+type ProfileType = "provider" | "business" | "beleza";
 
 const Login = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { user, isAdmin, isProvider, isBusiness, loading } = useAuth();
+  const { user, isAdmin, isProvider, isBusiness, isBeleza, loading } = useAuth();
   const [mode, setMode] = useState<"login" | "signup">(
     searchParams.get("tab") === "registar" ? "signup" : "login"
   );
@@ -36,8 +36,9 @@ const Login = () => {
     if (isAdmin) navigate("/admin", { replace: true });
     else if (isProvider) navigate("/painel", { replace: true });
     else if (isBusiness) navigate("/painel-loja", { replace: true });
+    else if (isBeleza) navigate("/painel-beleza", { replace: true });
     else navigate("/inicio", { replace: true });
-  }, [user, isAdmin, isProvider, isBusiness, loading, navigate]);
+  }, [user, isAdmin, isProvider, isBusiness, isBeleza, loading, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,9 +65,12 @@ const Login = () => {
     }
     // Wait for session, then assign role
     if (data.session) {
-      const { error: roleErr } = profileType === "business"
-        ? await supabase.rpc("register_as_business")
-        : await supabase.rpc("register_as_provider");
+      const { error: roleErr } =
+        profileType === "business"
+          ? await supabase.rpc("register_as_business")
+          : profileType === "beleza"
+            ? await supabase.rpc("register_as_beleza")
+            : await supabase.rpc("register_as_provider");
       if (roleErr) console.error("Role error:", roleErr);
     }
     setSubmitting(false);
@@ -117,7 +121,7 @@ const Login = () => {
               <form onSubmit={handleSignup} className="flex flex-col gap-3">
                 <div className="space-y-2">
                   <Label>{t("auth.profileType")}</Label>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-3 gap-2">
                     <button
                       type="button"
                       onClick={() => setProfileType("provider")}
@@ -144,10 +148,23 @@ const Login = () => {
                       <Store className="h-5 w-5" />
                       <span className="text-xs font-medium">{t("auth.businessProfile")}</span>
                     </button>
+                    <button
+                      type="button"
+                      onClick={() => setProfileType("beleza")}
+                      className={
+                        "flex flex-col items-center gap-1 rounded-lg border p-3 min-h-20 text-center transition-colors " +
+                        (profileType === "beleza"
+                          ? "border-primary bg-primary/5 text-primary"
+                          : "hover:bg-muted text-muted-foreground")
+                      }
+                    >
+                      <Scissors className="h-5 w-5" />
+                      <span className="text-xs font-medium">{t("auth.belezaProfile")}</span>
+                    </button>
                   </div>
                 </div>
                 <div className="space-y-1">
-                  <Label htmlFor="name">{profileType === "business" ? t("auth.businessName") : t("auth.name")}</Label>
+                  <Label htmlFor="name">{profileType === "provider" ? t("auth.name") : t("auth.businessName")}</Label>
                   <Input id="name" value={name} onChange={(e) => setName(e.target.value)} required />
                 </div>
                 <div className="space-y-1">
@@ -159,10 +176,20 @@ const Login = () => {
                   <Input id="password-s" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
                 </div>
                 <Button type="submit" disabled={submitting} className="w-full">
-                  {submitting ? t("auth.creatingAccount") : profileType === "business" ? t("auth.createBusinessAccount") : t("auth.createProviderAccount")}
+                  {submitting
+                    ? t("auth.creatingAccount")
+                    : profileType === "business"
+                      ? t("auth.createBusinessAccount")
+                      : profileType === "beleza"
+                        ? t("auth.createBelezaAccount")
+                        : t("auth.createProviderAccount")}
                 </Button>
                 <p className="text-[11px] text-muted-foreground text-center">
-                  {profileType === "business" ? t("auth.afterBusiness") : t("auth.afterProvider")}
+                  {profileType === "business"
+                    ? t("auth.afterBusiness")
+                    : profileType === "beleza"
+                      ? t("auth.afterBeleza")
+                      : t("auth.afterProvider")}
                 </p>
               </form>
             </TabsContent>

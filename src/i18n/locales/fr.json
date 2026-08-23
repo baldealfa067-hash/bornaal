@@ -82,17 +82,21 @@
     "providersTitle": "Prestataires de services",
     "shopsTitle": "Restaurants",
     "providersShort": "Prestataires",
-    "shopsShort": "Restaurants"
+    "shopsShort": "Restaurants",
+    "belezaTitle": "Beauté & Esthétique",
+    "belezaShort": "Beauté"
   },
   "explore": {
     "providersTitle": "Prestataires de services",
     "shopsTitle": "Restaurants",
     "providersShort": "Prestataires",
-    "shopsShort": "Restaurants"
+    "shopsShort": "Restaurants",
+    "belezaTitle": "Beauté & Esthétique",
+    "belezaShort": "Beauté"
   },
   "auth": {
     "accessTitle": "Accès",
-    "accessSubtitle": "Pour les administrateurs, prestataires et restaurants.",
+    "accessSubtitle": "Pour les administrateurs, prestateurs de services, restaurants et commerces de beauté.",
     "loginTab": "Connexion",
     "signupTab": "S'inscrire",
     "email": "Email",
@@ -114,7 +118,11 @@
     "enterName": "Veuillez indiquer votre nom",
     "registerError": "Erreur lors de l'inscription",
     "loginSuccess": "Session ouverte",
-    "accountCreated": "Compte créé. Connexion..."
+    "accountCreated": "Compte créé. Connexion...",
+    "belezaProfile": "Beauté & Esthétique",
+    "belezaName": "Nom du commerce",
+    "createBelezaAccount": "Créer un compte Beauté & Esthétique",
+    "afterBeleza": "Après connexion, complétez le profil de votre commerce et ajoutez votre catalogue de services."
   },
   "forgotPassword": {
     "title": "Récupérer le mot de passe",
@@ -566,7 +574,15 @@
     "deleteCategoryConfirm": "Supprimer la catégorie \"{{name}}\" ?",
     "deleteShopCategory": "Supprimer la catégorie de restaurant",
     "deleteNeighborhood": "Supprimer le quartier",
-    "deleteNeighborhoodConfirm": "Supprimer le quartier \"{{name}}\" ?"
+    "deleteNeighborhoodConfirm": "Supprimer le quartier \"{{name}}\" ?",
+    "belezaCategories": "Catégories Beauté & Esthétique",
+    "belezaCategoriesDesc": "Sous-catégories des commerces de beauté & esthétique — apparaissent dans la section « Beauté » de l'Explorar",
+    "belezaCategoryAdded": "Catégorie beauté ajoutée",
+    "belezaCategoryUpdated": "Catégorie beauté mise à jour",
+    "belezaCategoryDeleted": "Catégorie beauté supprimée",
+    "newBelezaCategoryPlaceholder": "Nouvelle sous-catégorie (ex : Barbier)",
+    "noBelezaCategories": "Aucune catégorie beauté & esthétique.",
+    "deleteBelezaCategory": "Supprimer la catégorie beauté & esthétique"
   },
   "requests": {
     "selectCategory": "Veuillez sélectionner une catégorie",
@@ -839,5 +855,37 @@
   "notFoundPage": {
     "notFound": "Oops ! Page introuvable",
     "home": "Accueil"
+  },
+  "beautyDashboard": {
+    "noProfile": "Vous n'avez pas encore créé votre profil beauté & esthétique.",
+    "createProfile": "Créer un profil beauté & esthétique",
+    "configure": "Configurer le commerce"
+  },
+  "beautyEdit": {
+    "myBusiness": "Mon commerce",
+    "completeToAppear": "Complétez le profil pour être visible sur la plateforme.",
+    "updateData": "Mettez à jour vos données et votre catalogue de services.",
+    "businessData": "Données du commerce",
+    "uploadPhoto": "Télécharger la photo du commerce",
+    "nameRequired": "Nom du commerce *",
+    "subcategoryRequired": "Sous-catégorie *",
+    "selectSubcategory": "Sélectionnez une sous-catégorie",
+    "descriptionPlaceholder": "Parlez de votre espace, vos spécialités, vos horaires...",
+    "catalogTitle": "Catalogue de services",
+    "catalogDesc": "Liste simple d'articles/services avec photo et prix. Les clients voient cette page publiquement.",
+    "itemNameRequired": "Nom du service/article *",
+    "itemPlaceholder": "ex : Coupe simple",
+    "priceType": "Type de prix *",
+    "priceFixed": "Prix fixe",
+    "priceFixedDesc": "Définissez une valeur pour cet article",
+    "negotiableDesc": "Sans valeur fixe — affiche « À combiner » au client",
+    "noItems": "Le catalogue n'a pas encore d'articles.",
+    "enterItemName": "Indiquez le nom du service/article",
+    "itemAdded": "Article ajouté au catalogue",
+    "viewPublic": "Voir la page publique du commerce"
+  },
+  "beautyDetail": {
+    "notFound": "Commerce introuvable.",
+    "catalogTitle": "Catalogue"
   }
 }

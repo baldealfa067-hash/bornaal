@@ -80,6 +80,68 @@ export type Database = {
         }
         Relationships: []
       }
+      beauty_categories: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          name_en: string | null
+          name_fr: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          name_en?: string | null
+          name_fr?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          name_en?: string | null
+          name_fr?: string | null
+        }
+        Relationships: []
+      }
+      beauty_items: {
+        Row: {
+          business_id: string
+          created_at: string
+          id: string
+          name: string
+          photo_url: string | null
+          price: number | null
+          price_type: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          id?: string
+          name: string
+          photo_url?: string | null
+          price?: number | null
+          price_type?: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          id?: string
+          name?: string
+          photo_url?: string | null
+          price?: number | null
+          price_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "beauty_items_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       messages: {
         Row: {
           content: string
@@ -797,6 +859,7 @@ export type Database = {
         Returns: undefined
       }
       register_as_business: { Args: never; Returns: undefined }
+      register_as_beleza: { Args: never; Returns: undefined }
       register_as_provider: { Args: never; Returns: undefined }
       admin_delete_user: { Args: { p_profile_id: string }; Returns: undefined }
       record_business_order: {
