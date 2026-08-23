@@ -81,18 +81,18 @@
   "home": {
     "providersTitle": "Prestadores de Serviço",
     "shopsTitle": "Restaurantes",
-    "providersShort": "Prestadores",
+    "providersShort": "Serviços",
     "shopsShort": "Restaurantes",
     "belezaTitle": "Beleza & Estética",
-    "belezaShort": "Beleza"
+    "belezaShort": "Beleza & Estética"
   },
   "explore": {
     "providersTitle": "Prestadores de Serviço",
     "shopsTitle": "Restaurantes",
-    "providersShort": "Prestadores",
+    "providersShort": "Serviços",
     "shopsShort": "Restaurantes",
     "belezaTitle": "Beleza & Estética",
-    "belezaShort": "Beleza"
+    "belezaShort": "Beleza & Estética"
   },
   "auth": {
     "accessTitle": "Acesso",

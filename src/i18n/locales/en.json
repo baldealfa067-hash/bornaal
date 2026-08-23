@@ -81,18 +81,18 @@
   "home": {
     "providersTitle": "Service Providers",
     "shopsTitle": "Restaurants",
-    "providersShort": "Providers",
+    "providersShort": "Services",
     "shopsShort": "Restaurants",
     "belezaTitle": "Beauty & Aesthetics",
-    "belezaShort": "Beauty"
+    "belezaShort": "Beauty & Aesthetics"
   },
   "explore": {
     "providersTitle": "Service Providers",
     "shopsTitle": "Restaurants",
-    "providersShort": "Providers",
+    "providersShort": "Services",
     "shopsShort": "Restaurants",
     "belezaTitle": "Beauty & Aesthetics",
-    "belezaShort": "Beauty"
+    "belezaShort": "Beauty & Aesthetics"
   },
   "auth": {
     "accessTitle": "Access",

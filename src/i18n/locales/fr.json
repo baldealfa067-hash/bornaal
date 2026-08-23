@@ -81,18 +81,18 @@
   "home": {
     "providersTitle": "Prestataires de services",
     "shopsTitle": "Restaurants",
-    "providersShort": "Prestataires",
+    "providersShort": "Services",
     "shopsShort": "Restaurants",
     "belezaTitle": "Beauté & Esthétique",
-    "belezaShort": "Beauté"
+    "belezaShort": "Beauté & Esthétique"
   },
   "explore": {
     "providersTitle": "Prestataires de services",
     "shopsTitle": "Restaurants",
-    "providersShort": "Prestataires",
+    "providersShort": "Services",
     "shopsShort": "Restaurants",
     "belezaTitle": "Beauté & Esthétique",
-    "belezaShort": "Beauté"
+    "belezaShort": "Beauté & Esthétique"
   },
   "auth": {
     "accessTitle": "Accès",

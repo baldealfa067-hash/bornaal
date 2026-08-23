@@ -25,7 +25,10 @@ const Explore = () => {
     { key: "beleza" as const, label: t("explore.belezaTitle"), short: t("explore.belezaShort") },
   ] as const;
   const [searchParams, setSearchParams] = useSearchParams();
-  const section = (searchParams.get("tipo") as SectionKey) || "servicos";
+  const tipoParam = searchParams.get("tipo");
+  const section: SectionKey = SECTIONS.some((s) => s.key === tipoParam)
+    ? (tipoParam as SectionKey)
+    : "servicos";
   const activeCategory = searchParams.get("categoria") || "";
   const qParam = searchParams.get("q") || "";
   const [search, setSearch] = useState(qParam);
