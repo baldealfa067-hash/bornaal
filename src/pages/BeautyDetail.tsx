@@ -1,10 +1,11 @@
 import { useParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useRef, useState } from "react";
-import { AlertCircle, MapPin, Phone, MessageCircle, BadgeCheck, CheckCircle2, ShieldAlert, Scissors, Loader2 } from "lucide-react";
+import { AlertCircle, MapPin, Phone, MessageCircle, BadgeCheck, CheckCircle2, ShieldAlert, Scissors, Loader2, ShoppingCart, Plus, Minus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 import { StarRating } from "@/components/StarRating";
 import { formatCFA } from "@/lib/format";
 import { supabase } from "@/integrations/supabase/client";
@@ -54,6 +55,8 @@ const BeautyDetail = () => {
   const [reviewerName, setReviewerName] = useState("");
   const [comment, setComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [cart, setCart] = useState<Record<string, number>>({});
+  const [sending, setSending] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -109,6 +112,45 @@ const BeautyDetail = () => {
     supabase.rpc("record_provider_contact", { p_provider_id: id, contact_type: "call" }).then(({ error }) => {
       if (error) console.error("[stats] record call error:", error.message);
     });
+  };
+
+  const addToCart = (itemId: string) => setCart((c) => ({ ...c, [itemId]: (c[itemId] ?? 0) + 1 }));
+  const removeFromCart = (itemId: string) => {
+    setCart((c) => {
+      const qty = (c[itemId] ?? 0) - 1;
+      if (qty <= 0) {
+        const { [itemId]: _, ...rest } = c;
+        return rest;
+      }
+      return { ...c, [itemId]: qty };
+    });
+  };
+
+  const cartItems = items.filter((i) => (cart[i.id] ?? 0) > 0);
+  const cartCount = cartItems.reduce((sum, i) => sum + (cart[i.id] ?? 0), 0);
+  const fixedTotal = cartItems.reduce((sum, i) => sum + (i.price ?? 0) * (cart[i.id] ?? 0), 0);
+
+  const sendCartToWhatsapp = async () => {
+    if (!id || !phone) return;
+    if (!cartItems.length) return toast.error(t("businessDetail.addItems"));
+    setSending(true);
+    const lines = cartItems
+      .map((i) => {
+        const priceText = i.price_type === "fixo" && i.price != null ? formatCFA(i.price * (cart[i.id] ?? 0)) : t("common.toCombine");
+        return t("businessDetailExtra.orderLine", { name: i.name, qty: cart[i.id], price: priceText });
+      })
+      .join("\n");
+    const hasFixed = cartItems.some((i) => i.price_type === "fixo" && i.price != null);
+    const totalLine = hasFixed ? `\n${t("businessDetailExtra.orderTotal", { total: formatCFA(fixedTotal) })}` : "";
+    const message = `${t("businessDetailExtra.orderGreeting", { name })}\n\n${lines}\n${totalLine}`;
+    const waUrl = `https://wa.me/${phone.replace(/\D/g, "")}?text=${encodeURIComponent(message)}`;
+    supabase.rpc("record_provider_contact", { p_provider_id: id, contact_type: "whatsapp" }).then(({ error }) => {
+      if (error) console.error("[stats] record whatsapp error:", error.message);
+    });
+    window.open(waUrl, "_blank");
+    setSending(false);
+    toast.success(t("businessDetail.orderSuccess"));
+    setCart({});
   };
 
   const openReport = () => {
@@ -250,10 +292,52 @@ const BeautyDetail = () => {
           </h2>
           <div className="flex flex-col gap-2">
             {items.map((item) => (
-              <ItemRow key={item.id} item={item} />
+              <ItemRow
+                key={item.id}
+                item={item}
+                qty={cart[item.id] ?? 0}
+                onAdd={() => addToCart(item.id)}
+                onRemove={() => removeFromCart(item.id)}
+              />
             ))}
           </div>
         </div>
+      )}
+
+      {cartItems.length > 0 && (
+        <Card className="mb-6 border-primary/40">
+          <CardContent className="p-4">
+            <h2 className="font-semibold mb-2 flex items-center gap-2">
+              <ShoppingCart className="h-5 w-5 text-primary" /> {t("businessDetail.orderTitle", { count: cartCount })}
+            </h2>
+            <div className="flex flex-col gap-1.5 mb-3">
+              {cartItems.map((i) => (
+                <div key={i.id} className="flex items-center justify-between text-sm">
+                  <span className="min-w-0 truncate">{i.name} x{cart[i.id]}</span>
+                  {i.price_type === "fixo" && i.price != null ? (
+                    <span className="font-medium shrink-0">{formatCFA(i.price * (cart[i.id] ?? 0))}</span>
+                  ) : (
+                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0 shrink-0">{t("common.toCombine")}</Badge>
+                  )}
+                </div>
+              ))}
+              {cartItems.some((i) => i.price_type === "fixo" && i.price != null) && (
+                <div className="flex items-center justify-between text-sm font-bold border-t pt-1.5">
+                  <span>{t("businessDetail.estimatedTotal")}</span>
+                  <span>{formatCFA(fixedTotal)}</span>
+                </div>
+              )}
+            </div>
+
+            <Button onClick={sendCartToWhatsapp} disabled={sending} className="w-full bg-[#25D366] hover:bg-[#1ebe57] text-white gap-2">
+              {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <MessageCircle className="h-5 w-5" />}
+              {sending ? t("businessDetail.registering") : t("businessDetail.sendOrder")}
+            </Button>
+            <p className="text-[11px] text-muted-foreground text-center mt-2">
+              {t("businessDetail.orderHint")}
+            </p>
+          </CardContent>
+        </Card>
       )}
 
       <div className="mb-8 grid grid-cols-2 gap-2">
@@ -405,7 +489,7 @@ const BeautyDetail = () => {
   );
 };
 
-const ItemRow = ({ item }: { item: BeautyItem }) => {
+const ItemRow = ({ item, qty, onAdd, onRemove }: { item: BeautyItem; qty: number; onAdd: () => void; onRemove: () => void }) => {
   const { t } = useTranslation();
   const isFixed = item.price_type === "fixo" && item.price != null;
   return (
@@ -425,6 +509,21 @@ const ItemRow = ({ item }: { item: BeautyItem }) => {
           <Badge variant="secondary" className="text-[11px] mt-0.5">{t("common.toCombine")}</Badge>
         )}
       </div>
+      {qty === 0 ? (
+        <Button size="sm" variant="outline" className="shrink-0 gap-1" onClick={onAdd}>
+          <Plus className="h-3.5 w-3.5" /> {t("common.add")}
+        </Button>
+      ) : (
+        <div className="flex items-center gap-1 shrink-0">
+          <Button size="icon" variant="outline" className="h-8 w-8" onClick={onRemove}>
+            <Minus className="h-3.5 w-3.5" />
+          </Button>
+          <span className="w-6 text-center font-semibold text-sm">{qty}</span>
+          <Button size="icon" className="h-8 w-8" onClick={onAdd}>
+            <Plus className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+      )}
     </div>
   );
 };
