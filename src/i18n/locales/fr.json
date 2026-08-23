@@ -84,7 +84,11 @@
     "providersShort": "Services",
     "shopsShort": "Restaurants",
     "belezaTitle": "Beauté & Esthétique",
-    "belezaShort": "Beauté & Esthétique"
+    "belezaShort": "Beauté & Esthétique",
+    "servicosTagline": "Trouvez des professionnels",
+    "restaurantesTagline": "Découvrez les menus",
+    "belezaTagline": "Prenez soin de vous",
+    "locationLabel": "Bissau, Guinée-Bissau"
   },
   "explore": {
     "providersTitle": "Prestataires de services",

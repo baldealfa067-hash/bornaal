@@ -84,7 +84,11 @@
     "providersShort": "Services",
     "shopsShort": "Restaurants",
     "belezaTitle": "Beauty & Aesthetics",
-    "belezaShort": "Beauty & Aesthetics"
+    "belezaShort": "Beauty & Aesthetics",
+    "servicosTagline": "Find professionals",
+    "restaurantesTagline": "Discover menus",
+    "belezaTagline": "Take care of yourself",
+    "locationLabel": "Bissau, Guinea-Bissau"
   },
   "explore": {
     "providersTitle": "Service Providers",

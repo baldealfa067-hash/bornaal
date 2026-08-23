@@ -137,14 +137,16 @@ require("fs").readFile(".env", "utf8", async (err, envRaw) => {
   check("?tipo inválido → fallback Serviços sem crash",
     (await page.getByRole("heading", { level: 1 }).textContent()).trim() === "Prestadores de Serviço");
 
-  // ---- 8. Smoke do mesmo toggle no Início (/inicio) -----------------------
+  // ---- 8. Início (/inicio): cartões de entrada levam ao Explorar ---------
   await page.goto(`${BASE}/inicio`, { waitUntil: "domcontentloaded" });
-  await page.getByRole("heading", { level: 1 }).waitFor();
-  for (const name of ["Serviços", "Restaurantes", "Beleza & Estética"]) {
-    check(`/inicio mostra «${name}»`, await page.getByRole("button", { name, exact: true }).isVisible());
+  await page.getByTestId("card-servicos").waitFor();
+  for (const [tipo, name] of [["servicos", "Serviços"], ["lojas", "Restaurantes"], ["beleza", "Beleza & Estética"]]) {
+    check(`/inicio tem cartão de entrada «${name}»`, await page.getByTestId(`card-${tipo}`).isVisible());
   }
-  await clickTab("Beleza & Estética");
-  check("/inicio troca para Beleza (h1)",
+  await page.getByTestId("card-beleza").click();
+  await page.waitForURL(/\/explorar\?tipo=beleza/);
+  await page.getByRole("heading", { level: 1 }).waitFor();
+  check("/inicio → cartão Beleza abre Explorar com h1 correto",
     (await page.getByRole("heading", { level: 1 }).textContent()).trim() === "Beleza & Estética");
 
   await browser.close();
