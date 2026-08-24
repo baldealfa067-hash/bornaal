@@ -111,10 +111,6 @@ const ProviderDetail = () => {
       toast.error(t("providerDetail.enterName"));
       return;
     }
-    if (!user) {
-      toast.error(t("providerDetail.loginToReview"));
-      return;
-    }
     const cleanComment = sanitizeComment(comment) || null;
     setSubmitting(true);
     const { error } = await supabase.from("reviews").insert({
@@ -122,7 +118,7 @@ const ProviderDetail = () => {
       rating,
       comment: cleanComment,
       reviewer_name: cleanName,
-      user_id: user.id,
+      user_id: user?.id ?? null,
       request_id: null,
     } as never);
     setSubmitting(false);
@@ -302,12 +298,11 @@ const ProviderDetail = () => {
             onChange={(e) => setComment(e.target.value)}
             rows={3}
           />
-          {user ? (
-            <Button onClick={submitDirectReview} disabled={submitting} className="w-full">
-              {submitting ? t("providerDetail.sending") : t("providerDetail.submitReview")}
-            </Button>
-          ) : (
-            <p className="text-sm text-muted-foreground text-center">{t("providerDetail.loginToReview")}</p>
+          <Button onClick={submitDirectReview} disabled={submitting} className="w-full">
+            {submitting ? t("providerDetail.sending") : t("providerDetail.submitReview")}
+          </Button>
+          {!user && (
+            <p className="text-xs text-muted-foreground text-center">{t("providerDetail.anonymousReviewNote")}</p>
           )}
         </div>
 

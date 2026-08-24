@@ -415,7 +415,8 @@
     "reviewSent": "Review sent successfully and will be shown after validation.",
     "reviewError": "Error sending review",
     "selectStars": "Please select a star rating",
-    "enterName": "Please enter your name"
+    "enterName": "Please enter your name",
+    "anonymousReviewNote": "No account? Your review is anonymous and will be published after approval."
   },
   "providerDetail": {
     "loading": "Loading...",
@@ -461,7 +462,8 @@
     "reviewSent": "Review sent successfully and will be shown after validation.",
     "reviewError": "Error sending review",
     "selectStars": "Please select a star rating",
-    "enterName": "Please enter your name"
+    "enterName": "Please enter your name",
+    "anonymousReviewNote": "No account? Your review is anonymous and will be published after approval."
   },
   "admin": {
     "loading": "Loading...",

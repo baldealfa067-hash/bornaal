@@ -415,7 +415,8 @@
     "reviewSent": "Avis envoyé avec succès, il sera affiché après validation.",
     "reviewError": "Erreur lors de l'envoi de l'avis",
     "selectStars": "Veuillez choisir une note",
-    "enterName": "Veuillez indiquer votre nom"
+    "enterName": "Veuillez indiquer votre nom",
+    "anonymousReviewNote": "Pas de compte ? Votre avis est anonyme et sera publié après validation."
   },
   "providerDetail": {
     "loading": "Chargement...",
@@ -461,7 +462,8 @@
     "reviewSent": "Avis envoyé avec succès, il sera affiché après validation.",
     "reviewError": "Erreur lors de l'envoi de l'avis",
     "selectStars": "Veuillez choisir une note",
-    "enterName": "Veuillez indiquer votre nom"
+    "enterName": "Veuillez indiquer votre nom",
+    "anonymousReviewNote": "Pas de compte ? Votre avis est anonyme et sera publié après validation."
   },
   "admin": {
     "loading": "Chargement...",

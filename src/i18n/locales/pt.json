@@ -415,7 +415,8 @@
     "reviewSent": "Avaliação enviada com sucesso e será exibida após validação.",
     "reviewError": "Erro ao enviar avaliação",
     "selectStars": "Selecione uma avaliação em estrelas",
-    "enterName": "Indique o seu nome"
+    "enterName": "Indique o seu nome",
+    "anonymousReviewNote": "Sem conta? A sua avaliação é anónima e será publicada após aprovação."
   },
   "providerDetail": {
     "loading": "A carregar...",
@@ -461,7 +462,8 @@
     "reviewSent": "Avaliação enviada com sucesso e será exibida após validação.",
     "reviewError": "Erro ao enviar avaliação",
     "selectStars": "Selecione uma avaliação em estrelas",
-    "enterName": "Indique o seu nome"
+    "enterName": "Indique o seu nome",
+    "anonymousReviewNote": "Sem conta? A sua avaliação é anónima e será publicada após aprovação."
   },
   "admin": {
     "loading": "A carregar...",
