@@ -61,7 +61,7 @@ type BeautyItem = { id: string; name: string; price_type: PriceType; price: numb
 const BeautyEdit = () => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
-  const { user, isBeleza, isAdmin, loading, signOut } = useAuth();
+  const { user, isBeleza, isAdmin, rolesLoaded, loading, signOut } = useAuth();
   const [profileId, setProfileId] = useState<string | null>(null);
   const [form, setForm] = useState<Form>(empty);
   const [saving, setSaving] = useState(false);
@@ -101,7 +101,7 @@ const BeautyEdit = () => {
   };
 
   useEffect(() => {
-    if (loading) return;
+    if (loading || !rolesLoaded) return;
     if (!user) return navigate("/login", { replace: true });
     if (!isBeleza && !isAdmin) return navigate("/inicio", { replace: true });
     (async () => {
@@ -122,7 +122,7 @@ const BeautyEdit = () => {
       }
       setFetching(false);
     })();
-  }, [user, isBeleza, isAdmin, loading, navigate]);
+  }, [user, isBeleza, isAdmin, rolesLoaded, loading, navigate]);
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

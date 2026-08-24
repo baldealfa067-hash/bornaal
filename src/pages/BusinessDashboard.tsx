@@ -39,7 +39,7 @@ type DashboardProfile = {
 const BusinessDashboard = () => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
-  const { user, isBusiness, isAdmin, loading, signOut } = useAuth();
+  const { user, isBusiness, isAdmin, rolesLoaded, loading, signOut } = useAuth();
   const qc = useQueryClient();
   const [profile, setProfile] = useState<DashboardProfile | null>(null);
   const [fetching, setFetching] = useState(true);
@@ -58,7 +58,7 @@ const BusinessDashboard = () => {
   };
 
   useEffect(() => {
-    if (loading) return;
+    if (loading || !rolesLoaded) return;
     if (!user) return navigate("/login", { replace: true });
     if (!isBusiness && !isAdmin) return navigate("/inicio", { replace: true });
     (async () => {
@@ -73,7 +73,7 @@ const BusinessDashboard = () => {
       }
       setFetching(false);
     })();
-  }, [user, isBusiness, isAdmin, loading, navigate]);
+  }, [user, isBusiness, isAdmin, rolesLoaded, loading, navigate]);
 
   useEffect(() => {
     if (!profile?.id) return;

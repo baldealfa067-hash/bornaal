@@ -38,7 +38,7 @@ type DashboardProfile = {
 const BeautyDashboard = () => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
-  const { user, isBeleza, isAdmin, loading, signOut } = useAuth();
+  const { user, isBeleza, isAdmin, rolesLoaded, loading, signOut } = useAuth();
   const qc = useQueryClient();
   const [profile, setProfile] = useState<DashboardProfile | null>(null);
   const [fetching, setFetching] = useState(true);
@@ -55,7 +55,7 @@ const BeautyDashboard = () => {
   };
 
   useEffect(() => {
-    if (loading) return;
+    if (loading || !rolesLoaded) return;
     if (!user) return navigate("/login", { replace: true });
     if (!isBeleza && !isAdmin) return navigate("/inicio", { replace: true });
     (async () => {
@@ -70,7 +70,7 @@ const BeautyDashboard = () => {
       }
       setFetching(false);
     })();
-  }, [user, isBeleza, isAdmin, loading, navigate]);
+  }, [user, isBeleza, isAdmin, rolesLoaded, loading, navigate]);
 
   useEffect(() => {
     if (!profile?.id) return;

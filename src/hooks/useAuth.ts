@@ -8,6 +8,7 @@ export const useAuth = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [roles, setRoles] = useState<AppRole[]>([]);
+  const [rolesLoaded, setRolesLoaded] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -15,6 +16,7 @@ export const useAuth = () => {
       setSession(s);
       setUser(s?.user ?? null);
       if (s?.user) {
+        setRolesLoaded(false);
         setTimeout(() => loadRoles(s.user!.id), 0);
       } else {
         setRoles([]);
@@ -32,6 +34,7 @@ export const useAuth = () => {
   const loadRoles = async (uid: string) => {
     const { data } = await supabase.from("user_roles").select("role").eq("user_id", uid);
     setRoles(((data ?? []) as { role: AppRole }[]).map((r) => r.role));
+    setRolesLoaded(true);
   };
 
   const isAdmin = roles.includes("admin");
@@ -43,5 +46,5 @@ export const useAuth = () => {
     await supabase.auth.signOut();
   };
 
-  return { session, user, roles, isAdmin, isProvider, isBusiness, isBeleza, loading, signOut };
+  return { session, user, roles, isAdmin, isProvider, isBusiness, isBeleza, rolesLoaded, loading, signOut };
 };

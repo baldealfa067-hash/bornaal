@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,7 +20,7 @@ const Login = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { user, isAdmin, isProvider, isBusiness, isBeleza, loading } = useAuth();
+  const { user, isAdmin, isProvider, isBusiness, isBeleza, rolesLoaded, loading } = useAuth();
   const [mode, setMode] = useState<"login" | "signup">(
     searchParams.get("tab") === "registar" ? "signup" : "login"
   );
@@ -29,16 +29,18 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const signingUp = useRef(false);
 
   useEffect(() => {
-    if (loading) return;
+    if (signingUp.current) return; // registo em curso: não roubar a navegação
+    if (loading || !rolesLoaded) return;
     if (!user) return;
     if (isAdmin) navigate("/admin", { replace: true });
     else if (isProvider) navigate("/painel", { replace: true });
     else if (isBusiness) navigate("/painel-loja", { replace: true });
     else if (isBeleza) navigate("/painel-beleza", { replace: true });
     else navigate("/inicio", { replace: true });
-  }, [user, isAdmin, isProvider, isBusiness, isBeleza, loading, navigate]);
+  }, [user, isAdmin, isProvider, isBusiness, isBeleza, rolesLoaded, loading, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,29 +55,44 @@ const Login = () => {
     e.preventDefault();
     if (password.length < 6) return toast.error(t("auth.passwordMin"));
     if (!name.trim()) return toast.error(t("auth.enterName"));
+    signingUp.current = true;
     setSubmitting(true);
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { emailRedirectTo: `${window.location.origin}/painel`, data: { name } },
-    });
-    if (error || !data.user) {
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { emailRedirectTo: `${window.location.origin}/painel`, data: { name } },
+      });
+      if (error || !data.user) {
+        return toast.error(error?.message ?? t("auth.registerError"));
+      }
+      // Assign role while we have a session
+      if (data.session) {
+        const { error: roleErr } =
+          profileType === "business"
+            ? await supabase.rpc("register_as_business")
+            : profileType === "beleza"
+              ? await supabase.rpc("register_as_beleza")
+              : await supabase.rpc("register_as_provider");
+        if (roleErr) console.error("Role error:", roleErr);
+        toast.success(t("auth.accountCreated"));
+        sessionStorage.setItem(JUST_SIGNED_UP_KEY, "1");
+        // Ir direto à página onde completa o perfil (configuração do negócio)
+        navigate(
+          profileType === "business"
+            ? "/painel-loja/editar"
+            : profileType === "beleza"
+              ? "/painel-beleza/editar"
+              : "/painel",
+          { replace: true }
+        );
+      } else {
+        toast.success(t("auth.accountCreated"));
+      }
+    } finally {
+      signingUp.current = false;
       setSubmitting(false);
-      return toast.error(error?.message ?? t("auth.registerError"));
     }
-    // Wait for session, then assign role
-    if (data.session) {
-      const { error: roleErr } =
-        profileType === "business"
-          ? await supabase.rpc("register_as_business")
-          : profileType === "beleza"
-            ? await supabase.rpc("register_as_beleza")
-            : await supabase.rpc("register_as_provider");
-      if (roleErr) console.error("Role error:", roleErr);
-    }
-    setSubmitting(false);
-    toast.success(t("auth.accountCreated"));
-    sessionStorage.setItem(JUST_SIGNED_UP_KEY, "1");
   };
 
   return (

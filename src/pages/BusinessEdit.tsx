@@ -72,7 +72,7 @@ type MenuItem = { id: string; name: string; price: number; photo_url: string | n
 const BusinessDashboard = () => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
-  const { user, isBusiness, isAdmin, loading, signOut } = useAuth();
+  const { user, isBusiness, isAdmin, rolesLoaded, loading, signOut } = useAuth();
   const [profileId, setProfileId] = useState<string | null>(null);
   const [form, setForm] = useState<Form>(empty);
   const [saving, setSaving] = useState(false);
@@ -112,7 +112,7 @@ const BusinessDashboard = () => {
   };
 
   useEffect(() => {
-    if (loading) return;
+    if (loading || !rolesLoaded) return;
     if (!user) return navigate("/login", { replace: true });
     if (!isBusiness && !isAdmin) return navigate("/inicio", { replace: true });
     (async () => {
@@ -136,7 +136,7 @@ const BusinessDashboard = () => {
       }
       setFetching(false);
     })();
-  }, [user, isBusiness, isAdmin, loading, navigate]);
+  }, [user, isBusiness, isAdmin, rolesLoaded, loading, navigate]);
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
