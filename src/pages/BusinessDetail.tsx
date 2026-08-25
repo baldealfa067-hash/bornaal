@@ -7,6 +7,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { StarRating } from "@/components/StarRating";
+import { ImagePreviewModal } from "@/components/ImagePreviewModal";
 import { formatCFA } from "@/lib/format";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
@@ -567,7 +568,7 @@ const MenuItemRow = ({ item, qty, onAdd, onRemove }: { item: MenuItem; qty: numb
   return (
   <div className="flex items-center gap-3 rounded-lg border bg-card p-2.5">
     {item.photo_url ? (
-      <img src={item.photo_url} alt={item.name} className="h-14 w-14 rounded-lg object-cover shrink-0" />
+      <ImagePreviewModal src={item.photo_url} alt={item.name} />
     ) : (
       <div className="h-14 w-14 rounded-lg bg-muted flex items-center justify-center text-muted-foreground shrink-0">
         <UtensilsCrossed className="h-5 w-5" />
