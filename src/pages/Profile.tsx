@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { LogOut, Settings, Briefcase, Loader2, Eye, MessageCircle, Phone, MessageSquareText, Star, BellRing } from "lucide-react";
+import { LogOut, Settings, Briefcase, Loader2, Eye, MessageCircle, Phone, MessageSquareText, Star, BellRing, Scissors } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -17,6 +17,7 @@ type ProviderProfile = {
   id: string;
   name: string;
   category: string;
+  profile_type: string;
   phone: string;
   location: string;
   description: string | null;
@@ -28,7 +29,7 @@ type ProviderProfile = {
 const Profile = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { user, isProvider, isBusiness, isAdmin, roles, loading, signOut } = useAuth();
+  const { user, isProvider, isBusiness, isBeleza, isAdmin, roles, loading, signOut } = useAuth();
   const qc = useQueryClient();
   const [profile, setProfile] = useState<ProviderProfile | null>(null);
   const [profileId, setProfileId] = useState<string | null>(null);
@@ -56,7 +57,7 @@ const Profile = () => {
     }
     supabase
       .from("profiles")
-      .select("id, name, category, phone, location, description, photo_url, price_type, starting_price")
+      .select("id, name, category, profile_type, phone, location, description, photo_url, price_type, starting_price")
       .eq("user_id", user.id)
       .maybeSingle()
       .then(({ data }) => {
@@ -101,7 +102,23 @@ const Profile = () => {
 
   if (!user || isAdmin) return null;
 
+  const hasBelezaBusiness = isBeleza || profile?.profile_type === "beleza";
+
   if (!profile || !profile.name) {
+    if (hasBelezaBusiness) {
+      return (
+        <div className="max-w-lg mx-auto px-4 py-8">
+          <h1 className="text-2xl font-bold mb-4">{t("profile.myProfile")}</h1>
+          <Card>
+            <CardContent className="flex flex-col items-center gap-3 py-8 text-center">
+              <Scissors className="h-8 w-8 text-muted-foreground" />
+              <p className="text-muted-foreground">{t("beautyDashboard.noProfile")}</p>
+              <Button onClick={() => navigate("/painel-beleza/editar")}>{t("beautyDashboard.createProfile")}</Button>
+            </CardContent>
+          </Card>
+        </div>
+      );
+    }
     return (
       <div className="max-w-lg mx-auto px-4 py-8">
         <h1 className="text-2xl font-bold mb-4">{t("profile.myProfile")}</h1>
@@ -140,7 +157,7 @@ const Profile = () => {
           </div>
         </CardHeader>
         <CardContent className="flex flex-col gap-3 mt-4">
-          {isProvider && profile && (
+          {(isProvider || hasBelezaBusiness) && profile && (
             <div className="rounded-lg border p-4 space-y-2 text-sm">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">{t("profile.phone")}</span>
@@ -176,7 +193,7 @@ const Profile = () => {
               )}
             </div>
           )}
-          {isProvider && (
+          {(isProvider || hasBelezaBusiness) && (
             <div className="rounded-lg border p-4">
               <p className="text-sm font-semibold mb-3">{t("profile.statsTitle")}</p>
               <div className="grid grid-cols-2 gap-2 text-sm">
@@ -209,7 +226,13 @@ const Profile = () => {
               {t("profile.editProvider")}
             </Button>
           )}
-          {!isProvider && !isAdmin && (
+          {!isProvider && hasBelezaBusiness && (
+            <Button variant="outline" onClick={() => navigate("/painel-beleza/editar")} className="w-full justify-start gap-2">
+              <Scissors className="h-4 w-4" />
+              {t("beautyDashboard.configure")}
+            </Button>
+          )}
+          {!isProvider && !isBusiness && !hasBelezaBusiness && (
             <Button variant="outline" onClick={() => navigate("/painel")} className="w-full justify-start gap-2">
               <Briefcase className="h-4 w-4" />
               {t("profile.becomeProvider")}
