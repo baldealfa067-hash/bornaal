@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { LogOut, Settings, Briefcase, Loader2, Eye, MessageCircle, Phone, MessageSquareText, Star, BellRing, Scissors } from "lucide-react";
+import { LogOut, Settings, Briefcase, Loader2, Eye, MessageCircle, Phone, MessageSquareText, Star, BellRing, Scissors, ClipboardList } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -29,7 +29,7 @@ type ProviderProfile = {
 const Profile = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { user, isProvider, isBusiness, isBeleza, isAdmin, roles, loading, signOut } = useAuth();
+  const { user, isProvider, isBusiness, isBeleza, isClient, isAdmin, roles, loading, signOut } = useAuth();
   const qc = useQueryClient();
   const [profile, setProfile] = useState<ProviderProfile | null>(null);
   const [profileId, setProfileId] = useState<string | null>(null);
@@ -114,6 +114,48 @@ const Profile = () => {
               <Scissors className="h-8 w-8 text-muted-foreground" />
               <p className="text-muted-foreground">{t("beautyDashboard.noProfile")}</p>
               <Button onClick={() => navigate("/painel-beleza/editar")}>{t("beautyDashboard.createProfile")}</Button>
+            </CardContent>
+          </Card>
+        </div>
+      );
+    }
+    if (isClient) {
+      const clientEmail = user?.email ?? "";
+      const clientInitials = (user?.name?.split(' ')[0] ?? clientEmail.split('@')[0] ?? 'U').slice(0, 2).toUpperCase();
+      return (
+        <div className="max-w-lg mx-auto px-4 py-8">
+          <h1 className="text-2xl font-bold mb-4">{t("profile.myProfile")}</h1>
+          <Card>
+            <CardHeader className="flex flex-row items-center gap-4">
+              <Avatar className="h-16 w-16">
+                <AvatarFallback className="text-lg">{clientInitials}</AvatarFallback>
+              </Avatar>
+              <div>
+                <CardTitle className="text-lg">{user?.name ?? clientEmail.split('@')[0]}</CardTitle>
+                <p className="text-sm text-muted-foreground">{t("profile.client")}</p>
+              </div>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-3 mt-4">
+              {clientEmail && (
+                <div className="rounded-lg border p-4 space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">{t("profile.email")}</span>
+                    <span className="font-medium">{clientEmail}</span>
+                  </div>
+                </div>
+              )}
+              <Button variant="outline" onClick={() => navigate("/pedidos")} className="w-full justify-start gap-2">
+                <ClipboardList className="h-4 w-4" />
+                {t("profile.myRequests")}
+              </Button>
+              <Button variant="outline" onClick={() => navigate("/login?mode=profissional")} className="w-full justify-start gap-2">
+                <Briefcase className="h-4 w-4" />
+                {t("profile.becomeProvider")}
+              </Button>
+              <Button variant="destructive" onClick={handleLogout} className="w-full justify-start gap-2">
+                <LogOut className="h-4 w-4" />
+                {t("profile.logout")}
+              </Button>
             </CardContent>
           </Card>
         </div>

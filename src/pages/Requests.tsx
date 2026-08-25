@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { MapPin, MessageCircle, Plus, Tag, Clock, ChevronDown, ChevronUp, Users, CheckCircle2, XCircle, Star } from "lucide-react";
+import { MapPin, MessageCircle, Plus, Tag, Clock, ChevronDown, ChevronUp, Users, CheckCircle2, XCircle, Star, ClipboardList } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -40,7 +40,7 @@ const PAGE_SIZE = 10;
 const Requests = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, isClient } = useAuth();
   const { data: providerProfile } = useMyProvider(user?.id ?? null);
   const { data: requests = [], isLoading } = useRequests();
   const { data: categories = [] } = useCategories();
@@ -50,6 +50,15 @@ const Requests = () => {
   const bidOnRequest = useBidOnRequest();
   const updateBid = useUpdateBidStatus();
   const [showAnonWarning, setShowAnonWarning] = useState(false);
+
+  // Vincular pedidos anónimos quando o utilizador faz login
+  useEffect(() => {
+    if (!user) return;
+    supabase.rpc("claim_anonymous_requests").then(({ data, error }) => {
+      if (error) console.error("[requests] claim error:", error.message);
+      else if (data && data > 0) toast.success(t("requests.claimedRequests", { count: data }));
+    });
+  }, [user]);
 
   const DEADLINE_OPTIONS = [
     { value: "urgente", label: t("requests.urgent") },
@@ -427,11 +436,22 @@ const Requests = () => {
         {/* ─── TAB: Os Meus (pedidos que publiquei) ─── */}
         <TabsContent value="meus">
           {!user ? (
-            <div className="text-center py-12">
-              <p className="text-sm text-muted-foreground mb-4">{t("requests.loginToSee")}</p>
-              <Link to="/login">
-                <Button size="sm">{t("requests.login")}</Button>
-              </Link>
+            <div className="text-center py-12 space-y-4">
+              <div className="mx-auto h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center">
+                <ClipboardList className="h-8 w-8 text-primary" />
+              </div>
+              <div>
+                <p className="font-semibold">{t("requests.clientSignupTitle")}</p>
+                <p className="text-sm text-muted-foreground mt-1">{t("requests.clientSignupDesc")}</p>
+              </div>
+              <div className="flex flex-col gap-2 max-w-xs mx-auto">
+                <Button onClick={() => navigate("/login?mode=cliente")} className="w-full h-11">
+                  {t("auth.continueWithGoogle")}
+                </Button>
+                <Button variant="outline" onClick={() => navigate("/login?mode=cliente")} className="w-full h-11">
+                  {t("auth.continueWithEmail")}
+                </Button>
+              </div>
             </div>
           ) : myRequests.length === 0 ? (
             <div className="text-center py-12 text-sm text-muted-foreground">
@@ -521,7 +541,7 @@ const Requests = () => {
             <DialogDescription>{t("requests.anonWarningDesc")}</DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-2">
-            <Button onClick={() => { setShowAnonWarning(false); navigate("/login"); }} className="w-full">
+            <Button onClick={() => { setShowAnonWarning(false); navigate("/login?mode=cliente"); }} className="w-full">
               {t("requests.createAccount")}
             </Button>
             <Button variant="outline" onClick={() => executePublish()} className="w-full">

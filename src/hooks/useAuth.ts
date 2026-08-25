@@ -41,10 +41,11 @@ export const useAuth = () => {
   const isProvider = roles.includes("provider");
   const isBusiness = roles.includes("business");
   const isBeleza = roles.includes("beleza");
+  const isClient = roles.includes("client");
 
   const signOut = async () => {
     await supabase.auth.signOut();
   };
 
-  return { session, user, roles, isAdmin, isProvider, isBusiness, isBeleza, rolesLoaded, loading, signOut };
+  return { session, user, roles, isAdmin, isProvider, isBusiness, isBeleza, isClient, rolesLoaded, loading, signOut };
 };
