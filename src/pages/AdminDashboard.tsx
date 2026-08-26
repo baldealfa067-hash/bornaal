@@ -1096,6 +1096,7 @@ const AdminDashboard = () => {
                       {[
                         { value: "provider", label: t("admin.notifProviders") },
                         { value: "business", label: t("admin.notifBusinesses") },
+                        { value: "beleza", label: t("admin.notifBeleza") },
                         { value: "client", label: t("admin.notifClients") },
                       ].map((g) => (
                         <label key={g.value} className="flex items-center gap-2 text-sm cursor-pointer">
@@ -1149,6 +1150,7 @@ const AdminDashboard = () => {
                                 <span>{n.target_groups.map((g) => {
                                   if (g === "provider") return t("admin.notifProviders");
                                   if (g === "business") return t("admin.notifBusinesses");
+                                  if (g === "beleza") return t("admin.notifBeleza");
                                   if (g === "client") return t("admin.notifClients");
                                   return g;
                                 }).join(", ")}</span>
