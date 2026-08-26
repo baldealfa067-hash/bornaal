@@ -9,8 +9,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Globe } from "lucide-react";
 
-const LABELS: Record<Lang, string> = { pt: "PT", fr: "FR", en: "EN" };
-const FLAGS: Record<Lang, string> = { pt: "🇵🇹", fr: "🇫🇷", en: "🇬🇧" };
+const LABELS: Record<Lang, string> = { pt: "PT", fr: "FR", en: "EN", kri: "Kriol" };
+const FLAGS: Record<Lang, string> = { pt: "🇵🇹", fr: "🇫🇷", en: "🇬🇧", kri: "🇬🇼" };
 
 export function LanguageSelector() {
   const { i18n } = useTranslation();

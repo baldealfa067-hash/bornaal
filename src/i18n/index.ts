@@ -3,9 +3,10 @@ import { initReactI18next } from "react-i18next";
 import pt from "./locales/pt.json";
 import fr from "./locales/fr.json";
 import en from "./locales/en.json";
+import kri from "./locales/kri.json";
 
 const STORAGE_KEY = "bornaal_lang";
-const SUPPORTED = ["pt", "fr", "en"] as const;
+const SUPPORTED = ["pt", "fr", "en", "kri"] as const;
 export type Lang = (typeof SUPPORTED)[number];
 
 function getInitialLang(): Lang {
@@ -21,6 +22,7 @@ i18n.use(initReactI18next).init({
     pt: { translation: pt },
     fr: { translation: fr },
     en: { translation: en },
+    kri: { translation: kri },
   },
   lng: getInitialLang(),
   fallbackLng: "pt",
