@@ -23,6 +23,8 @@ import {
   ChevronRight,
   Store,
   Scissors,
+  Send,
+  Bell,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -65,6 +67,7 @@ type Category = { id: string; name: string; name_en?: string | null; name_fr?: s
 type Bairro = { id: string; name: string };
 type ActivityType = "vista" | "whatsapp" | "call";
 type ActivitySeries = Record<ActivityType, number[]>;
+type AdminNotification = { id: string; title: string; body: string; target_groups: string[]; sent_by: string; recipients_count: number; created_at: string };
 
 type MenuKey =
   | "overview"
@@ -78,6 +81,7 @@ type MenuKey =
   | "beleza-categorias"
   | "bairros"
   | "stats"
+  | "send_notification"
   | "settings";
 
 type ProviderFilter = "todos" | "avaliacao" | "ativos" | "rejeitados";
@@ -172,6 +176,11 @@ const AdminDashboard = () => {
   const [bairroToDelete, setBairroToDelete] = useState<Bairro | null>(null);
   const [bizCategoryToDelete, setBizCategoryToDelete] = useState<Category | null>(null);
   const [belezaCategoryToDelete, setBelezaCategoryToDelete] = useState<Category | null>(null);
+  const [notifTitle, setNotifTitle] = useState("");
+  const [notifBody, setNotifBody] = useState("");
+  const [notifGroups, setNotifGroups] = useState<string[]>([]);
+  const [notifSending, setNotifSending] = useState(false);
+  const [adminNotifications, setAdminNotifications] = useState<AdminNotification[]>([]);
 
   useEffect(() => {
     if (loading) return;
@@ -194,6 +203,7 @@ const AdminDashboard = () => {
       { data: ql },
       { data: bc },
       { data: bl },
+      { data: an },
     ] = await Promise.all([
       supabase.from("profiles").select("id, name, category, phone, location, price_type, starting_price, photo_url, profile_type, is_verified, verification_status, verification_reason, verification_doc_url, verification_selfie_url").order("name"),
       supabase.from("service_requests").select("id, requester_name, category, location, description, status, created_at").order("created_at", { ascending: false }),
@@ -207,6 +217,7 @@ const AdminDashboard = () => {
       supabase.from("quality_levels").select("provider_id, level, score"),
       supabase.from("business_categories").select("id, name, name_en, name_fr").order("name"),
       supabase.from("beauty_categories").select("id, name, name_en, name_fr").order("name"),
+      supabase.from("admin_notifications").select("id, title, body, target_groups, sent_by, recipients_count, created_at").order("created_at", { ascending: false }),
     ]);
     const statsMap: Record<string, { profile_views: number; whatsapp_clicks: number; call_clicks: number }> = {};
     (st ?? []).forEach((s) => {
@@ -228,6 +239,7 @@ const AdminDashboard = () => {
     setBairros((b ?? []) as Bairro[]);
     setBusinessCategories((bc ?? []) as Category[]);
     setBeautyCategories((bl ?? []) as Category[]);
+    setAdminNotifications((an ?? []) as AdminNotification[]);
     setActivity(buildActivityMap((act ?? []) as { provider_id: string; activity_type: string; created_at: string }[]));
     setPortfolioCount(pfMap);
     setQuality(qlMap);
@@ -404,6 +416,30 @@ const AdminDashboard = () => {
     loadAll();
   };
 
+  const sendBulkNotification = async () => {
+    if (!notifTitle.trim() || !notifBody.trim()) {
+      toast.error(t("admin.notifRequiredFields"));
+      return;
+    }
+    if (notifGroups.length === 0) {
+      toast.error(t("admin.notifRequiredGroup"));
+      return;
+    }
+    setNotifSending(true);
+    const { data, error } = await supabase.rpc("send_bulk_notification", {
+      p_title: notifTitle.trim(),
+      p_body: notifBody.trim(),
+      p_target_groups: notifGroups,
+    });
+    setNotifSending(false);
+    if (error) return toast.error(error.message);
+    toast.success(t("admin.notifSent", { count: data ?? 0 }));
+    setNotifTitle("");
+    setNotifBody("");
+    setNotifGroups([]);
+    loadAll();
+  };
+
   const providerName = (pid: string) => providers.find((p) => p.id === pid)?.name ?? t("admin.client");
   const profileUrl = (p: Provider) => (p.profile_type === "business" ? `/loja/${p.id}` : p.profile_type === "beleza" ? `/beleza/${p.id}` : `/prestador/${p.id}`);
   const providerLink = (pid: string) => {
@@ -576,6 +612,7 @@ const AdminDashboard = () => {
     { key: "beleza-categorias", label: t("admin.belezaCategories"), icon: <Scissors className="h-4 w-4" />, count: beautyCategories.length },
     { key: "bairros", label: t("admin.neighborhoods"), icon: <MapPin className="h-4 w-4" />, count: bairros.length },
     { key: "stats", label: t("admin.statistics"), icon: <BarChart3 className="h-4 w-4" /> },
+    { key: "send_notification", label: t("admin.sendNotification"), icon: <Bell className="h-4 w-4" /> },
     { key: "settings", label: t("admin.settings"), icon: <Settings className="h-4 w-4" /> },
   ];
 
@@ -1021,6 +1058,109 @@ const AdminDashboard = () => {
                   </div>
                 </CardContent>
               </Card>
+            </div>
+          )}
+
+          {menu === "send_notification" && (
+            <div className="flex flex-col gap-6 max-w-2xl">
+              <h1 className="text-2xl font-bold">{t("admin.sendNotification")}</h1>
+
+              <Card>
+                <CardContent className="p-4 flex flex-col gap-4">
+                  <div className="flex flex-col gap-2">
+                    <label className="text-sm font-medium">{t("admin.notifTitle")}</label>
+                    <input
+                      type="text"
+                      value={notifTitle}
+                      onChange={(e) => setNotifTitle(e.target.value)}
+                      placeholder={t("admin.notifTitlePlaceholder")}
+                      className="w-full border rounded-lg px-3 py-2 text-sm bg-background"
+                      maxLength={120}
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-2">
+                    <label className="text-sm font-medium">{t("admin.notifMessage")}</label>
+                    <textarea
+                      value={notifBody}
+                      onChange={(e) => setNotifBody(e.target.value)}
+                      placeholder={t("admin.notifMessagePlaceholder")}
+                      className="w-full border rounded-lg px-3 py-2 text-sm bg-background min-h-[80px] resize-none"
+                      maxLength={500}
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-2">
+                    <label className="text-sm font-medium">{t("admin.notifTarget")}</label>
+                    <div className="flex flex-wrap gap-3">
+                      {[
+                        { value: "provider", label: t("admin.notifProviders") },
+                        { value: "business", label: t("admin.notifBusinesses") },
+                        { value: "client", label: t("admin.notifClients") },
+                      ].map((g) => (
+                        <label key={g.value} className="flex items-center gap-2 text-sm cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={notifGroups.includes(g.value)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setNotifGroups((prev) => [...prev, g.value]);
+                              } else {
+                                setNotifGroups((prev) => prev.filter((x) => x !== g.value));
+                              }
+                            }}
+                            className="rounded"
+                          />
+                          {g.label}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  <Button
+                    onClick={sendBulkNotification}
+                    disabled={notifSending || !notifTitle.trim() || !notifBody.trim() || notifGroups.length === 0}
+                    className="gap-2 self-start"
+                  >
+                    <Send className="h-4 w-4" />
+                    {notifSending ? t("admin.notifSending") : t("admin.notifSend")}
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <div>
+                <h2 className="text-lg font-semibold mb-3">{t("admin.notifHistory")}</h2>
+                {adminNotifications.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-6">{t("admin.notifNoHistory")}</p>
+                ) : (
+                  <div className="flex flex-col gap-2">
+                    {adminNotifications.map((n) => (
+                      <Card key={n.id}>
+                        <CardContent className="p-3">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <div className="font-medium text-sm">{n.title}</div>
+                              <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{n.body}</p>
+                              <div className="flex flex-wrap items-center gap-2 mt-2 text-xs text-muted-foreground">
+                                <span>{new Date(n.created_at).toLocaleString(i18n.language)}</span>
+                                <span>·</span>
+                                <span>{n.recipients_count} {t("admin.notifRecipients")}</span>
+                                <span>·</span>
+                                <span>{n.target_groups.map((g) => {
+                                  if (g === "provider") return t("admin.notifProviders");
+                                  if (g === "business") return t("admin.notifBusinesses");
+                                  if (g === "client") return t("admin.notifClients");
+                                  return g;
+                                }).join(", ")}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           )}
 

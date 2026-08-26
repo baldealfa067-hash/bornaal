@@ -802,6 +802,36 @@ export type Database = {
           },
         ]
       }
+      admin_notifications: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          recipients_count: number
+          sent_by: string
+          target_groups: string[]
+          title: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          recipients_count?: number
+          sent_by: string
+          target_groups: string[]
+          title: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          recipients_count?: number
+          sent_by?: string
+          target_groups?: string[]
+          title?: string
+        }
+        Relationships: []
+      }
       quality_levels: {
         Row: {
           calculated_at: string
@@ -862,6 +892,14 @@ export type Database = {
       register_as_beleza: { Args: never; Returns: undefined }
       register_as_provider: { Args: never; Returns: undefined }
       admin_delete_user: { Args: { p_profile_id: string }; Returns: undefined }
+      send_bulk_notification: {
+        Args: {
+          p_body: string
+          p_target_groups: string[]
+          p_title: string
+        }
+        Returns: number
+      }
       record_business_order: {
         Args: {
           p_address: string | null
