@@ -52,7 +52,17 @@
     "others": "Outrus",
     "verifiedBadge": "Kofirmadu",
     "negotiablePrice": "Negoasiavel",
-    "toCombinePrice": "Pa kombina"
+    "toCombinePrice": "Pa kombina",
+    "message": "Mensajen",
+    "directContactUrgent": "Kontatu diretu (urjenti)"
+  },
+  "chat": {
+    "startConversation": "Kumensa koversa",
+    "startConversationHint": "Tenu mensajen pa kumensa koversa.",
+    "typeMessage": "Skrivi to mensajen...",
+    "noResponseHint": "Sin risposta? Tenta kontatu diretu",
+    "contactDirectly": "Kontatu diretu",
+    "whatsappFallback": "Ola {{name}}, tenu mandi mensajen na Bornaal ma sin risposta. Mi ke kontatu diretu."
   },
   "header": {
     "language": "Lingua"

@@ -52,7 +52,17 @@
     "others": "Others",
     "verifiedBadge": "Verified",
     "negotiablePrice": "Negotiable",
-    "toCombinePrice": "To be agreed"
+    "toCombinePrice": "To be agreed",
+    "message": "Message",
+    "directContactUrgent": "Direct contact (urgent)"
+  },
+  "chat": {
+    "startConversation": "Start the conversation",
+    "startConversationHint": "Send a message to start the conversation.",
+    "typeMessage": "Type your message...",
+    "noResponseHint": "No response? Try direct contact",
+    "contactDirectly": "Contact directly",
+    "whatsappFallback": "Hello {{name}}, I sent you a message on Bornaal but got no response. I'd like to contact you directly."
   },
   "header": {
     "language": "Language"

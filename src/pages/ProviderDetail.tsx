@@ -1,7 +1,7 @@
 import { useParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useRef, useState } from "react";
-import { AlertCircle, MapPin, Phone, MessageCircle, Wallet, BadgeCheck, CheckCircle2, ShieldAlert } from "lucide-react";
+import { AlertCircle, MapPin, Phone, MessageCircle, Wallet, BadgeCheck, CheckCircle2, ShieldAlert, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -20,6 +20,7 @@ import { useTranslation } from "react-i18next";
 import i18n from "@/i18n";
 import { useQueryClient } from "@tanstack/react-query";
 import { sanitizeName, sanitizeComment, sanitizeReason, sanitizeDescription, sanitizeContact } from "@/lib/sanitize";
+import { ChatDialog } from "@/components/ChatDialog";
 
 type ReportReasonKey = "notDone" | "charge" | "behaviour" | "fake" | "other";
 const REPORT_REASONS: { key: ReportReasonKey; labelKey: string }[] = [
@@ -49,6 +50,7 @@ const ProviderDetail = () => {
   const [reviewerName, setReviewerName] = useState("");
   const [comment, setComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -264,20 +266,40 @@ const ProviderDetail = () => {
       )}
 
       {/* Contact buttons */}
-      <div className="mb-8 grid grid-cols-2 gap-2">
-        <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="block" onClick={trackWhatsapp}>
-          <Button className="w-full bg-[#25D366] hover:bg-[#1ebe57] text-white gap-2">
-            <MessageCircle className="h-5 w-5" />
-            {t("common.whatsapp")}
+      <div className="mb-8 space-y-2">
+        {user && user.id !== (provider as { user_id?: string }).user_id && (
+          <Button
+            className="w-full gap-2 h-12 text-base font-semibold"
+            onClick={() => setChatOpen(true)}
+          >
+            <MessageSquare className="h-5 w-5" />
+            {t("common.message")}
           </Button>
-        </a>
-        <a href={`tel:${provider.phone.replace(/\s/g, "")}`} className="block" onClick={trackCall}>
-          <Button variant="secondary" className="w-full gap-2">
-            <Phone className="h-5 w-5" />
-            {t("common.call")}
-          </Button>
-        </a>
+        )}
+        <div className="grid grid-cols-2 gap-2">
+          <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="block" onClick={trackWhatsapp}>
+            <Button variant="secondary" className="w-full gap-2">
+              <MessageCircle className="h-5 w-5 text-[#25D366]" />
+              <span className="text-xs">{t("common.directContactUrgent")}</span>
+            </Button>
+          </a>
+          <a href={`tel:${provider.phone.replace(/\s/g, "")}`} className="block" onClick={trackCall}>
+            <Button variant="secondary" className="w-full gap-2">
+              <Phone className="h-5 w-5" />
+              {t("common.call")}
+            </Button>
+          </a>
+        </div>
       </div>
+
+      <ChatDialog
+        open={chatOpen}
+        onOpenChange={setChatOpen}
+        otherUserId={(provider as { user_id?: string }).user_id ?? ""}
+        otherUserName={provider.name}
+        otherUserPhone={provider.phone}
+        otherUserPhoto={provider.photo_url}
+      />
 
       <section>
         <h2 className="font-semibold mb-3">{t("providerDetail.reviewsCount", { count: provider.reviewCount })}</h2>
