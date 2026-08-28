@@ -59,7 +59,9 @@
     "startConversation": "Kumensa koversa",
     "startConversationHint": "Tenu mensajen pa kumensa koversa.",
     "typeMessage": "Skrivi to mensajen...",
-    "noResponseHint": "Sin risposta? Tenta liga diretu"
+    "noResponseHint": "Sin risposta? Tenta liga diretu",
+    "newMessage": "Mensajen nobu",
+    "messageFrom": "{{name}}: {{content}}"
   },
   "header": {
     "language": "Lingua"

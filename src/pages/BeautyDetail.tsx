@@ -23,6 +23,7 @@ import { sanitizeName, sanitizeComment, sanitizeReason, sanitizeDescription, san
 import { useBeautyCategories } from "@/hooks/useProviders";
 import { translateCategoryName } from "@/lib/categoryI18n";
 import { ChatDialog } from "@/components/ChatDialog";
+import { useUnreadFromUser } from "@/hooks/useChat";
 
 type ReportReasonKey = "food" | "charge" | "behaviour" | "fake" | "hygiene" | "other";
 const REPORT_REASONS: { key: ReportReasonKey; labelKey: string }[] = [
@@ -329,15 +330,24 @@ const BeautyDetail = () => {
       )}
 
       <div className="mb-8 space-y-2">
-        {user && user.id !== String((business as Record<string, unknown>).user_id ?? "") && (
-          <Button
-            className="w-full gap-2 h-12 text-base font-semibold"
-            onClick={() => setChatOpen(true)}
-          >
-            <MessageSquare className="h-5 w-5" />
-            {t("common.message")}
-          </Button>
-        )}
+        {user && user.id !== String((business as Record<string, unknown>).user_id ?? "") && (() => {
+          const beautyUserId = String((business as Record<string, unknown>).user_id ?? "");
+          const { data: unreadCount = 0 } = useUnreadFromUser(user.id, beautyUserId);
+          return (
+            <Button
+              className="w-full gap-2 h-12 text-base font-semibold relative"
+              onClick={() => setChatOpen(true)}
+            >
+              <MessageSquare className="h-5 w-5" />
+              {t("common.message")}
+              {unreadCount > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 bg-destructive text-destructive-foreground text-[10px] font-bold h-5 min-w-[20px] rounded-full flex items-center justify-center px-1">
+                  {unreadCount > 99 ? "99+" : unreadCount}
+                </span>
+              )}
+            </Button>
+          );
+        })()}
         <a href={`tel:${phone.replace(/\s/g, "")}`} className="block" onClick={trackCall}>
           <Button variant="secondary" className="w-full gap-2">
             <Phone className="h-5 w-5" />

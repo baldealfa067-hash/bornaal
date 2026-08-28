@@ -59,7 +59,9 @@
     "startConversation": "Commencer la conversation",
     "startConversationHint": "Envoyez un message pour démarrer la conversation.",
     "typeMessage": "Écrivez votre message...",
-    "noResponseHint": "Pas de réponse ? Essayez d'appeler directement"
+    "noResponseHint": "Pas de réponse ? Essayez d'appeler directement",
+    "newMessage": "Nouveau message",
+    "messageFrom": "{{name}}: {{content}}"
   },
   "header": {
     "language": "Langue"

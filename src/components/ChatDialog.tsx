@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { Send, MessageSquare, Phone, ArrowLeft } from "lucide-react";
+import { Send, MessageSquare, Phone, ArrowLeft, Check, CheckCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -35,9 +35,10 @@ export const ChatDialog = ({
   const { user } = useAuth();
   const [input, setInput] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const [showNoResponseHint, setShowNoResponseHint] = useState(false);
 
-  const { data: messages = [] } = useMessages(user?.id ?? null, otherUserId);
+  const { data: messages = [], isLoading } = useMessages(user?.id ?? null, otherUserId);
   const sendMessage = useSendMessage();
   const markAsRead = useMarkMessagesAsRead();
 
@@ -49,6 +50,13 @@ export const ChatDialog = ({
       markAsRead.mutate({ userId: user.id, otherUserId });
     }
   }, [open, user?.id, otherUserId]);
+
+  // Focus input when dialog opens
+  useEffect(() => {
+    if (open) {
+      setTimeout(() => inputRef.current?.focus(), 100);
+    }
+  }, [open]);
 
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -102,6 +110,18 @@ export const ChatDialog = ({
     }
   };
 
+  // Group messages by date
+  const groupedMessages: { date: string; messages: typeof messages }[] = [];
+  let currentDate = "";
+  for (const msg of messages) {
+    const msgDate = new Date(msg.created_at).toLocaleDateString();
+    if (msgDate !== currentDate) {
+      currentDate = msgDate;
+      groupedMessages.push({ date: msgDate, messages: [] });
+    }
+    groupedMessages[groupedMessages.length - 1].messages.push(msg);
+  }
+
   if (!open) return null;
 
   return (
@@ -137,48 +157,102 @@ export const ChatDialog = ({
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
-        {messages.length === 0 && (
-          <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground">
-            <MessageSquare className="h-10 w-10 mb-3 opacity-40" />
-            <p className="text-sm">{t("chat.startConversation")}</p>
-            <p className="text-xs mt-1">{t("chat.startConversationHint")}</p>
+      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-1">
+        {isLoading && messages.length === 0 && (
+          <div className="flex items-center justify-center h-full text-muted-foreground">
+            <p className="text-sm">{t("common.loading")}</p>
           </div>
         )}
-        {messages.map((msg) => {
-          const isMine = msg.sender_id === user?.id;
-          return (
-            <div
-              key={msg.id}
-              className={`flex ${isMine ? "justify-end" : "justify-start"}`}
-            >
-              <div
-                className={`max-w-[75%] rounded-2xl px-4 py-2.5 text-sm ${
-                  isMine
-                    ? "bg-primary text-primary-foreground rounded-br-sm"
-                    : "bg-muted text-foreground rounded-bl-sm"
-                }`}
-              >
-                <p className="whitespace-pre-wrap break-words">{msg.content}</p>
-                <p
-                  className={`text-[10px] mt-1 ${
-                    isMine ? "text-primary-foreground/60" : "text-muted-foreground"
+
+        {!isLoading && messages.length === 0 && (
+          <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground">
+            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+              <MessageSquare className="h-8 w-8 text-primary/50" />
+            </div>
+            <p className="text-sm font-medium">{t("chat.startConversation")}</p>
+            <p className="text-xs mt-1 max-w-[250px]">{t("chat.startConversationHint")}</p>
+          </div>
+        )}
+
+        {groupedMessages.map((group) => (
+          <div key={group.date}>
+            {/* Date separator */}
+            <div className="flex items-center justify-center my-3">
+              <span className="text-[11px] text-muted-foreground bg-background px-3 py-1 rounded-full border">
+                {group.date}
+              </span>
+            </div>
+
+            {group.messages.map((msg, idx) => {
+              const isMine = msg.sender_id === user?.id;
+              const nextMsg = group.messages[idx + 1];
+              const isLastInGroup =
+                !nextMsg || nextMsg.sender_id !== msg.sender_id;
+              const showTime =
+                isLastInGroup ||
+                (nextMsg &&
+                  new Date(nextMsg.created_at).getTime() -
+                    new Date(msg.created_at).getTime() >
+                    5 * 60 * 1000);
+
+              return (
+                <div
+                  key={msg.id}
+                  className={`flex ${isMine ? "justify-end" : "justify-start"} ${
+                    isLastInGroup ? "mb-3" : "mb-0.5"
                   }`}
                 >
-                  {new Date(msg.created_at).toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                  {isMine && !msg.read && " •"}
-                </p>
-              </div>
-            </div>
-          );
-        })}
+                  <div
+                    className={`max-w-[78%] px-3.5 py-2 text-[13px] leading-relaxed ${
+                      isMine
+                        ? `bg-primary text-primary-foreground ${
+                            isLastInGroup ? "rounded-2xl rounded-br-sm" : "rounded-2xl"
+                          }`
+                        : `bg-muted text-foreground ${
+                            isLastInGroup ? "rounded-2xl rounded-bl-sm" : "rounded-2xl"
+                          }`
+                    }`}
+                  >
+                    <p className="whitespace-pre-wrap break-words">{msg.content}</p>
+                    {showTime && (
+                      <div
+                        className={`flex items-center gap-1 mt-1 ${
+                          isMine ? "justify-end" : "justify-start"
+                        }`}
+                      >
+                        <span
+                          className={`text-[10px] ${
+                            isMine
+                              ? "text-primary-foreground/60"
+                              : "text-muted-foreground"
+                          }`}
+                        >
+                          {new Date(msg.created_at).toLocaleTimeString([], {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </span>
+                        {isMine && (
+                          <span className="text-primary-foreground/60">
+                            {msg.read ? (
+                              <CheckCheck className="h-3 w-3" />
+                            ) : (
+                              <Check className="h-3 w-3" />
+                            )}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ))}
 
         {/* No response hint — suggest calling */}
         {showNoResponseHint && otherUserPhone && (
-          <div className="flex justify-center my-2">
+          <div className="flex justify-center my-3">
             <div className="bg-muted/80 border border-border rounded-xl px-4 py-3 text-center max-w-[85%]">
               <p className="text-xs text-muted-foreground mb-2">
                 {t("chat.noResponseHint")}
@@ -200,6 +274,7 @@ export const ChatDialog = ({
       <div className="border-t bg-card px-3 py-3 shrink-0">
         <div className="flex gap-2 items-end">
           <Input
+            ref={inputRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
