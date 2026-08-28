@@ -53,16 +53,13 @@
     "verifiedBadge": "Verificado",
     "negotiablePrice": "Negociável",
     "toCombinePrice": "A combinar",
-    "message": "Mensagem",
-    "directContactUrgent": "Contacto direto (urgente)"
+    "message": "Mensagem"
   },
   "chat": {
     "startConversation": "Inicie a conversa",
     "startConversationHint": "Envie uma mensagem para começar a conversa.",
     "typeMessage": "Escreva a sua mensagem...",
-    "noResponseHint": "Sem resposta? Tente o contacto direto",
-    "contactDirectly": "Contactar diretamente",
-    "whatsappFallback": "Olá {{name}}, enviei uma mensagem no Bornaal mas sem resposta. Gostaria de contactar diretamente."
+    "noResponseHint": "Sem resposta? Tente ligar diretamente"
   },
   "header": {
     "language": "Idioma"

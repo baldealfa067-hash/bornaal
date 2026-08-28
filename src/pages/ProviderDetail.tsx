@@ -1,7 +1,7 @@
 import { useParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useRef, useState } from "react";
-import { AlertCircle, MapPin, Phone, MessageCircle, Wallet, BadgeCheck, CheckCircle2, ShieldAlert, MessageSquare } from "lucide-react";
+import { AlertCircle, MapPin, Phone, Wallet, BadgeCheck, CheckCircle2, ShieldAlert, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -75,17 +75,6 @@ const ProviderDetail = () => {
   if (!provider) {
     return <div className="flex items-center justify-center min-h-screen text-muted-foreground">{t("providerDetail.notFound")}</div>;
   }
-
-  const whatsappUrl = `https://wa.me/${provider.phone.replace(/\D/g, "")}?text=${encodeURIComponent(
-    t("providerDetailExtra.whatsappMsg", { name: provider.name })
-  )}`;
-
-  const trackWhatsapp = () => {
-    if (!id) return;
-    supabase.rpc("record_provider_contact", { p_provider_id: id, contact_type: "whatsapp" }).then(({ error }) => {
-      if (error) console.error("[stats] record whatsapp error:", error.message);
-    });
-  };
 
   const trackCall = () => {
     if (!id) return;
@@ -276,20 +265,12 @@ const ProviderDetail = () => {
             {t("common.message")}
           </Button>
         )}
-        <div className="grid grid-cols-2 gap-2">
-          <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="block" onClick={trackWhatsapp}>
-            <Button variant="secondary" className="w-full gap-2">
-              <MessageCircle className="h-5 w-5 text-[#25D366]" />
-              <span className="text-xs">{t("common.directContactUrgent")}</span>
-            </Button>
-          </a>
-          <a href={`tel:${provider.phone.replace(/\s/g, "")}`} className="block" onClick={trackCall}>
-            <Button variant="secondary" className="w-full gap-2">
-              <Phone className="h-5 w-5" />
-              {t("common.call")}
-            </Button>
-          </a>
-        </div>
+        <a href={`tel:${provider.phone.replace(/\s/g, "")}`} className="block" onClick={trackCall}>
+          <Button variant="secondary" className="w-full gap-2">
+            <Phone className="h-5 w-5" />
+            {t("common.call")}
+          </Button>
+        </a>
       </div>
 
       <ChatDialog

@@ -1,7 +1,7 @@
 import { useParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useRef, useState } from "react";
-import { AlertCircle, MapPin, Phone, MessageCircle, BadgeCheck, CheckCircle2, ShieldAlert, Store, UtensilsCrossed, Plus, Minus, ShoppingCart, Loader2, MessageSquare } from "lucide-react";
+import { AlertCircle, MapPin, Phone, BadgeCheck, CheckCircle2, ShieldAlert, Store, UtensilsCrossed, Plus, Minus, ShoppingCart, Loader2, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -118,17 +118,6 @@ const BusinessDetail = () => {
   const cartItems = menuItems.filter((i) => (cart[i.id] ?? 0) > 0);
   const cartTotal = cartItems.reduce((sum, i) => sum + i.price * (cart[i.id] ?? 0), 0);
   const cartCount = cartItems.reduce((sum, i) => sum + (cart[i.id] ?? 0), 0);
-
-  const whatsappUrl = `https://wa.me/${phone.replace(/\D/g, "")}?text=${encodeURIComponent(
-    t("businessDetailExtra.whatsappMsg", { name })
-  )}`;
-
-  const trackWhatsapp = () => {
-    if (!id) return;
-    supabase.rpc("record_provider_contact", { p_provider_id: id, contact_type: "whatsapp" }).then(({ error }) => {
-      if (error) console.error("[stats] record whatsapp error:", error.message);
-    });
-  };
 
   const trackCall = () => {
     if (!id) return;
@@ -427,20 +416,12 @@ const BusinessDetail = () => {
             {t("common.message")}
           </Button>
         )}
-        <div className="grid grid-cols-2 gap-2">
-          <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="block" onClick={trackWhatsapp}>
-            <Button variant="secondary" className="w-full gap-2">
-              <MessageCircle className="h-5 w-5 text-[#25D366]" />
-              <span className="text-xs">{t("common.directContactUrgent")}</span>
-            </Button>
-          </a>
-          <a href={`tel:${phone.replace(/\s/g, "")}`} className="block" onClick={trackCall}>
-            <Button variant="secondary" className="w-full gap-2">
-              <Phone className="h-5 w-5" />
-              {t("common.call")}
-            </Button>
-          </a>
-        </div>
+        <a href={`tel:${phone.replace(/\s/g, "")}`} className="block" onClick={trackCall}>
+          <Button variant="secondary" className="w-full gap-2">
+            <Phone className="h-5 w-5" />
+            {t("common.call")}
+          </Button>
+        </a>
       </div>
 
       <ChatDialog

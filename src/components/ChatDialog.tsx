@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { X, Send, MessageCircle, Phone, ArrowLeft } from "lucide-react";
+import { Send, MessageSquare, Phone, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -11,7 +11,6 @@ import {
   useMarkMessagesAsRead,
   useMessagesRealtime,
 } from "@/hooks/useChat";
-import { supabase } from "@/integrations/supabase/client";
 
 interface ChatDialogProps {
   open: boolean;
@@ -103,13 +102,6 @@ export const ChatDialog = ({
     }
   };
 
-  const whatsappUrl =
-    otherUserPhone
-      ? `https://wa.me/${otherUserPhone.replace(/\D/g, "")}?text=${encodeURIComponent(
-          t("chat.whatsappFallback", { name: otherUserName })
-        )}`
-      : null;
-
   if (!open) return null;
 
   return (
@@ -135,13 +127,6 @@ export const ChatDialog = ({
         <div className="flex-1 min-w-0">
           <h2 className="text-sm font-semibold truncate">{otherUserName}</h2>
         </div>
-        {whatsappUrl && (
-          <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
-            <Button variant="ghost" size="icon" className="h-9 w-9 text-[#25D366]">
-              <MessageCircle className="h-5 w-5" />
-            </Button>
-          </a>
-        )}
         {otherUserPhone && (
           <a href={`tel:${otherUserPhone.replace(/\s/g, "")}`}>
             <Button variant="ghost" size="icon" className="h-9 w-9">
@@ -155,7 +140,7 @@ export const ChatDialog = ({
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
         {messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground">
-            <MessageCircle className="h-10 w-10 mb-3 opacity-40" />
+            <MessageSquare className="h-10 w-10 mb-3 opacity-40" />
             <p className="text-sm">{t("chat.startConversation")}</p>
             <p className="text-xs mt-1">{t("chat.startConversationHint")}</p>
           </div>
@@ -191,20 +176,17 @@ export const ChatDialog = ({
           );
         })}
 
-        {/* No response hint */}
-        {showNoResponseHint && whatsappUrl && (
+        {/* No response hint — suggest calling */}
+        {showNoResponseHint && otherUserPhone && (
           <div className="flex justify-center my-2">
             <div className="bg-muted/80 border border-border rounded-xl px-4 py-3 text-center max-w-[85%]">
               <p className="text-xs text-muted-foreground mb-2">
                 {t("chat.noResponseHint")}
               </p>
-              <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
-                <Button
-                  size="sm"
-                  className="bg-[#25D366] hover:bg-[#1ebe57] text-white gap-1.5 text-xs"
-                >
-                  <MessageCircle className="h-3.5 w-3.5" />
-                  {t("chat.contactDirectly")}
+              <a href={`tel:${otherUserPhone.replace(/\s/g, "")}`}>
+                <Button size="sm" variant="secondary" className="gap-1.5 text-xs">
+                  <Phone className="h-3.5 w-3.5" />
+                  {t("common.call")}
                 </Button>
               </a>
             </div>
