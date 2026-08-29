@@ -17,19 +17,37 @@ export interface Notification {
   link: string | null;
 }
 
-const mapNotification = (n: Record<string, unknown>): Notification => ({
-  id: n.id as string,
-  title: n.title as string,
-  message: n.message as string,
-  type: n.type as string,
-  reference_type: n.reference_type as string | null,
-  reference_id: n.reference_id as string | null,
-  is_read: n.is_read as boolean,
-  created_at: n.created_at as string,
-  read: n.is_read as boolean,
-  body: n.message as string,
-  link: n.reference_id ? `/${n.reference_type === "order" ? "pedido" : n.reference_type === "appointment" ? "meus-agendamentos" : "pedidos"}/${n.reference_id}` : null,
-});
+const mapNotification = (n: Record<string, unknown>): Notification => {
+  const refType = n.reference_type as string | null;
+  const refId = n.reference_id as string | null;
+  const dbLink = n.link as string | null;
+
+  // Prefer DB-computed link; fall back to building it
+  let computedLink: string | null = dbLink;
+  if (!computedLink && refType && refId) {
+    if (refType === "chat") {
+      computedLink = `/mensagem/${refId}`;
+    } else if (refType === "order") {
+      computedLink = `/pedido/${refId}`;
+    } else if (refType === "appointment") {
+      computedLink = `/meus-agendamentos/${refId}`;
+    }
+  }
+
+  return {
+    id: n.id as string,
+    title: n.title as string,
+    message: (n.message as string) ?? (n.body as string) ?? "",
+    type: n.type as string,
+    reference_type: refType,
+    reference_id: refId,
+    is_read: (n.is_read as boolean) ?? (n.read as boolean) ?? false,
+    created_at: n.created_at as string,
+    read: (n.is_read as boolean) ?? (n.read as boolean) ?? false,
+    body: (n.body as string) ?? (n.message as string) ?? "",
+    link: computedLink,
+  };
+};
 
 export const useNotifications = (userId: string | null) =>
   useQuery({

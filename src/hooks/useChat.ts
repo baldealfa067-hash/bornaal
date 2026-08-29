@@ -86,7 +86,7 @@ export const useSendMessage = () => {
               p_message: `${senderName}: ${truncated}`,
               p_type: "chat_message",
               p_reference_type: "chat",
-              p_reference_id: null,
+              p_reference_id: senderId,
             });
           })
           .catch((err) => console.error("[chat] notification error:", err));
