@@ -17,6 +17,14 @@ export interface Notification {
   link: string | null;
 }
 
+const cleanNotificationMessage = (msg: string): string => {
+  if (msg.includes("supabase.co") || msg.includes("mensagem")) {
+    const sender = msg.split(":")[0];
+    return `${sender}: [imagem/voz]`;
+  }
+  return msg;
+};
+
 const mapNotification = (n: Record<string, unknown>): Notification => {
   const refType = n.reference_type as string | null;
   const refId = n.reference_id as string | null;
@@ -37,14 +45,14 @@ const mapNotification = (n: Record<string, unknown>): Notification => {
   return {
     id: n.id as string,
     title: n.title as string,
-    message: (n.message as string) ?? (n.body as string) ?? "",
+    message: cleanNotificationMessage((n.message as string) ?? (n.body as string) ?? ""),
     type: n.type as string,
     reference_type: refType,
     reference_id: refId,
     is_read: (n.is_read as boolean) ?? (n.read as boolean) ?? false,
     created_at: n.created_at as string,
     read: (n.is_read as boolean) ?? (n.read as boolean) ?? false,
-    body: (n.body as string) ?? (n.message as string) ?? "",
+    body: cleanNotificationMessage((n.body as string) ?? (n.message as string) ?? ""),
     link: computedLink,
   };
 };
