@@ -88,11 +88,18 @@ export const useSendMessage = () => {
           .maybeSingle()
           .then(({ data: senderProfile }) => {
             const senderName = senderProfile?.name || "Alguém";
-            const truncated = content.length > 80 ? content.slice(0, 80) + "..." : content;
+            let preview: string;
+            if (messageType === "voice") {
+              preview = "🎤 Mensagem de voz";
+            } else if (messageType === "image") {
+              preview = "🖼️ Imagem";
+            } else {
+              preview = content.length > 80 ? content.slice(0, 80) + "..." : content;
+            }
             return supabase.rpc("create_notification", {
               p_user_id: receiverId,
               p_title: "Nova mensagem",
-              p_message: `${senderName}: ${truncated}`,
+              p_message: `${senderName}: ${preview}`,
               p_type: "chat_message",
               p_reference_type: "chat",
               p_reference_id: senderId,
