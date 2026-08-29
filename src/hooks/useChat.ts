@@ -60,18 +60,15 @@ export const useSendMessage = () => {
       senderId,
       receiverId,
       content,
-      messageType,
     }: {
       senderId: string | null;
       receiverId: string;
       content: string;
-      messageType?: string;
     }) => {
       const { error: msgError } = await supabase.from("messages").insert({
         sender_id: senderId,
         receiver_id: receiverId,
         content,
-        message_type: messageType ?? "text",
       });
       if (msgError) throw msgError;
 

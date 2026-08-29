@@ -165,7 +165,6 @@ export const ChatDialog = ({
         senderId: myId,
         receiverId: otherUserId,
         content: urlData.publicUrl,
-        messageType: "image",
       });
       setImagePreview(null);
       setSelectedFile(null);
@@ -195,7 +194,6 @@ export const ChatDialog = ({
         senderId: myId,
         receiverId: otherUserId,
         content,
-        messageType: "text",
       });
     } catch (err) {
       console.error("[chat] send error:", err);

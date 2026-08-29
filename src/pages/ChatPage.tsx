@@ -180,7 +180,6 @@ const ChatPage = () => {
         senderId: myId,
         receiverId: userId,
         content: urlData.publicUrl,
-        messageType: "image",
       });
       setImagePreview(null);
       setSelectedFile(null);
@@ -210,7 +209,6 @@ const ChatPage = () => {
         senderId: myId,
         receiverId: userId,
         content,
-        messageType: "text",
       });
     } catch (err) {
       console.error("[chat] send error:", err);
