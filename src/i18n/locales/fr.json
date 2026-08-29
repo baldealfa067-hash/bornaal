@@ -61,7 +61,10 @@
     "typeMessage": "Écrivez votre message...",
     "noResponseHint": "Pas de réponse ? Essayez d'appeler directement",
     "newMessage": "Nouveau message",
-    "messageFrom": "{{name}}: {{content}}"
+    "messageFrom": "{{name}}: {{content}}",
+    "loginRequired": "Connectez-vous pour envoyer des messages.",
+    "errorNoRecipient": "Impossible de identifier le destinataire.",
+    "sendError": "Erreur lors de l'envoi. Réessayez."
   },
   "header": {
     "language": "Langue"

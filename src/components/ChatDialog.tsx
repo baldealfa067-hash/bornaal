@@ -11,6 +11,7 @@ import {
   useMarkMessagesAsRead,
   useMessagesRealtime,
 } from "@/hooks/useChat";
+import { toast } from "sonner";
 
 interface ChatDialogProps {
   open: boolean;
@@ -92,15 +93,29 @@ export const ChatDialog = ({
   }, [messages, user?.id, open]);
 
   const handleSend = async () => {
-    if (!user?.id || !input.trim()) return;
+    if (!user?.id) {
+      toast.error(t("chat.loginRequired"));
+      return;
+    }
+    if (!input.trim()) return;
+    if (!otherUserId) {
+      toast.error(t("chat.errorNoRecipient"));
+      return;
+    }
     const content = input.trim();
     setInput("");
     setShowNoResponseHint(false);
-    await sendMessage.mutateAsync({
-      senderId: user.id,
-      receiverId: otherUserId,
-      content,
-    });
+    try {
+      await sendMessage.mutateAsync({
+        senderId: user.id,
+        receiverId: otherUserId,
+        content,
+      });
+    } catch (err) {
+      console.error("[chat] send error:", err);
+      toast.error(t("chat.sendError"));
+      setInput(content);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {

@@ -61,7 +61,10 @@
     "typeMessage": "Escreva a sua mensagem...",
     "noResponseHint": "Sem resposta? Tente ligar diretamente",
     "newMessage": "Nova mensagem",
-    "messageFrom": "{{name}}: {{content}}"
+    "messageFrom": "{{name}}: {{content}}",
+    "loginRequired": "Faça login para enviar mensagens.",
+    "errorNoRecipient": "Não foi possível identificar o destinatário.",
+    "sendError": "Erro ao enviar mensagem. Tente novamente."
   },
   "header": {
     "language": "Idioma"

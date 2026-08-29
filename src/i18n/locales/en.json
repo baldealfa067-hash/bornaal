@@ -61,7 +61,10 @@
     "typeMessage": "Type your message...",
     "noResponseHint": "No response? Try calling directly",
     "newMessage": "New message",
-    "messageFrom": "{{name}}: {{content}}"
+    "messageFrom": "{{name}}: {{content}}",
+    "loginRequired": "Please log in to send messages.",
+    "errorNoRecipient": "Could not identify the recipient.",
+    "sendError": "Error sending message. Please try again."
   },
   "header": {
     "language": "Language"

@@ -61,7 +61,10 @@
     "typeMessage": "Skrivi to mensajen...",
     "noResponseHint": "Sin risposta? Tenta liga diretu",
     "newMessage": "Mensajen nobu",
-    "messageFrom": "{{name}}: {{content}}"
+    "messageFrom": "{{name}}: {{content}}",
+    "loginRequired": "Fasi login pa tenu mandi mensajen.",
+    "errorNoRecipient": "N na posivel identifika destinatariu.",
+    "sendError": "Ero na mandi mensajen. Tenta di nobu."
   },
   "header": {
     "language": "Lingua"

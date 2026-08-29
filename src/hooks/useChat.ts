@@ -56,22 +56,23 @@ export const useSendMessage = () => {
       });
       if (msgError) throw msgError;
 
-      // Create notification for the receiver
-      const { data: senderProfile } = await supabase
+      // Create notification for the receiver (non-blocking)
+      supabase
         .from("profiles")
         .select("name")
         .eq("user_id", senderId)
-        .maybeSingle();
-
-      const senderName = senderProfile?.name || "Alguém";
-
-      await supabase.from("notifications").insert({
-        user_id: receiverId,
-        type: "chat_message",
-        title: "Nova mensagem",
-        body: `${senderName}: ${content.length > 80 ? content.slice(0, 80) + "..." : content}`,
-        link: null,
-      });
+        .maybeSingle()
+        .then(({ data: senderProfile }) => {
+          const senderName = senderProfile?.name || "Alguém";
+          return supabase.from("notifications").insert({
+            user_id: receiverId,
+            type: "chat_message",
+            title: "Nova mensagem",
+            body: `${senderName}: ${content.length > 80 ? content.slice(0, 80) + "..." : content}`,
+            link: null,
+          });
+        })
+        .catch((err) => console.error("[chat] notification error:", err));
     },
     onSuccess: (_data, variables) => {
       qc.invalidateQueries({
