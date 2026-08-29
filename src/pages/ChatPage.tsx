@@ -8,55 +8,26 @@ import {
   ArrowLeft,
   Check,
   CheckCheck,
-  Image as ImageIcon,
-  MoreVertical,
-  Ban,
-  ShieldAlert,
-  Loader2,
-  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
-import { useAnonymousId } from "@/hooks/useAnonymousId";
 import {
   useMessages,
   useSendMessage,
   useMarkMessagesAsRead,
   useMessagesRealtime,
 } from "@/hooks/useChat";
-import { useIsBlockedByMe, useIsBlockedByThem, useBlockUser } from "@/hooks/useBlockedUsers";
-import { useReportUser } from "@/hooks/useUserReports";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-
-const NO_RESPONSE_TIMEOUT_MS = 15 * 60 * 1000;
-const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
 
 const ChatPage = () => {
   const { userId } = useParams<{ userId: string }>();
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { user, loading: authLoading } = useAuth();
-  const anonymousId = useAnonymousId();
-  const myId = user?.id ?? anonymousId;
-  const isAnon = !user?.id;
+
+  const myId = user?.id ?? "";
 
   const [otherUserName, setOtherUserName] = useState("");
   const [otherUserPhone, setOtherUserPhone] = useState("");
@@ -65,29 +36,13 @@ const ChatPage = () => {
   const [input, setInput] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [showNoResponseHint, setShowNoResponseHint] = useState(false);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [uploading, setUploading] = useState(false);
 
-  const { data: messages = [], isLoading, isError } = useMessages(myId, userId ?? null);
+  const { data: messages = [], isLoading, isError } = useMessages(myId || null, userId ?? null);
   const sendMessage = useSendMessage();
   const markAsRead = useMarkMessagesAsRead();
-  const { data: isBlocked = false } = useIsBlockedByMe(myId, userId ?? null);
-  const { data: isBlockedByThem = false } = useIsBlockedByThem(myId, userId ?? null);
-  const blockUser = useBlockUser();
-  const reportUser = useReportUser();
-
-  const [blockDialogOpen, setBlockDialogOpen] = useState(false);
-  const [reportDialogOpen, setReportDialogOpen] = useState(false);
-  const [reportReason, setReportReason] = useState("");
-  const [reportDescription, setReportDescription] = useState("");
-  const [reporting, setReporting] = useState(false);
 
   useMessagesRealtime(user?.id ?? null, userId ?? null);
 
-  // Fetch other user's profile
   useEffect(() => {
     if (!userId) return;
     supabase
@@ -104,109 +59,43 @@ const ChatPage = () => {
       });
   }, [userId]);
 
-  // Redirect if not logged in and no anon
   useEffect(() => {
-    if (!authLoading && !user && !anonymousId) {
+    if (!authLoading && !user) {
+      toast.error(t("chat.loginRequired"));
       navigate("/login", { replace: true });
     }
-  }, [authLoading, user, anonymousId, navigate]);
+  }, [authLoading, user, navigate]);
 
-  // Mark incoming messages as read
   useEffect(() => {
     if (user?.id && userId) {
       markAsRead.mutate({ userId: user.id, otherUserId: userId });
     }
   }, [user?.id, userId]);
 
-  // Focus input
   useEffect(() => {
     setTimeout(() => textareaRef.current?.focus(), 200);
   }, []);
 
-  // Scroll to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // No response hint
-  useEffect(() => {
-    if (messages.length === 0) {
-      setShowNoResponseHint(false);
-      return;
-    }
-    const lastMsg = messages[messages.length - 1];
-    const isLastFromMe = lastMsg.sender_id === myId;
-    if (!isLastFromMe) {
-      setShowNoResponseHint(false);
-      return;
-    }
-    const lastMsgTime = new Date(lastMsg.created_at).getTime();
-    const now = Date.now();
-    if (now - lastMsgTime >= NO_RESPONSE_TIMEOUT_MS) {
-      setShowNoResponseHint(true);
-    } else {
-      const remaining = NO_RESPONSE_TIMEOUT_MS - (now - lastMsgTime);
-      const timer = setTimeout(() => setShowNoResponseHint(true), remaining);
-      return () => clearTimeout(timer);
-    }
-  }, [messages, myId]);
-
-  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (file.size > MAX_IMAGE_SIZE) {
-      toast.error(t("common.imageTooLarge"));
-      return;
-    }
-    setSelectedFile(file);
-    const reader = new FileReader();
-    reader.onload = (ev) => setImagePreview(ev.target?.result as string);
-    reader.readAsDataURL(file);
-  };
-
-  const uploadAndSendImage = async () => {
-    if (!selectedFile || !userId) return;
-    setUploading(true);
-    try {
-      const fileName = `chat/${Date.now()}-${crypto.randomUUID()}.jpg`;
-      const { error: uploadError } = await supabase.storage
-        .from("portfolio")
-        .upload(fileName, selectedFile, { contentType: selectedFile.type });
-      if (uploadError) throw uploadError;
-      const { data: urlData } = supabase.storage
-        .from("portfolio")
-        .getPublicUrl(fileName);
-      await sendMessage.mutateAsync({
-        senderId: myId,
-        receiverId: userId,
-        content: urlData.publicUrl,
-      });
-      setImagePreview(null);
-      setSelectedFile(null);
-    } catch (err) {
-      console.error("[chat] image upload error:", err);
-      toast.error(t("chat.sendError"));
-    } finally {
-      setUploading(false);
-    }
-  };
-
   const handleSend = async () => {
-    if (selectedFile) {
-      await uploadAndSendImage();
-      return;
-    }
     if (!input.trim()) return;
     if (!userId) {
       toast.error(t("chat.errorNoRecipient"));
       return;
     }
+    if (!user?.id) {
+      toast.error(t("chat.loginRequired"));
+      navigate("/login", { replace: true });
+      return;
+    }
     const content = input.trim();
     setInput("");
-    setShowNoResponseHint(false);
     try {
       await sendMessage.mutateAsync({
-        senderId: myId,
+        senderId: user.id,
         receiverId: userId,
         content,
       });
@@ -224,39 +113,6 @@ const ChatPage = () => {
     }
   };
 
-  const handleBlock = async () => {
-    if (!user?.id || !userId) return;
-    try {
-      await blockUser.mutateAsync({ blockerId: user.id, blockedId: userId });
-      toast.success(t("chat.userBlocked"));
-      setBlockDialogOpen(false);
-      navigate(-1);
-    } catch {
-      toast.error(t("chat.blockError"));
-    }
-  };
-
-  const handleReport = async () => {
-    if (!user?.id || !userId || !reportReason.trim()) return;
-    setReporting(true);
-    try {
-      await reportUser.mutateAsync({
-        reporterId: user.id,
-        reportedId: userId,
-        reason: reportReason.trim(),
-        description: reportDescription.trim() || undefined,
-      });
-      toast.success(t("chat.reportSubmitted"));
-      setReportDialogOpen(false);
-      setReportReason("");
-      setReportDescription("");
-    } catch {
-      toast.error(t("chat.reportError"));
-    } finally {
-      setReporting(false);
-    }
-  };
-
   const groupedMessages: { date: string; messages: typeof messages }[] = [];
   let currentDate = "";
   for (const msg of messages) {
@@ -267,6 +123,16 @@ const ChatPage = () => {
     }
     groupedMessages[groupedMessages.length - 1].messages.push(msg);
   }
+
+  if (authLoading) {
+    return (
+      <div style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", background: "var(--background)" }}>
+        <p style={{ fontSize: 14, color: "var(--muted-foreground)" }}>{t("common.loading")}</p>
+      </div>
+    );
+  }
+
+  if (!user) return null;
 
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", flexDirection: "column", background: "var(--background)" }}>
@@ -297,31 +163,6 @@ const ChatPage = () => {
               <Phone style={{ width: 20, height: 20 }} />
             </Button>
           </a>
-        )}
-        {!isAnon && user?.id && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" style={{ width: 36, height: 36 }}>
-                <MoreVertical style={{ width: 20, height: 20 }} />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem
-                onClick={() => setBlockDialogOpen(true)}
-                className="text-destructive gap-2"
-              >
-                <Ban className="h-4 w-4" />
-                {isBlocked ? t("chat.unblock") : t("chat.block")}
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => setReportDialogOpen(true)}
-                className="gap-2"
-              >
-                <ShieldAlert className="h-4 w-4" />
-                {t("chat.reportUser")}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
         )}
       </div>
 
@@ -373,11 +214,6 @@ const ChatPage = () => {
                 (nextMsg &&
                   new Date(nextMsg.created_at).getTime() - new Date(msg.created_at).getTime() > 5 * 60 * 1000);
 
-              const isImage =
-                (msg as Record<string, unknown>).message_type === "image" ||
-                msg.content.match(/\.(jpg|jpeg|png|gif|webp)/i) ||
-                msg.content.includes("/portfolio/");
-
               return (
                 <div
                   key={msg.id}
@@ -403,16 +239,7 @@ const ChatPage = () => {
                       wordBreak: "break-word",
                     }}
                   >
-                    {isImage ? (
-                      <img
-                        src={msg.content}
-                        alt={t("chat.imageMessage")}
-                        style={{ borderRadius: 8, maxWidth: "100%", maxHeight: 256, objectFit: "cover", cursor: "pointer" }}
-                        onClick={() => window.open(msg.content, "_blank")}
-                      />
-                    ) : (
-                      <p style={{ margin: 0, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{msg.content}</p>
-                    )}
+                    <p style={{ margin: 0, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{msg.content}</p>
                     {showTime && (
                       <div
                         style={{
@@ -434,7 +261,7 @@ const ChatPage = () => {
                             minute: "2-digit",
                           })}
                         </span>
-                        {isMine && !isAnon && (
+                        {isMine && (
                           <span style={{ color: "hsl(var(--primary-foreground) / 0.6)" }}>
                             {msg.read ? (
                               <CheckCheck style={{ width: 12, height: 12 }} />
@@ -452,127 +279,31 @@ const ChatPage = () => {
           </div>
         ))}
 
-        {showNoResponseHint && otherUserPhone && (
-          <div style={{ display: "flex", justifyContent: "center", margin: "12px 0" }}>
-            <div style={{ background: "hsl(var(--muted) / 0.8)", border: "1px solid var(--border)", borderRadius: 12, padding: "12px 16px", textAlign: "center", maxWidth: "85%" }}>
-              <p style={{ fontSize: 12, color: "var(--muted-foreground)", marginBottom: 8 }}>
-                {t("chat.noResponseHint")}
-              </p>
-              <a href={`tel:${otherUserPhone.replace(/\s/g, "")}`}>
-                <Button size="sm" variant="secondary" style={{ gap: 6, fontSize: 12 }}>
-                  <Phone style={{ width: 14, height: 14 }} />
-                  {t("common.call")}
-                </Button>
-              </a>
-            </div>
-          </div>
-        )}
-
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Image preview */}
-      {imagePreview && (
-        <div style={{ borderTop: "1px solid var(--border)", background: "var(--card)", padding: "8px 12px", flexShrink: 0 }}>
-          <div style={{ position: "relative", display: "inline-block" }}>
-            <img src={imagePreview} alt="Preview" style={{ height: 80, borderRadius: 8, objectFit: "cover" }} />
-            <button
-              onClick={() => { setImagePreview(null); setSelectedFile(null); }}
-              style={{ position: "absolute", top: -6, right: -6, background: "hsl(var(--destructive))", color: "white", borderRadius: "50%", padding: 2, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
-            >
-              <X style={{ width: 12, height: 12 }} />
-            </button>
-          </div>
-        </div>
-      )}
-
       {/* Input */}
       <div style={{ borderTop: "1px solid var(--border)", background: "var(--card)", padding: "10px 12px", flexShrink: 0, paddingBottom: "max(10px, env(safe-area-inset-bottom))" }}>
-        {isBlockedByThem && (
-          <p style={{ fontSize: 12, color: "hsl(var(--destructive))", textAlign: "center", marginBottom: 8 }}>
-            {t("chat.blockedByThem")}
-          </p>
-        )}
-        {isAnon && !isBlockedByThem && (
-          <p style={{ fontSize: 10, color: "var(--muted-foreground)", textAlign: "center", marginBottom: 8 }}>
-            {t("chat.anonymousHint")}
-          </p>
-        )}
         <div style={{ display: "flex", gap: 8, alignItems: "flex-end" }}>
-          <input ref={fileInputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleImageSelect} />
-          <Button size="icon" variant="ghost" onClick={() => fileInputRef.current?.click()} disabled={uploading || isBlockedByThem} style={{ width: 40, height: 40, flexShrink: 0 }}>
-            <ImageIcon style={{ width: 20, height: 20 }} />
-          </Button>
           <textarea
             ref={textareaRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder={isBlockedByThem ? t("chat.cannotSend") : t("chat.typeMessage")}
-            disabled={uploading || isBlockedByThem}
+            placeholder={t("chat.typeMessage")}
             rows={1}
             style={{ flex: 1, minHeight: 40, maxHeight: 120, padding: "8px 12px", fontSize: 14, lineHeight: 1.4, borderRadius: 12, border: "1px solid var(--input)", background: "var(--background)", color: "var(--foreground)", resize: "none", outline: "none", fontFamily: "inherit" }}
           />
           <Button
             size="icon"
             onClick={handleSend}
-            disabled={(!input.trim() && !selectedFile) || sendMessage.isPending || uploading || isBlockedByThem}
+            disabled={!input.trim() || sendMessage.isPending}
             style={{ width: 40, height: 40, flexShrink: 0, borderRadius: 12 }}
           >
-            {uploading ? <Loader2 style={{ width: 16, height: 16 }} className="animate-spin" /> : <Send style={{ width: 16, height: 16 }} />}
+            <Send style={{ width: 16, height: 16 }} />
           </Button>
         </div>
       </div>
-
-      {/* Block Dialog */}
-      <Dialog open={blockDialogOpen} onOpenChange={setBlockDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{t("chat.blockTitle")}</DialogTitle>
-            <DialogDescription>{t("chat.blockDesc", { name: otherUserName })}</DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setBlockDialogOpen(false)}>{t("common.cancel")}</Button>
-            <Button variant="destructive" onClick={handleBlock} disabled={blockUser.isPending}>
-              {blockUser.isPending ? t("common.saving") : t("chat.block")}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Report Dialog */}
-      <Dialog open={reportDialogOpen} onOpenChange={setReportDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{t("chat.reportTitle")}</DialogTitle>
-            <DialogDescription>{t("chat.reportDesc", { name: otherUserName })}</DialogDescription>
-          </DialogHeader>
-          <div style={{ display: "grid", gap: 16, padding: "8px 0" }}>
-            <div style={{ display: "grid", gap: 8 }}>
-              <Label>{t("chat.reportReason")}</Label>
-              <select value={reportReason} onChange={(e) => setReportReason(e.target.value)} style={{ border: "1px solid var(--input)", borderRadius: 6, padding: "8px 12px", fontSize: 14, background: "var(--background)" }}>
-                <option value="">{t("chat.selectReason")}</option>
-                <option value="spam">{t("chat.reportReasons.spam")}</option>
-                <option value="harassment">{t("chat.reportReasons.harassment")}</option>
-                <option value="inappropriate">{t("chat.reportReasons.inappropriate")}</option>
-                <option value="scam">{t("chat.reportReasons.scam")}</option>
-                <option value="other">{t("chat.reportReasons.other")}</option>
-              </select>
-            </div>
-            <div style={{ display: "grid", gap: 8 }}>
-              <Label>{t("chat.reportDetails")}</Label>
-              <Textarea placeholder={t("chat.reportDetailsPlaceholder")} value={reportDescription} onChange={(e) => setReportDescription(e.target.value)} rows={3} />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setReportDialogOpen(false)}>{t("common.cancel")}</Button>
-            <Button onClick={handleReport} disabled={!reportReason || reporting} className="gap-2">
-              <ShieldAlert className="h-4 w-4" />
-              {reporting ? t("common.submitting") : t("chat.reportUser")}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };

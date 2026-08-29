@@ -6,7 +6,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useConversations, type ConversationPreview } from "@/hooks/useChat";
-import { useBlockedUserIds } from "@/hooks/useBlockedUsers";
 import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from "react-i18next";
 
@@ -22,18 +21,12 @@ const ConversationsPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { data: conversations = [], isLoading } = useConversations(user?.id ?? null);
-  const { data: blockedIds = new Set<string>() } = useBlockedUserIds(user?.id ?? null);
   const [profiles, setProfiles] = useState<Map<string, ProfileInfo>>(new Map());
   const fetchIdsRef = useRef<string>("");
 
-  // Filter out blocked users from conversations
-  const visibleConversations = conversations.filter(
-    (c) => !blockedIds.has(c.otherUserId)
-  );
-
   useEffect(() => {
-    if (!visibleConversations.length) return;
-    const ids = visibleConversations.map((c) => c.otherUserId).sort().join(",");
+    if (!conversations.length) return;
+    const ids = conversations.map((c) => c.otherUserId).sort().join(",");
     // Prevent refetching same IDs
     if (ids === fetchIdsRef.current) return;
     fetchIdsRef.current = ids;
@@ -42,7 +35,7 @@ const ConversationsPage = () => {
       const { data } = await supabase
         .from("profiles")
         .select("user_id, name, photo_url, profile_type")
-        .in("user_id", visibleConversations.map((c) => c.otherUserId));
+        .in("user_id", conversations.map((c) => c.otherUserId));
       if (data) {
         const map = new Map<string, ProfileInfo>();
         for (const p of data) {
@@ -52,7 +45,7 @@ const ConversationsPage = () => {
       }
     };
     fetchProfiles();
-  }, [visibleConversations]);
+  }, [conversations]);
 
   if (!user) {
     return (
@@ -83,7 +76,7 @@ const ConversationsPage = () => {
         </div>
       )}
 
-      {!isLoading && visibleConversations.length === 0 && (
+      {!isLoading && conversations.length === 0 && (
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
             <MessageSquare className="h-8 w-8 text-primary/50" />
@@ -93,9 +86,9 @@ const ConversationsPage = () => {
         </div>
       )}
 
-      {!isLoading && visibleConversations.length > 0 && (
+      {!isLoading && conversations.length > 0 && (
         <div className="divide-y divide-border">
-          {visibleConversations.map((conv) => {
+          {conversations.map((conv) => {
             const profile = profiles.get(conv.otherUserId);
             const name = profile?.name ?? conv.otherUserId.slice(0, 8);
             const photoUrl = profile?.photo_url ?? null;

@@ -9,8 +9,6 @@ export interface Message {
   content: string;
   read: boolean;
   created_at: string;
-  message_type?: string;
-  image_url?: string;
 }
 
 export interface ConversationPreview {
