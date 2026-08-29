@@ -64,7 +64,8 @@
     "messageFrom": "{{name}}: {{content}}",
     "loginRequired": "Faça login para enviar mensagens.",
     "errorNoRecipient": "Não foi possível identificar o destinatário.",
-    "sendError": "Erro ao enviar mensagem. Tente novamente."
+    "sendError": "Erro ao enviar mensagem. Tente novamente.",
+    "anonymousHint": "A enviar como anónimo. As suas mensagens não ficam associadas a uma conta."
   },
   "header": {
     "language": "Idioma"

@@ -64,7 +64,8 @@
     "messageFrom": "{{name}}: {{content}}",
     "loginRequired": "Connectez-vous pour envoyer des messages.",
     "errorNoRecipient": "Impossible de identifier le destinataire.",
-    "sendError": "Erreur lors de l'envoi. Réessayez."
+    "sendError": "Erreur lors de l'envoi. Réessayez.",
+    "anonymousHint": "Envoi en tant qu'anonyme. Vos messages ne sont pas associés à un compte."
   },
   "header": {
     "language": "Langue"

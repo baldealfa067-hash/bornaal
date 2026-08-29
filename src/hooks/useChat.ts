@@ -23,13 +23,24 @@ export const useMessages = (userId: string | null, otherUserId: string | null) =
     queryKey: ["messages", userId, otherUserId],
     queryFn: async (): Promise<Message[]> => {
       if (!userId || !otherUserId) return [];
-      const { data, error } = await supabase
+      const isAnon = userId.startsWith("anon-");
+      let query = supabase
         .from("messages")
         .select("*")
-        .or(
-          `and(sender_id.eq.${userId},receiver_id.eq.${otherUserId}),and(sender_id.eq.${otherUserId},receiver_id.eq.${userId})`
-        )
         .order("created_at", { ascending: true });
+
+      if (isAnon) {
+        // Anonymous user: fetch messages where sender_id matches their anon ID
+        query = query.or(
+          `sender_id.eq.${userId},receiver_id.eq.${otherUserId}`
+        );
+      } else {
+        query = query.or(
+          `and(sender_id.eq.${userId},receiver_id.eq.${otherUserId}),and(sender_id.eq.${otherUserId},receiver_id.eq.${userId})`
+        );
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return (data ?? []) as Message[];
     },
@@ -45,7 +56,7 @@ export const useSendMessage = () => {
       receiverId,
       content,
     }: {
-      senderId: string;
+      senderId: string | null;
       receiverId: string;
       content: string;
     }) => {
@@ -56,31 +67,35 @@ export const useSendMessage = () => {
       });
       if (msgError) throw msgError;
 
-      // Create notification for the receiver (non-blocking)
-      supabase
-        .from("profiles")
-        .select("name")
-        .eq("user_id", senderId)
-        .maybeSingle()
-        .then(({ data: senderProfile }) => {
-          const senderName = senderProfile?.name || "Alguém";
-          return supabase.from("notifications").insert({
-            user_id: receiverId,
-            type: "chat_message",
-            title: "Nova mensagem",
-            body: `${senderName}: ${content.length > 80 ? content.slice(0, 80) + "..." : content}`,
-            link: null,
-          });
-        })
-        .catch((err) => console.error("[chat] notification error:", err));
+      // Create notification for the receiver (non-blocking, only for authenticated senders)
+      if (senderId && !senderId.startsWith("anon-")) {
+        supabase
+          .from("profiles")
+          .select("name")
+          .eq("user_id", senderId)
+          .maybeSingle()
+          .then(({ data: senderProfile }) => {
+            const senderName = senderProfile?.name || "Alguém";
+            return supabase.from("notifications").insert({
+              user_id: receiverId,
+              type: "chat_message",
+              title: "Nova mensagem",
+              body: `${senderName}: ${content.length > 80 ? content.slice(0, 80) + "..." : content}`,
+              link: null,
+            });
+          })
+          .catch((err) => console.error("[chat] notification error:", err));
+      }
     },
     onSuccess: (_data, variables) => {
-      qc.invalidateQueries({
-        queryKey: ["messages", variables.senderId, variables.receiverId],
-      });
-      qc.invalidateQueries({
-        queryKey: ["messages", variables.receiverId, variables.senderId],
-      });
+      if (variables.senderId) {
+        qc.invalidateQueries({
+          queryKey: ["messages", variables.senderId, variables.receiverId],
+        });
+        qc.invalidateQueries({
+          queryKey: ["messages", variables.receiverId, variables.senderId],
+        });
+      }
       qc.invalidateQueries({ queryKey: ["unread-messages"] });
       qc.invalidateQueries({ queryKey: ["conversations"] });
     },

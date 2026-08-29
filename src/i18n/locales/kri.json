@@ -64,7 +64,8 @@
     "messageFrom": "{{name}}: {{content}}",
     "loginRequired": "Fasi login pa tenu mandi mensajen.",
     "errorNoRecipient": "N na posivel identifika destinatariu.",
-    "sendError": "Ero na mandi mensajen. Tenta di nobu."
+    "sendError": "Ero na mandi mensajen. Tenta di nobu.",
+    "anonymousHint": "Ta mandi komu anónimu. To mensajen na ta liga na nenhuma konta."
   },
   "header": {
     "language": "Lingua"

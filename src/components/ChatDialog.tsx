@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
+import { useAnonymousId } from "@/hooks/useAnonymousId";
 import {
   useMessages,
   useSendMessage,
@@ -22,7 +23,7 @@ interface ChatDialogProps {
   otherUserPhoto?: string | null;
 }
 
-const NO_RESPONSE_TIMEOUT_MS = 15 * 60 * 1000; // 15 minutes
+const NO_RESPONSE_TIMEOUT_MS = 15 * 60 * 1000;
 
 export const ChatDialog = ({
   open,
@@ -34,18 +35,22 @@ export const ChatDialog = ({
 }: ChatDialogProps) => {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const anonymousId = useAnonymousId();
+  const myId = user?.id ?? anonymousId;
+  const isAnon = !user?.id;
+
   const [input, setInput] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const [showNoResponseHint, setShowNoResponseHint] = useState(false);
 
-  const { data: messages = [], isLoading } = useMessages(user?.id ?? null, otherUserId);
+  const { data: messages = [], isLoading } = useMessages(myId, otherUserId);
   const sendMessage = useSendMessage();
   const markAsRead = useMarkMessagesAsRead();
 
   useMessagesRealtime(user?.id ?? null, otherUserId);
 
-  // Mark incoming messages as read when dialog opens
+  // Mark incoming messages as read when dialog opens (only for authenticated)
   useEffect(() => {
     if (open && user?.id && otherUserId) {
       markAsRead.mutate({ userId: user.id, otherUserId });
@@ -74,7 +79,7 @@ export const ChatDialog = ({
     }
 
     const lastMsg = messages[messages.length - 1];
-    const isLastFromMe = lastMsg.sender_id === user?.id;
+    const isLastFromMe = lastMsg.sender_id === myId;
 
     if (!isLastFromMe) {
       setShowNoResponseHint(false);
@@ -90,13 +95,9 @@ export const ChatDialog = ({
       const timer = setTimeout(() => setShowNoResponseHint(true), remaining);
       return () => clearTimeout(timer);
     }
-  }, [messages, user?.id, open]);
+  }, [messages, myId, open]);
 
   const handleSend = async () => {
-    if (!user?.id) {
-      toast.error(t("chat.loginRequired"));
-      return;
-    }
     if (!input.trim()) return;
     if (!otherUserId) {
       toast.error(t("chat.errorNoRecipient"));
@@ -107,7 +108,7 @@ export const ChatDialog = ({
     setShowNoResponseHint(false);
     try {
       await sendMessage.mutateAsync({
-        senderId: user.id,
+        senderId: myId,
         receiverId: otherUserId,
         content,
       });
@@ -191,7 +192,6 @@ export const ChatDialog = ({
 
         {groupedMessages.map((group) => (
           <div key={group.date}>
-            {/* Date separator */}
             <div className="flex items-center justify-center my-3">
               <span className="text-[11px] text-muted-foreground bg-background px-3 py-1 rounded-full border">
                 {group.date}
@@ -199,7 +199,7 @@ export const ChatDialog = ({
             </div>
 
             {group.messages.map((msg, idx) => {
-              const isMine = msg.sender_id === user?.id;
+              const isMine = msg.sender_id === myId;
               const nextMsg = group.messages[idx + 1];
               const isLastInGroup =
                 !nextMsg || nextMsg.sender_id !== msg.sender_id;
@@ -247,7 +247,7 @@ export const ChatDialog = ({
                             minute: "2-digit",
                           })}
                         </span>
-                        {isMine && (
+                        {isMine && !isAnon && (
                           <span className="text-primary-foreground/60">
                             {msg.read ? (
                               <CheckCheck className="h-3 w-3" />
@@ -265,7 +265,7 @@ export const ChatDialog = ({
           </div>
         ))}
 
-        {/* No response hint — suggest calling */}
+        {/* No response hint */}
         {showNoResponseHint && otherUserPhone && (
           <div className="flex justify-center my-3">
             <div className="bg-muted/80 border border-border rounded-xl px-4 py-3 text-center max-w-[85%]">
@@ -285,8 +285,13 @@ export const ChatDialog = ({
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input */}
+      {/* Input — always visible */}
       <div className="border-t bg-card px-3 py-3 shrink-0">
+        {isAnon && (
+          <p className="text-[10px] text-muted-foreground text-center mb-2">
+            {t("chat.anonymousHint")}
+          </p>
+        )}
         <div className="flex gap-2 items-end">
           <Input
             ref={inputRef}

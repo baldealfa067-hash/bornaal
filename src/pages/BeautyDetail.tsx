@@ -336,7 +336,7 @@ const BeautyDetail = () => {
         {!isOwnProfile && (
           <Button
             className="w-full gap-2 h-12 text-base font-semibold relative"
-            onClick={() => user ? setChatOpen(true) : window.location.href = "/login"}
+            onClick={() => setChatOpen(true)}
           >
             <MessageSquare className="h-5 w-5" />
             {t("common.message")}

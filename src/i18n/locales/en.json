@@ -64,7 +64,8 @@
     "messageFrom": "{{name}}: {{content}}",
     "loginRequired": "Please log in to send messages.",
     "errorNoRecipient": "Could not identify the recipient.",
-    "sendError": "Error sending message. Please try again."
+    "sendError": "Error sending message. Please try again.",
+    "anonymousHint": "Sending as anonymous. Your messages are not linked to an account."
   },
   "header": {
     "language": "Language"
