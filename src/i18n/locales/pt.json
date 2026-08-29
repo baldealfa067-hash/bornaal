@@ -54,7 +54,9 @@
     "verifiedBadge": "Verificado",
     "negotiablePrice": "Negociável",
     "toCombinePrice": "A combinar",
-    "message": "Mensagem"
+    "message": "Mensagem",
+    "view": "Ver",
+    "copy": "Copiar"
   },
   "chat": {
     "startConversation": "Inicie a conversa",
@@ -465,7 +467,7 @@
     "orderNotes": "Observações (opcional)",
     "orderNotesPlaceholder": "Ex: Sem cebola, pouco picante...",
     "total": "Total",
-    "enterName": "Indique o seu nome.",
+    "enterName": "Indique o seu nome",
     "enterPhone": "Indique o seu telefone.",
     "whatsapp": "WhatsApp",
     "call": "Ligar",
@@ -496,7 +498,6 @@
     "reviewSent": "Avaliação enviada com sucesso e será exibida após validação.",
     "reviewError": "Erro ao enviar avaliação",
     "selectStars": "Selecione uma avaliação em estrelas",
-    "enterName": "Indique o seu nome",
     "anonymousReviewNote": "Sem conta? A sua avaliação é anónima e será publicada após aprovação."
   },
   "providerDetail": {
@@ -965,9 +966,7 @@
     "home": "Início"
   },
   "beautyDashboard": {
-    "noProfile": "Ainda não criaste o teu perfil de beleza & estética.",
-    "createProfile": "Criar perfil de beleza & estética",
-    "configure": "Configurar negócio"
+    "appointmentsManagement": "Gestão de Agendamentos"
   },
   "beautyEdit": {
     "myBusiness": "Meu negócio",
@@ -1076,9 +1075,6 @@
     "noAppointments": "Sem agendamentos nesta secção.",
     "customer": "Cliente",
     "notes": "Observações"
-  },
-  "beautyDashboard": {
-    "appointmentsManagement": "Gestão de Agendamentos"
   },
   "driverDashboard": {
     "registerTitle": "Torne-se Motorista",

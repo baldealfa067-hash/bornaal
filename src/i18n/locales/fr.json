@@ -54,7 +54,9 @@
     "verifiedBadge": "Vérifié",
     "negotiablePrice": "Négociable",
     "toCombinePrice": "À convenir",
-    "message": "Message"
+    "message": "Message",
+    "view": "Voir",
+    "copy": "Copier"
   },
   "chat": {
     "startConversation": "Commencer la conversation",
@@ -456,7 +458,7 @@
     "sendOrder": "Envoyer la commande via WhatsApp",
     "placeOrder": "Passer commande",
     "registering": "Enregistrement...",
-    "orderHint": "La commande sera envoyée directement au restaurant.",
+    "orderHint": "La commande s'ouvre dans le WhatsApp de l'établissement, sans paiement dans l'app.",
     "confirmOrder": "Confirmer la commande",
     "confirmOrderDesc": "Vérifiez les détails de votre commande avant d'envoyer.",
     "customerName": "Votre nom",
@@ -465,10 +467,8 @@
     "orderNotes": "Remarques (facultatif)",
     "orderNotesPlaceholder": "Ex: Sans oignon, peu épicé...",
     "total": "Total",
-    "enterName": "Veuillez indiquer votre nom.",
+    "enterName": "Veuillez indiquer votre nom",
     "enterPhone": "Veuillez indiquer votre téléphone.",
-    "registering": "Enregistrement...",
-    "orderHint": "La commande s'ouvre dans le WhatsApp de l'établissement, sans paiement dans l'app.",
     "whatsapp": "WhatsApp",
     "call": "Appeler",
     "reviewsCount": "Avis ({{count}})",
@@ -498,7 +498,6 @@
     "reviewSent": "Avis envoyé avec succès, il sera affiché après validation.",
     "reviewError": "Erreur lors de l'envoi de l'avis",
     "selectStars": "Veuillez choisir une note",
-    "enterName": "Veuillez indiquer votre nom",
     "anonymousReviewNote": "Pas de compte ? Votre avis est anonyme et sera publié après validation."
   },
   "providerDetail": {
@@ -967,9 +966,7 @@
     "home": "Accueil"
   },
   "beautyDashboard": {
-    "noProfile": "Vous n'avez pas encore créé votre profil beauté & esthétique.",
-    "createProfile": "Créer un profil beauté & esthétique",
-    "configure": "Configurer le commerce"
+    "appointmentsManagement": "Gestion des réservations"
   },
   "beautyEdit": {
     "myBusiness": "Mon commerce",
@@ -1078,9 +1075,6 @@
     "noAppointments": "Pas de réservations dans cette section.",
     "customer": "Client",
     "notes": "Remarques"
-  },
-  "beautyDashboard": {
-    "appointmentsManagement": "Gestion des réservations"
   },
   "driverDashboard": {
     "registerTitle": "Devenir Livreur",

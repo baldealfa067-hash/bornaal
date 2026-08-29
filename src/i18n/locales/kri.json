@@ -54,7 +54,9 @@
     "verifiedBadge": "Kofirmadu",
     "negotiablePrice": "Negoasiavel",
     "toCombinePrice": "Pa kombina",
-    "message": "Mensajen"
+    "message": "Mensajen",
+    "view": "Olha",
+    "copy": "Kopia"
   },
   "chat": {
     "startConversation": "Kumensa koversa",

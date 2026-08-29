@@ -35,13 +35,13 @@ import { useTranslation } from "react-i18next";
 import { formatCFA } from "@/lib/format";
 
 const STATUS_TABS = [
-  { value: "novo", label: "orderStatus.new", icon: Package, color: "text-blue-600" },
-  { value: "confirmado", label: "orderStatus.confirmed", icon: CheckCircle2, color: "text-green-600" },
-  { value: "em_preparacao", label: "orderStatus.preparing", icon: ChefHat, color: "text-yellow-600" },
-  { value: "pronto", label: "orderStatus.ready", icon: UtensilsCrossed, color: "text-green-600" },
-  { value: "saiu_para_entrega", label: "orderStatus.outForDelivery", icon: Truck, color: "text-blue-600" },
-  { value: "entregue", label: "orderStatus.delivered", icon: CheckCircle2, color: "text-green-600" },
-  { value: "cancelado", label: "orderStatus.cancelled", icon: XCircle, color: "text-red-600" },
+  { value: "novo", label: "orderStatus.novo", icon: Package, color: "text-blue-600" },
+  { value: "confirmado", label: "orderStatus.confirmado", icon: CheckCircle2, color: "text-green-600" },
+  { value: "em_preparacao", label: "orderStatus.em_preparacao", icon: ChefHat, color: "text-yellow-600" },
+  { value: "pronto", label: "orderStatus.pronto", icon: UtensilsCrossed, color: "text-green-600" },
+  { value: "saiu_para_entrega", label: "orderStatus.saiu_para_entrega", icon: Truck, color: "text-blue-600" },
+  { value: "entregue", label: "orderStatus.entregue", icon: CheckCircle2, color: "text-green-600" },
+  { value: "cancelado", label: "orderStatus.cancelado", icon: XCircle, color: "text-red-600" },
 ];
 
 const NEXT_STATUS: Record<string, string[]> = {
@@ -161,7 +161,7 @@ const OrderManagement = ({ businessId }: OrderManagementProps) => {
   return (
     <div>
       <Tabs defaultValue="novo">
-        <TabsList className="w-full justify-start overflow-x-auto h-auto p-1 bg-muted/50">
+        <TabsList className="w-full grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-7 h-auto p-1 gap-1 bg-muted/50">
           {STATUS_TABS.map((tab) => {
             const count = getOrdersByStatus(tab.value).length;
             const Icon = tab.icon;
@@ -169,12 +169,12 @@ const OrderManagement = ({ businessId }: OrderManagementProps) => {
               <TabsTrigger
                 key={tab.value}
                 value={tab.value}
-                className="gap-1.5 text-xs data-[state=active]:bg-background"
+                className="flex flex-col items-center gap-0.5 text-[11px] min-h-14 px-1 py-2 data-[state=active]:bg-background data-[state=active]:shadow-sm"
               >
-                <Icon className={`h-3.5 w-3.5 ${tab.color}`} />
-                {t(tab.label)}
+                <Icon className={`h-4 w-4 ${tab.color}`} />
+                <span className="leading-tight text-center">{t(tab.label)}</span>
                 {count > 0 && (
-                  <Badge className="ml-1 h-4 min-w-[16px] text-[9px] px-1">{count}</Badge>
+                  <Badge className="h-4 min-w-[16px] text-[9px] px-1 mt-0.5">({count})</Badge>
                 )}
               </TabsTrigger>
             );

@@ -54,7 +54,9 @@
     "verifiedBadge": "Verified",
     "negotiablePrice": "Negotiable",
     "toCombinePrice": "To be agreed",
-    "message": "Message"
+    "message": "Message",
+    "view": "View",
+    "copy": "Copy"
   },
   "chat": {
     "startConversation": "Start the conversation",
@@ -465,7 +467,7 @@
     "orderNotes": "Notes (optional)",
     "orderNotesPlaceholder": "E.g. No onions, mild spice...",
     "total": "Total",
-    "enterName": "Please enter your name.",
+    "enterName": "Please enter your name",
     "enterPhone": "Please enter your phone.",
     "whatsapp": "WhatsApp",
     "call": "Call",
@@ -496,7 +498,6 @@
     "reviewSent": "Review sent successfully and will be shown after validation.",
     "reviewError": "Error sending review",
     "selectStars": "Please select a star rating",
-    "enterName": "Please enter your name",
     "anonymousReviewNote": "No account? Your review is anonymous and will be published after approval."
   },
   "providerDetail": {
@@ -965,9 +966,7 @@
     "home": "Home"
   },
   "beautyDashboard": {
-    "noProfile": "You haven't created your beauty & aesthetics profile yet.",
-    "createProfile": "Create beauty & aesthetics profile",
-    "configure": "Configure business"
+    "appointmentsManagement": "Appointment Management"
   },
   "beautyEdit": {
     "myBusiness": "My business",
@@ -1076,9 +1075,6 @@
     "noAppointments": "No appointments in this section.",
     "customer": "Customer",
     "notes": "Notes"
-  },
-  "beautyDashboard": {
-    "appointmentsManagement": "Appointment Management"
   },
   "driverDashboard": {
     "registerTitle": "Become a Driver",
