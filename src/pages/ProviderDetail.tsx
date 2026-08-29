@@ -21,6 +21,8 @@ import i18n from "@/i18n";
 import { useQueryClient } from "@tanstack/react-query";
 import { sanitizeName, sanitizeComment, sanitizeReason, sanitizeDescription, sanitizeContact } from "@/lib/sanitize";
 import { useUnreadFromUser } from "@/hooks/useChat";
+import { useRequireClientAuth } from "@/hooks/useRequireClientAuth";
+import { ClientSignupDialog } from "@/components/ClientSignupDialog";
 
 type ReportReasonKey = "notDone" | "charge" | "behaviour" | "fake" | "other";
 const REPORT_REASONS: { key: ReportReasonKey; labelKey: string }[] = [
@@ -54,6 +56,7 @@ const ProviderDetail = () => {
   const providerUserId = (provider as { user_id?: string | null } | null)?.user_id ?? null;
   const isOwnProfile = user?.id === providerUserId;
   const { data: unreadCount = 0 } = useUnreadFromUser(user?.id ?? null, providerUserId);
+  const { requireAuth, open: signupOpen, setOpen: setSignupOpen, onSignupSuccess } = useRequireClientAuth();
 
   useEffect(() => {
     if (!id) return;
@@ -262,7 +265,7 @@ const ProviderDetail = () => {
         {!isOwnProfile && (
           <Button
             className="w-full gap-2 h-12 text-base font-semibold relative"
-            onClick={() => providerUserId && navigate(`/mensagem/${providerUserId}`)}
+            onClick={() => requireAuth(() => providerUserId && navigate(`/mensagem/${providerUserId}`))}
           >
             <MessageSquare className="h-5 w-5" />
             {t("common.message")}
@@ -412,6 +415,8 @@ const ProviderDetail = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      <ClientSignupDialog open={signupOpen} onOpenChange={setSignupOpen} onSuccess={onSignupSuccess} />
     </div>
   );
 };

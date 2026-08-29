@@ -23,6 +23,8 @@ import { sanitizeName, sanitizeComment, sanitizeReason, sanitizeDescription, san
 import { useBeautyCategories } from "@/hooks/useProviders";
 import { translateCategoryName } from "@/lib/categoryI18n";
 import { useUnreadFromUser } from "@/hooks/useChat";
+import { useRequireClientAuth } from "@/hooks/useRequireClientAuth";
+import { ClientSignupDialog } from "@/components/ClientSignupDialog";
 import { useCreateAppointment } from "@/hooks/useAppointments";
 import { Calendar } from "@/components/ui/calendar";
 
@@ -73,6 +75,7 @@ const BeautyDetail = () => {
   const beautyUserId = business ? String((business as Record<string, unknown>).user_id ?? "") : "";
   const isOwnProfile = user?.id === beautyUserId && !!user;
   const { data: unreadCount = 0 } = useUnreadFromUser(user?.id ?? null, beautyUserId || null);
+  const { requireAuth, open: signupOpen, setOpen: setSignupOpen, onSignupSuccess } = useRequireClientAuth();
 
   useEffect(() => {
     if (!id) return;
@@ -384,7 +387,7 @@ const BeautyDetail = () => {
         {!isOwnProfile && (
           <Button
             className="w-full gap-2 h-12 text-base font-semibold relative"
-            onClick={() => beautyUserId && navigate(`/mensagem/${beautyUserId}`)}
+            onClick={() => requireAuth(() => beautyUserId && navigate(`/mensagem/${beautyUserId}`))}
           >
             <MessageSquare className="h-5 w-5" />
             {t("common.message")}
@@ -611,6 +614,8 @@ const BeautyDetail = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <ClientSignupDialog open={signupOpen} onOpenChange={setSignupOpen} onSuccess={onSignupSuccess} />
     </div>
   );
 };

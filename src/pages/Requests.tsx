@@ -19,6 +19,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useMyProvider } from "@/hooks/useMyProvider";
 import { useCategories } from "@/hooks/useProviders";
 import { useBairros } from "@/hooks/useBairros";
+import { useRequireClientAuth } from "@/hooks/useRequireClientAuth";
+import { ClientSignupDialog } from "@/components/ClientSignupDialog";
 import { BAIRROS_FILTER } from "@/lib/locations";
 import { formatCFA } from "@/lib/format";
 import { getPageCount, paginateArray } from "@/lib/pagination";
@@ -49,7 +51,7 @@ const Requests = () => {
   const create = useCreateRequest();
   const bidOnRequest = useBidOnRequest();
   const updateBid = useUpdateBidStatus();
-  const [showAnonWarning, setShowAnonWarning] = useState(false);
+  const { requireAuth, open: signupOpen, setOpen: setSignupOpen, onSignupSuccess } = useRequireClientAuth();
 
   // Vincular pedidos anónimos quando o utilizador faz login
   useEffect(() => {
@@ -186,11 +188,7 @@ const Requests = () => {
     e.preventDefault();
     if (!form.category) return toast.error(t("requests.selectCategory"));
     if (!form.description.trim()) return toast.error(t("requests.describeRequest"));
-    if (!user) {
-      setShowAnonWarning(true);
-      return;
-    }
-    await executePublish();
+    requireAuth(() => executePublish());
   };
 
   const handleBid = async () => {
@@ -533,23 +531,8 @@ const Requests = () => {
         </DialogContent>
       </Dialog>
 
-      {/* ─── Dialog: Aviso sem conta ─── */}
-      <Dialog open={showAnonWarning} onOpenChange={setShowAnonWarning}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>{t("requests.anonWarningTitle")}</DialogTitle>
-            <DialogDescription>{t("requests.anonWarningDesc")}</DialogDescription>
-          </DialogHeader>
-          <div className="flex flex-col gap-2">
-            <Button onClick={() => { setShowAnonWarning(false); navigate("/login?mode=cliente"); }} className="w-full">
-              {t("requests.createAccount")}
-            </Button>
-            <Button variant="outline" onClick={() => executePublish()} className="w-full">
-              {t("requests.continueWithoutAccount")}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      {/* ─── Dialog: Criar conta de cliente ─── */}
+      <ClientSignupDialog open={signupOpen} onOpenChange={setSignupOpen} onSuccess={onSignupSuccess} />
     </div>
   );
 };

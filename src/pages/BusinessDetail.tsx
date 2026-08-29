@@ -25,6 +25,8 @@ import { translateCategoryName } from "@/lib/categoryI18n";
 import { useUnreadFromUser } from "@/hooks/useChat";
 import { useCreateOrder } from "@/hooks/useOrders";
 import { useBairros } from "@/hooks/useBairros";
+import { useRequireClientAuth } from "@/hooks/useRequireClientAuth";
+import { ClientSignupDialog } from "@/components/ClientSignupDialog";
 
 type ReportReasonKey = "food" | "charge" | "behaviour" | "fake" | "hygiene" | "other";
 const REPORT_REASONS: { key: ReportReasonKey; labelKey: string }[] = [
@@ -84,6 +86,7 @@ const BusinessDetail = () => {
   const bizUserId = business ? String((business as Record<string, unknown>).user_id ?? "") : "";
   const isOwnProfile = user?.id === bizUserId && !!user;
   const { data: unreadCount = 0 } = useUnreadFromUser(user?.id ?? null, bizUserId || null);
+  const { requireAuth, open: signupOpen, setOpen: setSignupOpen, onSignupSuccess } = useRequireClientAuth();
 
   useEffect(() => {
     if (!id) return;
@@ -159,7 +162,7 @@ const BusinessDetail = () => {
       if (!deliveryPhone.trim()) return toast.error(t("businessDetail.enterPhone"));
       if (!bairro.trim()) return toast.error(t("businessDetail.selectBairro"));
     }
-    setOrderConfirmOpen(true);
+    requireAuth(() => setOrderConfirmOpen(true));
   };
 
   const confirmOrder = async () => {
@@ -461,7 +464,7 @@ const BusinessDetail = () => {
         {!isOwnProfile && (
           <Button
             className="w-full gap-2 h-12 text-base font-semibold relative"
-            onClick={() => bizUserId && navigate(`/mensagem/${bizUserId}`)}
+            onClick={() => requireAuth(() => bizUserId && navigate(`/mensagem/${bizUserId}`))}
           >
             <MessageSquare className="h-5 w-5" />
             {t("common.message")}
@@ -687,6 +690,8 @@ const BusinessDetail = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <ClientSignupDialog open={signupOpen} onOpenChange={setSignupOpen} onSuccess={onSignupSuccess} />
     </div>
   );
 };
