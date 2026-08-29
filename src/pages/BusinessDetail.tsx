@@ -72,7 +72,7 @@ const BusinessDetail = () => {
   const [address, setAddress] = useState("");
   const [sending, setSending] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
-  const bizUserId = String((business as Record<string, unknown>).user_id ?? "");
+  const bizUserId = business ? String((business as Record<string, unknown>).user_id ?? "") : "";
   const isOwnProfile = user?.id === bizUserId && !!user;
   const { data: unreadCount = 0 } = useUnreadFromUser(user?.id ?? null, bizUserId || null);
 

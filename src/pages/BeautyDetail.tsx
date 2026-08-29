@@ -61,7 +61,7 @@ const BeautyDetail = () => {
   const [cart, setCart] = useState<Record<string, number>>({});
   const [sending, setSending] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
-  const beautyUserId = String((business as Record<string, unknown>).user_id ?? "");
+  const beautyUserId = business ? String((business as Record<string, unknown>).user_id ?? "") : "";
   const isOwnProfile = user?.id === beautyUserId && !!user;
   const { data: unreadCount = 0 } = useUnreadFromUser(user?.id ?? null, beautyUserId || null);
 

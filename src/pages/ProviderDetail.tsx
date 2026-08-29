@@ -52,7 +52,7 @@ const ProviderDetail = () => {
   const [comment, setComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
-  const providerUserId = (provider as { user_id?: string | null }).user_id ?? null;
+  const providerUserId = (provider as { user_id?: string | null } | null)?.user_id ?? null;
   const isOwnProfile = user?.id === providerUserId;
   const { data: unreadCount = 0 } = useUnreadFromUser(user?.id ?? null, providerUserId);
 
