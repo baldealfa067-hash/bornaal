@@ -39,13 +39,56 @@ const Login = () => {
     if (signingUp.current) return;
     if (loading || !rolesLoaded) return;
     if (!user) return;
+
+    // Handle Google OAuth callback — assign the role that was selected before redirect
+    if (searchParams.get("fromGoogle") === "true") {
+      const savedType = sessionStorage.getItem("bornaal:google_profile_type");
+      sessionStorage.removeItem("bornaal:google_profile_type");
+
+      const assignRoleAndRedirect = async () => {
+        signingUp.current = true;
+        try {
+          if (savedType === "business") {
+            const { error } = await supabase.rpc("register_as_business");
+            if (error) console.error("Role error:", error);
+            navigate("/painel-loja/editar", { replace: true });
+          } else if (savedType === "beleza") {
+            const { error } = await supabase.rpc("register_as_beleza");
+            if (error) console.error("Role error:", error);
+            navigate("/painel-beleza/editar", { replace: true });
+          } else {
+            const { error } = await supabase.rpc("register_as_provider");
+            if (error) console.error("Role error:", error);
+            sessionStorage.setItem(JUST_SIGNED_UP_KEY, "1");
+            navigate("/painel", { replace: true });
+          }
+        } finally {
+          signingUp.current = false;
+        }
+      };
+
+      // If roles are already loaded and user has one, just redirect
+      if (isProvider || isBusiness || isBeleza || isClient || isAdmin) {
+        if (isAdmin) navigate("/admin", { replace: true });
+        else if (isProvider) navigate("/painel", { replace: true });
+        else if (isBusiness) navigate("/painel-loja", { replace: true });
+        else if (isBeleza) navigate("/painel-beleza", { replace: true });
+        else if (isClient) navigate("/pedidos", { replace: true });
+        return;
+      }
+
+      // First-time Google user — assign role
+      assignRoleAndRedirect();
+      return;
+    }
+
     if (isAdmin) navigate("/admin", { replace: true });
     else if (isProvider) navigate("/painel", { replace: true });
     else if (isBusiness) navigate("/painel-loja", { replace: true });
     else if (isBeleza) navigate("/painel-beleza", { replace: true });
     else if (isClient) navigate("/pedidos", { replace: true });
     else navigate("/inicio", { replace: true });
-  }, [user, isAdmin, isProvider, isBusiness, isBeleza, isClient, rolesLoaded, loading, navigate]);
+  }, [user, isAdmin, isProvider, isBusiness, isBeleza, isClient, rolesLoaded, loading, navigate, searchParams]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -106,11 +149,14 @@ const Login = () => {
   };
 
   const handleGoogleLogin = async () => {
+    if (!isClientFlow) {
+      sessionStorage.setItem("bornaal:google_profile_type", profileType);
+    }
     setSubmitting(true);
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/pedidos`,
+        redirectTo: `${window.location.origin}/login?fromGoogle=true`,
       },
     });
     setSubmitting(false);
@@ -196,6 +242,34 @@ const Login = () => {
           </p>
         </div>
 
+        {/* Selecção de tipo de perfil — visível para Google e registo */}
+        {!isClientFlow && (
+          <div className="space-y-2">
+            <Label>{t("auth.profileType")}</Label>
+            <div className="grid grid-cols-3 gap-2">
+              {([
+                { value: "provider", icon: Wrench, label: t("auth.providerProfile") },
+                { value: "business", icon: Store, label: t("auth.businessProfile") },
+                { value: "beleza", icon: Scissors, label: t("auth.belezaProfile") },
+              ] as const).map(({ value, icon: Icon, label }) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setProfileType(value)}
+                  className={`flex flex-col items-center gap-1.5 p-3 rounded-lg border transition-colors ${
+                    profileType === value
+                      ? "border-primary bg-primary/5 text-primary"
+                      : "border-border hover:border-primary/30"
+                  }`}
+                >
+                  <Icon className="h-5 w-5" />
+                  <span className="text-[10px] font-medium leading-tight text-center">{label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Google OAuth (preparado — desativado sem credenciais) */}
         <Button
           variant="outline"
@@ -249,34 +323,6 @@ const Login = () => {
 
           <TabsContent value="signup">
             <form onSubmit={handleSignup} className="flex flex-col gap-3 mt-4">
-              {/* Selecção de tipo de perfil — só para profissionais */}
-              {!isClientFlow && (
-                <div className="space-y-2">
-                  <Label>{t("auth.profileType")}</Label>
-                  <div className="grid grid-cols-3 gap-2">
-                    {([
-                      { value: "provider", icon: Wrench, label: t("auth.providerProfile") },
-                      { value: "business", icon: Store, label: t("auth.businessProfile") },
-                      { value: "beleza", icon: Scissors, label: t("auth.belezaProfile") },
-                    ] as const).map(({ value, icon: Icon, label }) => (
-                      <button
-                        key={value}
-                        type="button"
-                        onClick={() => setProfileType(value)}
-                        className={`flex flex-col items-center gap-1.5 p-3 rounded-lg border transition-colors ${
-                          profileType === value
-                            ? "border-primary bg-primary/5 text-primary"
-                            : "border-border hover:border-primary/30"
-                        }`}
-                      >
-                        <Icon className="h-5 w-5" />
-                        <span className="text-[10px] font-medium leading-tight text-center">{label}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
               <div className="space-y-1">
                 <Label htmlFor="name">{t("auth.name")}</Label>
                 <Input id="name" value={name} onChange={(e) => setName(e.target.value)} required />
