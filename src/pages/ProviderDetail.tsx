@@ -52,6 +52,9 @@ const ProviderDetail = () => {
   const [comment, setComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
+  const providerUserId = (provider as { user_id?: string | null }).user_id ?? null;
+  const isOwnProfile = user?.id === providerUserId;
+  const { data: unreadCount = 0 } = useUnreadFromUser(user?.id ?? null, providerUserId);
 
   useEffect(() => {
     if (!id) return;
@@ -257,24 +260,20 @@ const ProviderDetail = () => {
 
       {/* Contact buttons */}
       <div className="mb-8 space-y-2">
-        {user && user.id !== (provider as { user_id?: string }).user_id && (() => {
-          const providerUserId = (provider as { user_id?: string }).user_id ?? "";
-          const { data: unreadCount = 0 } = useUnreadFromUser(user.id, providerUserId);
-          return (
-            <Button
-              className="w-full gap-2 h-12 text-base font-semibold relative"
-              onClick={() => setChatOpen(true)}
-            >
-              <MessageSquare className="h-5 w-5" />
-              {t("common.message")}
-              {unreadCount > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 bg-destructive text-destructive-foreground text-[10px] font-bold h-5 min-w-[20px] rounded-full flex items-center justify-center px-1">
-                  {unreadCount > 99 ? "99+" : unreadCount}
-                </span>
-              )}
-            </Button>
-          );
-        })()}
+        {!isOwnProfile && (
+          <Button
+            className="w-full gap-2 h-12 text-base font-semibold relative"
+            onClick={() => user ? setChatOpen(true) : window.location.href = "/login"}
+          >
+            <MessageSquare className="h-5 w-5" />
+            {t("common.message")}
+            {unreadCount > 0 && (
+              <span className="absolute -top-1.5 -right-1.5 bg-destructive text-destructive-foreground text-[10px] font-bold h-5 min-w-[20px] rounded-full flex items-center justify-center px-1">
+                {unreadCount > 99 ? "99+" : unreadCount}
+              </span>
+            )}
+          </Button>
+        )}
         <a href={`tel:${provider.phone.replace(/\s/g, "")}`} className="block" onClick={trackCall}>
           <Button variant="secondary" className="w-full gap-2">
             <Phone className="h-5 w-5" />
