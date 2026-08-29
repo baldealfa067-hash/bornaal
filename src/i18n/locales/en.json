@@ -335,7 +335,8 @@
     "calls": "Calls",
     "comments": "Comments",
     "viewPublic": "View public page",
-    "ordersManagement": "Order Management"
+    "ordersManagement": "Orders",
+    "profileTab": "Profile"
   },
   "businessEdit": {
     "imageTooLarge": "Image too large (max 5 MB)",

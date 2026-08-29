@@ -405,62 +405,63 @@ const OrderCard = ({
   nextStatuses: string[];
 }) => {
   const { t } = useTranslation();
+  const primaryAction = nextStatuses.find((s) => s !== "cancelado");
 
   return (
     <Card>
       <CardContent className="p-3">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-sm font-bold">#{order.order_number}</span>
-              <span className="text-xs text-muted-foreground">
-                {new Date(order.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+        {/* Top line: number + time + total */}
+        <div className="flex items-center justify-between mb-1.5">
+          <div className="flex items-center gap-2">
+            <span className="text-base font-bold">#{order.order_number}</span>
+            <span className="text-xs text-muted-foreground">
+              {new Date(order.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+            </span>
+          </div>
+          <span className="text-base font-bold text-primary">{formatCFA(order.total)}</span>
+        </div>
+
+        {/* Items */}
+        <p className="text-sm text-muted-foreground truncate mb-1.5">
+          {order.items.map((i) => `${i.name} x${i.qty}`).join(", ")}
+        </p>
+
+        {/* Delivery quick info */}
+        {order.consumption_option === "entrega" && (
+          <div className="flex items-center gap-3 text-xs text-muted-foreground mb-2">
+            {order.customer_phone && (
+              <span className="flex items-center gap-1">
+                <Phone className="h-3 w-3" /> {order.customer_phone}
               </span>
-              {order.consumption_option === "entrega" && (
-                <Badge variant="outline" className="text-[10px] gap-1">
-                  <Truck className="h-2.5 w-2.5" />
-                  {t("orderStatus.outForDelivery").split(" ")[0]}
-                </Badge>
-              )}
-            </div>
-            <p className="text-sm font-medium">{order.customer_name}</p>
-
-            {/* Delivery summary inline */}
-            {order.consumption_option === "entrega" && order.customer_phone && (
-              <div className="flex items-center gap-3 mt-0.5">
-                <span className="text-xs text-muted-foreground flex items-center gap-1">
-                  <Phone className="h-3 w-3" /> {order.customer_phone}
-                </span>
-                {order.bairro && (
-                  <span className="text-xs text-muted-foreground flex items-center gap-1">
-                    <MapPin className="h-3 w-3" /> {order.bairro}
-                  </span>
-                )}
-              </div>
             )}
-
-            <p className="text-xs text-muted-foreground truncate">
-              {order.items.map((i) => `${i.name} x${i.qty}`).join(", ")}
-            </p>
-            <p className="text-sm font-bold text-primary mt-1">{formatCFA(order.total)}</p>
+            {order.bairro && (
+              <span className="flex items-center gap-1">
+                <MapPin className="h-3 w-3" /> {order.bairro}
+              </span>
+            )}
           </div>
-          <div className="flex flex-col gap-1.5 shrink-0">
-            <Button size="sm" variant="outline" onClick={onView} className="gap-1">
-              <Eye className="h-3.5 w-3.5" />
-              {t("common.view")}
+        )}
+
+        {/* Action buttons — big, easy to tap */}
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="lg"
+            onClick={onView}
+            className="flex-1 min-h-12 text-sm"
+          >
+            {t("common.view")}
+          </Button>
+          {primaryAction && (
+            <Button
+              size="lg"
+              onClick={() => onStatusChange(primaryAction)}
+              className="flex-1 min-h-12 text-sm gap-1.5"
+            >
+              {primaryAction === "saiu_para_entrega" && <Truck className="h-4 w-4" />}
+              {t(`orderStatus.${primaryAction}`, primaryAction)}
             </Button>
-            {nextStatuses.length > 0 && nextStatuses[0] !== "cancelado" && (
-              <Button
-                size="sm"
-                onClick={() => onStatusChange(nextStatuses[0])}
-                disabled={false}
-                className="gap-1"
-              >
-                {nextStatuses[0] === "saiu_para_entrega" && <Truck className="h-3.5 w-3.5" />}
-                {t(`orderStatus.${nextStatuses[0]}`, nextStatuses[0])}
-              </Button>
-            )}
-          </div>
+          )}
         </div>
       </CardContent>
     </Card>

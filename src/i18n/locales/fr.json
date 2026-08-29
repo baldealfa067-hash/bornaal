@@ -335,7 +335,8 @@
     "calls": "Appels",
     "comments": "Commentaires",
     "viewPublic": "Voir la page publique",
-    "ordersManagement": "Gestion des commandes"
+    "ordersManagement": "Commandes",
+    "profileTab": "Profil"
   },
   "businessEdit": {
     "imageTooLarge": "Image trop volumineuse (max 5 Mo)",

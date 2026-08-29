@@ -335,7 +335,8 @@
     "calls": "Ligações",
     "comments": "Comentários",
     "viewPublic": "Ver página pública do estabelecimento",
-    "ordersManagement": "Gestão de Pedidos"
+    "ordersManagement": "Pedidos",
+    "profileTab": "Perfil"
   },
   "businessEdit": {
     "imageTooLarge": "Imagem demasiado grande (máx 5MB)",

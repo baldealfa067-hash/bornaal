@@ -16,9 +16,10 @@ import {
   ShieldX,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useProviderStatsQuery } from "@/hooks/useProviderStats";
@@ -111,6 +112,31 @@ const BusinessDashboard = () => {
 
   const initials = (profile?.name ?? "?").slice(0, 2).toUpperCase();
 
+  const verificationBadge = (() => {
+    switch (profile?.verification_status) {
+      case "aprovado":
+        return (
+          <Badge variant="secondary" className="text-[10px] px-1.5 py-0 gap-1">
+            <ShieldCheck className="h-3 w-3 text-green-600" /> {t("businessDashboard.verified")}
+          </Badge>
+        );
+      case "pendente":
+        return (
+          <Badge variant="secondary" className="text-[10px] px-1.5 py-0 gap-1">
+            <ShieldAlert className="h-3 w-3 text-yellow-600" /> {t("businessDashboard.pendingVerification")}
+          </Badge>
+        );
+      case "rejeitado":
+        return (
+          <Badge variant="secondary" className="text-[10px] px-1.5 py-0 gap-1">
+            <ShieldX className="h-3 w-3 text-destructive" /> {t("businessDashboard.rejectedVerification")}
+          </Badge>
+        );
+      default:
+        return null;
+    }
+  })();
+
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b">
@@ -136,96 +162,90 @@ const BusinessDashboard = () => {
             <CardContent className="flex flex-col items-center gap-3 py-10 text-center">
               <Store className="h-8 w-8 text-muted-foreground" />
               <p className="text-muted-foreground">{t("businessDashboard.noProfile")}</p>
-              <Button onClick={() => navigate("/painel-loja/editar")} className="gap-2">
-                <Settings className="h-4 w-4" /> {t("businessDashboard.createProfile")}
+              <Button onClick={() => navigate("/painel-loja/editar")} className="gap-2 min-h-12 text-base">
+                <Settings className="h-5 w-5" /> {t("businessDashboard.createProfile")}
               </Button>
             </CardContent>
           </Card>
         ) : (
-          <>
-            <div className="flex items-center gap-4 mb-6">
-              <Avatar className="h-16 w-16 rounded-xl">
-                {profile.photo_url ? <AvatarImage src={profile.photo_url} className="object-cover" /> : null}
-                <AvatarFallback className="rounded-xl bg-primary/10 text-primary text-lg font-bold">{initials}</AvatarFallback>
-              </Avatar>
-              <div className="min-w-0">
-                <h1 className="text-xl font-bold truncate">{profile.name}</h1>
-                <p className="text-sm text-muted-foreground flex items-center gap-1.5 flex-wrap">
-                  {translateCategoryName(profile.category, bizCats as { id: string; name: string; name_en: string | null; name_fr: string | null }[], i18n.language)}
-                  {profile.verification_status === "aprovado" && (
-                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0 gap-1">
-                      <ShieldCheck className="h-3 w-3 text-green-600" /> {t("businessDashboard.verified")}
-                    </Badge>
-                  )}
-                  {profile.verification_status === "pendente" && (
-                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0 gap-1">
-                      <ShieldAlert className="h-3 w-3 text-yellow-600" /> {t("businessDashboard.pendingVerification")}
-                    </Badge>
-                  )}
-                  {profile.verification_status === "rejeitado" && (
-                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0 gap-1">
-                      <ShieldX className="h-3 w-3 text-destructive" /> {t("businessDashboard.rejectedVerification")}
-                    </Badge>
-                  )}
-                </p>
-              </div>
-            </div>
+          <Tabs defaultValue="pedidos">
+            <TabsList className="w-full h-12 mb-4">
+              <TabsTrigger value="pedidos" className="flex-1 text-sm min-h-10 gap-1.5">
+                <ShoppingCart className="h-4 w-4" />
+                {t("businessDashboard.ordersManagement")}
+              </TabsTrigger>
+              <TabsTrigger value="perfil" className="flex-1 text-sm min-h-10 gap-1.5">
+                <Store className="h-4 w-4" />
+                {t("businessDashboard.profileTab")}
+              </TabsTrigger>
+            </TabsList>
 
-            <Button onClick={() => navigate("/painel-loja/editar")} className="w-full gap-2 min-h-11 mb-6">
-              <Settings className="h-4 w-4" /> {t("businessDashboard.configure")}
-            </Button>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base flex items-center gap-2">
-                  <Store className="h-5 w-5 text-primary" /> {t("businessDashboard.statsTitle")}
-                </CardTitle>
-                <p className="text-xs text-muted-foreground">{t("businessDashboard.statsDesc")}</p>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-                  <div className="rounded-lg border p-3 flex flex-col items-center gap-1">
-                    <ShoppingCart className="h-5 w-5 text-primary" />
-                    <span className="text-2xl font-bold">{orderCount}</span>
-                    <span className="text-[11px] text-muted-foreground text-center">{t("businessDashboard.ordersReceived")}</span>
-                  </div>
-                  <div className="rounded-lg border p-3 flex flex-col items-center gap-1">
-                    <Eye className="h-5 w-5 text-primary" />
-                    <span className="text-2xl font-bold">{stats.profile_views}</span>
-                    <span className="text-[11px] text-muted-foreground text-center">{t("businessDashboard.profileViews")}</span>
-                  </div>
-                  <div className="rounded-lg border p-3 flex flex-col items-center gap-1">
-                    <MessageCircle className="h-5 w-5 text-[#25D366]" />
-                    <span className="text-2xl font-bold">{stats.whatsapp_clicks}</span>
-                    <span className="text-[11px] text-muted-foreground text-center">{t("businessDashboard.whatsappContacts")}</span>
-                  </div>
-                  <div className="rounded-lg border p-3 flex flex-col items-center gap-1">
-                    <Phone className="h-5 w-5 text-secondary-foreground" />
-                    <span className="text-2xl font-bold">{stats.call_clicks}</span>
-                    <span className="text-[11px] text-muted-foreground text-center">{t("businessDashboard.calls")}</span>
-                  </div>
-                  <div className="rounded-lg border p-3 flex flex-col items-center gap-1">
-                    <MessageSquareText className="h-5 w-5 text-muted-foreground" />
-                    <span className="text-2xl font-bold">{commentCount}</span>
-                    <span className="text-[11px] text-muted-foreground text-center">{t("businessDashboard.comments")}</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <div className="mt-4 flex justify-center">
-              <Link to={`/loja/${profile.id}`} className="text-xs text-primary hover:underline inline-flex items-center justify-center min-h-11 w-full">
-                {t("businessDashboard.viewPublic")}
-              </Link>
-            </div>
-
-            <div className="mt-6">
-              <h2 className="font-semibold mb-3 flex items-center gap-2">
-                <ShoppingCart className="h-5 w-5 text-primary" /> {t("businessDashboard.ordersManagement")}
-              </h2>
+            <TabsContent value="pedidos" className="mt-0">
               <OrderManagement businessId={profile.id} />
-            </div>
-          </>
+            </TabsContent>
+
+            <TabsContent value="perfil" className="mt-0 space-y-4">
+              {/* Profile header */}
+              <div className="flex items-center gap-4">
+                <Avatar className="h-16 w-16 rounded-xl">
+                  {profile.photo_url ? <AvatarImage src={profile.photo_url} className="object-cover" /> : null}
+                  <AvatarFallback className="rounded-xl bg-primary/10 text-primary text-lg font-bold">{initials}</AvatarFallback>
+                </Avatar>
+                <div className="min-w-0">
+                  <h1 className="text-xl font-bold truncate">{profile.name}</h1>
+                  <p className="text-sm text-muted-foreground flex items-center gap-1.5 flex-wrap">
+                    {translateCategoryName(profile.category, bizCats as { id: string; name: string; name_en: string | null; name_fr: string | null }[], i18n.language)}
+                    {verificationBadge}
+                  </p>
+                </div>
+              </div>
+
+              {/* Configure button */}
+              <Button onClick={() => navigate("/painel-loja/editar")} className="w-full gap-2 min-h-12 text-base">
+                <Settings className="h-5 w-5" /> {t("businessDashboard.configure")}
+              </Button>
+
+              {/* Stats */}
+              <Card>
+                <CardContent className="p-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                    <div className="rounded-lg border p-3 flex flex-col items-center gap-1">
+                      <ShoppingCart className="h-5 w-5 text-primary" />
+                      <span className="text-2xl font-bold">{orderCount}</span>
+                      <span className="text-[11px] text-muted-foreground text-center">{t("businessDashboard.ordersReceived")}</span>
+                    </div>
+                    <div className="rounded-lg border p-3 flex flex-col items-center gap-1">
+                      <Eye className="h-5 w-5 text-primary" />
+                      <span className="text-2xl font-bold">{stats.profile_views}</span>
+                      <span className="text-[11px] text-muted-foreground text-center">{t("businessDashboard.profileViews")}</span>
+                    </div>
+                    <div className="rounded-lg border p-3 flex flex-col items-center gap-1">
+                      <MessageCircle className="h-5 w-5 text-[#25D366]" />
+                      <span className="text-2xl font-bold">{stats.whatsapp_clicks}</span>
+                      <span className="text-[11px] text-muted-foreground text-center">{t("businessDashboard.whatsappContacts")}</span>
+                    </div>
+                    <div className="rounded-lg border p-3 flex flex-col items-center gap-1">
+                      <Phone className="h-5 w-5 text-secondary-foreground" />
+                      <span className="text-2xl font-bold">{stats.call_clicks}</span>
+                      <span className="text-[11px] text-muted-foreground text-center">{t("businessDashboard.calls")}</span>
+                    </div>
+                    <div className="rounded-lg border p-3 flex flex-col items-center gap-1">
+                      <MessageSquareText className="h-5 w-5 text-muted-foreground" />
+                      <span className="text-2xl font-bold">{commentCount}</span>
+                      <span className="text-[11px] text-muted-foreground text-center">{t("businessDashboard.comments")}</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* View public page */}
+              <Link to={`/loja/${profile.id}`} className="block">
+                <Button variant="outline" className="w-full min-h-12 text-base">
+                  {t("businessDashboard.viewPublic")}
+                </Button>
+              </Link>
+            </TabsContent>
+          </Tabs>
         )}
       </main>
     </div>
