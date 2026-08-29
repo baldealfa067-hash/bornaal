@@ -13,6 +13,8 @@ import {
   ShieldAlert,
   Loader2,
   X,
+  Play,
+  Pause,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -56,6 +58,45 @@ interface ChatDialogProps {
 
 const NO_RESPONSE_TIMEOUT_MS = 15 * 60 * 1000;
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
+
+const VoicePlayer = ({ url, isMine }: { url: string; isMine: boolean }) => {
+  const [playing, setPlaying] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    const audio = new Audio(url);
+    audioRef.current = audio;
+    audio.addEventListener("timeupdate", () => {
+      if (audio.duration) setProgress((audio.currentTime / audio.duration) * 100);
+    });
+    audio.addEventListener("ended", () => { setPlaying(false); setProgress(0); });
+    return () => { audio.pause(); audio.src = ""; };
+  }, [url]);
+
+  const toggle = () => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    if (playing) { audio.pause(); setPlaying(false); }
+    else { audio.play(); setPlaying(true); }
+  };
+
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 180 }}>
+      <button onClick={toggle} style={{
+        width: 32, height: 32, borderRadius: "50%", border: "none",
+        background: isMine ? "hsl(var(--primary-foreground) / 0.2)" : "hsl(var(--primary) / 0.15)",
+        color: "inherit", display: "flex", alignItems: "center", justifyContent: "center",
+        cursor: "pointer", flexShrink: 0,
+      }}>
+        {playing ? <Pause style={{ width: 14, height: 14 }} /> : <Play style={{ width: 14, height: 14, marginLeft: 2 }} />}
+      </button>
+      <div style={{ flex: 1, height: 4, borderRadius: 2, background: isMine ? "hsl(var(--primary-foreground) / 0.2)" : "hsl(var(--muted))", overflow: "hidden" }}>
+        <div style={{ height: "100%", width: `${progress}%`, borderRadius: 2, background: isMine ? "hsl(var(--primary-foreground) / 0.7)" : "hsl(var(--primary))", transition: "width 0.1s" }} />
+      </div>
+    </div>
+  );
+};
 
 export const ChatDialog = ({
   open,
@@ -362,10 +403,12 @@ export const ChatDialog = ({
                 (nextMsg &&
                   new Date(nextMsg.created_at).getTime() - new Date(msg.created_at).getTime() > 5 * 60 * 1000);
 
-              const isImage =
+              const isVoice = (msg as Record<string, unknown>).message_type === "voice";
+              const isImage = !isVoice && (
                 (msg as Record<string, unknown>).message_type === "image" ||
                 msg.content.match(/\.(jpg|jpeg|png|gif|webp)/i) ||
-                msg.content.includes("/portfolio/");
+                (msg.content.includes("/portfolio/") && !msg.content.includes("/voice/"))
+              );
 
               return (
                 <div
@@ -392,7 +435,9 @@ export const ChatDialog = ({
                       wordBreak: "break-word",
                     }}
                   >
-                    {isImage ? (
+                    {isVoice ? (
+                      <VoicePlayer url={msg.content} isMine={isMine} />
+                    ) : isImage ? (
                       <img
                         src={msg.content}
                         alt={t("chat.imageMessage")}
