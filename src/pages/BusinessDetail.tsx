@@ -24,6 +24,7 @@ import { useBusinessCategories } from "@/hooks/useProviders";
 import { translateCategoryName } from "@/lib/categoryI18n";
 import { useUnreadFromUser } from "@/hooks/useChat";
 import { useCreateOrder } from "@/hooks/useOrders";
+import { useBairros } from "@/hooks/useBairros";
 
 type ReportReasonKey = "food" | "charge" | "behaviour" | "fake" | "hygiene" | "other";
 const REPORT_REASONS: { key: ReportReasonKey; labelKey: string }[] = [
@@ -70,14 +71,16 @@ const BusinessDetail = () => {
   const [submitting, setSubmitting] = useState(false);
   const [cart, setCart] = useState<Record<string, number>>({});
   const [consumptionOption, setConsumptionOption] = useState("");
-  const [address, setAddress] = useState("");
   const [bairro, setBairro] = useState("");
+  const [referencePoint, setReferencePoint] = useState("");
+  const [deliveryPhone, setDeliveryPhone] = useState("");
   const [sending, setSending] = useState(false);
   const [orderConfirmOpen, setOrderConfirmOpen] = useState(false);
   const [orderCustomerName, setOrderCustomerName] = useState("");
   const [orderCustomerPhone, setOrderCustomerPhone] = useState("");
   const [orderNotes, setOrderNotes] = useState("");
   const createOrder = useCreateOrder();
+  const { data: bairros = [] } = useBairros();
   const bizUserId = business ? String((business as Record<string, unknown>).user_id ?? "") : "";
   const isOwnProfile = user?.id === bizUserId && !!user;
   const { data: unreadCount = 0 } = useUnreadFromUser(user?.id ?? null, bizUserId || null);
@@ -152,8 +155,9 @@ const BusinessDetail = () => {
     if (!id) return;
     if (!cartItems.length) return toast.error(t("businessDetail.addItems"));
     if (!activeConsumption) return toast.error(t("businessDetail.chooseConsumption"));
-    if (activeConsumption === "entrega" && !address.trim()) {
-      return toast.error(t("businessDetail.enterAddress"));
+    if (activeConsumption === "entrega") {
+      if (!deliveryPhone.trim()) return toast.error(t("businessDetail.enterPhone"));
+      if (!bairro.trim()) return toast.error(t("businessDetail.selectBairro"));
     }
     setOrderConfirmOpen(true);
   };
@@ -161,25 +165,27 @@ const BusinessDetail = () => {
   const confirmOrder = async () => {
     if (!id) return;
     if (!orderCustomerName.trim()) return toast.error(t("businessDetail.enterName"));
-    if (!orderCustomerPhone.trim()) return toast.error(t("businessDetail.enterPhone"));
+    const phoneForOrder = activeConsumption === "entrega" ? deliveryPhone.trim() : orderCustomerPhone.trim();
+    if (!phoneForOrder) return toast.error(t("businessDetail.enterPhone"));
     setSending(true);
     try {
       const orderId = await createOrder.mutateAsync({
         businessId: id,
         customerId: user?.id ?? null,
         customerName: orderCustomerName.trim(),
-        customerPhone: orderCustomerPhone.trim(),
+        customerPhone: phoneForOrder,
         items: cartItems.map((i) => ({ name: i.name, price: i.price, qty: cart[i.id] ?? 0 })),
         total: cartTotal,
         consumptionOption: activeConsumption,
-        address: activeConsumption === "entrega" ? address.trim() : undefined,
+        address: activeConsumption === "entrega" ? [bairro.trim(), referencePoint.trim()].filter(Boolean).join(" - ") : undefined,
         notes: orderNotes.trim() || undefined,
         bairro: activeConsumption === "entrega" ? bairro.trim() || undefined : undefined,
       });
       toast.success(t("businessDetail.orderSuccess"));
       setCart({});
-      setAddress("");
       setBairro("");
+      setReferencePoint("");
+      setDeliveryPhone("");
       setOrderCustomerName("");
       setOrderCustomerPhone("");
       setOrderNotes("");
@@ -404,22 +410,36 @@ const BusinessDetail = () => {
             {activeConsumption === "entrega" && (
               <>
                 <div className="mb-3">
-                  <Label htmlFor="order-address">{t("businessDetail.deliveryAddress")}</Label>
+                  <Label htmlFor="order-delivery-phone">{t("businessDetail.customerPhone")} *</Label>
                   <Input
-                    id="order-address"
-                    placeholder={t("businessDetail.addressPlaceholder")}
-                    value={address}
-                    onChange={(e) => setAddress(e.target.value)}
+                    id="order-delivery-phone"
+                    type="tel"
+                    placeholder={t("businessDetail.phonePlaceholder")}
+                    value={deliveryPhone}
+                    onChange={(e) => setDeliveryPhone(e.target.value)}
                     className="mt-1.5"
                   />
                 </div>
                 <div className="mb-3">
-                  <Label htmlFor="order-bairro">{t("businessDetail.bairro")}</Label>
+                  <Label>{t("businessDetail.bairro")} *</Label>
+                  <Select value={bairro} onValueChange={setBairro}>
+                    <SelectTrigger className="mt-1.5">
+                      <SelectValue placeholder={t("businessDetail.selectBairro")} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {bairros.map((b) => (
+                        <SelectItem key={b} value={b}>{b}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="mb-3">
+                  <Label htmlFor="order-reference">{t("businessDetail.referencePoint")}</Label>
                   <Input
-                    id="order-bairro"
-                    placeholder={t("businessDetail.bairroPlaceholder")}
-                    value={bairro}
-                    onChange={(e) => setBairro(e.target.value)}
+                    id="order-reference"
+                    placeholder={t("businessDetail.referencePlaceholder")}
+                    value={referencePoint}
+                    onChange={(e) => setReferencePoint(e.target.value)}
                     className="mt-1.5"
                   />
                 </div>
@@ -610,6 +630,16 @@ const BusinessDetail = () => {
                 <span>{formatCFA(cartTotal)}</span>
               </div>
             </div>
+
+            {activeConsumption === "entrega" && (
+              <div className="rounded-lg border border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950 p-3 text-sm space-y-1">
+                <p className="font-semibold text-blue-700 dark:text-blue-300 text-xs uppercase">{t("businessDetail.deliveryInfo")}</p>
+                <p><span className="text-muted-foreground">{t("businessDetail.customerPhone")}:</span> <strong>{deliveryPhone}</strong></p>
+                <p><span className="text-muted-foreground">{t("businessDetail.bairro")}:</span> <strong>{bairro}</strong></p>
+                {referencePoint && <p><span className="text-muted-foreground">{t("businessDetail.referencePoint")}:</span> {referencePoint}</p>}
+              </div>
+            )}
+
             <div className="grid gap-2">
               <Label htmlFor="order-name">{t("businessDetail.customerName")}</Label>
               <Input
@@ -619,16 +649,18 @@ const BusinessDetail = () => {
                 onChange={(e) => setOrderCustomerName(e.target.value)}
               />
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="order-phone">{t("businessDetail.customerPhone")}</Label>
-              <Input
-                id="order-phone"
-                type="tel"
-                placeholder={t("businessDetail.phonePlaceholder")}
-                value={orderCustomerPhone}
-                onChange={(e) => setOrderCustomerPhone(e.target.value)}
-              />
-            </div>
+            {activeConsumption !== "entrega" && (
+              <div className="grid gap-2">
+                <Label htmlFor="order-phone">{t("businessDetail.customerPhone")}</Label>
+                <Input
+                  id="order-phone"
+                  type="tel"
+                  placeholder={t("businessDetail.phonePlaceholder")}
+                  value={orderCustomerPhone}
+                  onChange={(e) => setOrderCustomerPhone(e.target.value)}
+                />
+              </div>
+            )}
             <div className="grid gap-2">
               <Label htmlFor="order-notes">{t("businessDetail.orderNotes")}</Label>
               <Textarea
@@ -644,7 +676,11 @@ const BusinessDetail = () => {
             <Button variant="outline" onClick={() => setOrderConfirmOpen(false)}>
               {t("common.cancel")}
             </Button>
-            <Button onClick={confirmOrder} disabled={sending || !orderCustomerName.trim() || !orderCustomerPhone.trim()} className="gap-2">
+            <Button
+              onClick={confirmOrder}
+              disabled={sending || !orderCustomerName.trim() || (activeConsumption !== "entrega" && !orderCustomerPhone.trim())}
+              className="gap-2 min-h-12"
+            >
               {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
               {sending ? t("businessDetail.registering") : t("businessDetail.confirmOrder")}
             </Button>
