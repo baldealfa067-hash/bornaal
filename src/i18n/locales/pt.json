@@ -450,6 +450,8 @@
     "consumptionOption": "Opção de consumo",
     "deliveryAddress": "Morada de entrega *",
     "addressPlaceholder": "Ex: Quelele, rua 2, casa 15",
+    "bairro": "Bairro",
+    "bairroPlaceholder": "Ex: Quelele, Plateau",
     "sendOrder": "Enviar pedido por WhatsApp",
     "placeOrder": "Fazer Pedido",
     "registering": "A registar...",
@@ -1034,6 +1036,7 @@
     "em_preparacao": "Em Preparação",
     "na_cozinha": "Na Cozinha",
     "pronto": "Pronto",
+    "saiu_para_entrega": "Saiu para Entrega",
     "aguardando_motorista": "A Aguardar Motorista",
     "motorista_encontrado": "Motorista Encontrado",
     "pedido_recolhido": "Pedido Recolhido",
@@ -1049,7 +1052,9 @@
     "prepTime": "Tempo de preparação",
     "prepTimeTitle": "Tempo de Preparação",
     "prepTimeDesc": "Indique o tempo estimado de preparação em minutos.",
-    "prepTimeMinutes": "Minutos"
+    "prepTimeMinutes": "Minutos",
+    "deliveryInfo": "Dados de Entrega",
+    "copyAllDelivery": "Copiar todos os dados"
   },
   "myAppointments": {
     "title": "Os Meus Agendamentos",

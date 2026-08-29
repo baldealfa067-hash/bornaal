@@ -184,6 +184,15 @@ export type Database = {
           id: string
           items: Json
           total: number
+          customer_id: string | null
+          customer_name: string | null
+          customer_phone: string | null
+          notes: string | null
+          preparation_time: number | null
+          status: string
+          order_number: number
+          updated_at: string
+          bairro: string | null
         }
         Insert: {
           address?: string | null
@@ -193,6 +202,15 @@ export type Database = {
           id?: string
           items?: Json
           total?: number
+          customer_id?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          notes?: string | null
+          preparation_time?: number | null
+          status?: string
+          order_number?: number
+          updated_at?: string
+          bairro?: string | null
         }
         Update: {
           address?: string | null
@@ -202,6 +220,15 @@ export type Database = {
           id?: string
           items?: Json
           total?: number
+          customer_id?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          notes?: string | null
+          preparation_time?: number | null
+          status?: string
+          order_number?: number
+          updated_at?: string
+          bairro?: string | null
         }
         Relationships: [
           {

@@ -71,6 +71,7 @@ const BusinessDetail = () => {
   const [cart, setCart] = useState<Record<string, number>>({});
   const [consumptionOption, setConsumptionOption] = useState("");
   const [address, setAddress] = useState("");
+  const [bairro, setBairro] = useState("");
   const [sending, setSending] = useState(false);
   const [orderConfirmOpen, setOrderConfirmOpen] = useState(false);
   const [orderCustomerName, setOrderCustomerName] = useState("");
@@ -173,10 +174,12 @@ const BusinessDetail = () => {
         consumptionOption: activeConsumption,
         address: activeConsumption === "entrega" ? address.trim() : undefined,
         notes: orderNotes.trim() || undefined,
+        bairro: activeConsumption === "entrega" ? bairro.trim() || undefined : undefined,
       });
       toast.success(t("businessDetail.orderSuccess"));
       setCart({});
       setAddress("");
+      setBairro("");
       setOrderCustomerName("");
       setOrderCustomerPhone("");
       setOrderNotes("");
@@ -399,16 +402,28 @@ const BusinessDetail = () => {
             )}
 
             {activeConsumption === "entrega" && (
-              <div className="mb-3">
-                <Label htmlFor="order-address">{t("businessDetail.deliveryAddress")}</Label>
-                <Input
-                  id="order-address"
-                  placeholder={t("businessDetail.addressPlaceholder")}
-                  value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                  className="mt-1.5"
-                />
-              </div>
+              <>
+                <div className="mb-3">
+                  <Label htmlFor="order-address">{t("businessDetail.deliveryAddress")}</Label>
+                  <Input
+                    id="order-address"
+                    placeholder={t("businessDetail.addressPlaceholder")}
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
+                    className="mt-1.5"
+                  />
+                </div>
+                <div className="mb-3">
+                  <Label htmlFor="order-bairro">{t("businessDetail.bairro")}</Label>
+                  <Input
+                    id="order-bairro"
+                    placeholder={t("businessDetail.bairroPlaceholder")}
+                    value={bairro}
+                    onChange={(e) => setBairro(e.target.value)}
+                    className="mt-1.5"
+                  />
+                </div>
+              </>
             )}
 
             <Button onClick={sendOrder} disabled={sending} className="w-full gap-2">

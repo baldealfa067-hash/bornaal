@@ -505,6 +505,7 @@
     "em_preparacao": "Ta Prepara",
     "na_cozinha": "Na Cozinha",
     "pronto": "Prontu",
+    "saiu_para_entrega": "Saí pa Entrega",
     "aguardando_motorista": "Ta Spira Motorista",
     "motorista_encontrado": "Motorista Kuskutra",
     "pedido_recolhido": "Rekuliadu",
@@ -520,7 +521,9 @@
     "prepTime": "Tempu di preparason",
     "prepTimeTitle": "Tempu di Preparason",
     "prepTimeDesc": "Indika tempu estimadu di preparason na minutus.",
-    "prepTimeMinutes": "Minutus"
+    "prepTimeMinutes": "Minutus",
+    "deliveryInfo": "Informason di Entrega",
+    "copyAllDelivery": "Kopia tudu informason"
   },
   "beautyDetail": {
     "notFound": "Négoisiu na kuskutra.",

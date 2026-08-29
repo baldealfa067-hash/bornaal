@@ -10,6 +10,11 @@ import {
   MessageSquare,
   Timer,
   XCircle,
+  Copy,
+  Check,
+  Truck,
+  MapPin,
+  Phone,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -28,13 +33,13 @@ import { Label } from "@/components/ui/label";
 import { useBusinessOrders, useUpdateOrderStatus, type Order } from "@/hooks/useOrders";
 import { useTranslation } from "react-i18next";
 import { formatCFA } from "@/lib/format";
-import { supabase } from "@/integrations/supabase/client";
 
 const STATUS_TABS = [
   { value: "novo", label: "orderStatus.new", icon: Package, color: "text-blue-600" },
   { value: "confirmado", label: "orderStatus.confirmed", icon: CheckCircle2, color: "text-green-600" },
   { value: "em_preparacao", label: "orderStatus.preparing", icon: ChefHat, color: "text-yellow-600" },
   { value: "pronto", label: "orderStatus.ready", icon: UtensilsCrossed, color: "text-green-600" },
+  { value: "saiu_para_entrega", label: "orderStatus.outForDelivery", icon: Truck, color: "text-blue-600" },
   { value: "entregue", label: "orderStatus.delivered", icon: CheckCircle2, color: "text-green-600" },
   { value: "cancelado", label: "orderStatus.cancelled", icon: XCircle, color: "text-red-600" },
 ];
@@ -43,12 +48,61 @@ const NEXT_STATUS: Record<string, string[]> = {
   novo: ["confirmado", "cancelado"],
   confirmado: ["em_preparacao", "cancelado"],
   em_preparacao: ["pronto"],
-  pronto: ["aguardando_motorista"],
+  pronto: ["saiu_para_entrega", "entregue"],
+  saiu_para_entrega: ["entregue"],
   aguardando_motorista: [],
   motorista_encontrado: ["pedido_recolhido"],
   pedido_recolhido: ["a_caminho"],
   a_caminho: ["entregue"],
   entregue: ["concluido"],
+};
+
+const CONSUMPTION_LABELS: Record<string, string> = {
+  comer_no_local: "🍽️ Local",
+  para_levar: "🥡 Levar",
+  entrega: "🛵 Entrega",
+};
+
+interface CopyButtonProps {
+  text: string;
+  label?: string;
+}
+
+const CopyButton = ({ text, label }: CopyButtonProps) => {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      const textArea = document.createElement("textarea");
+      textArea.value = text;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textArea);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  return (
+    <Button
+      variant="ghost"
+      size="sm"
+      onClick={handleCopy}
+      className="h-6 px-1.5 gap-1 text-xs"
+    >
+      {copied ? (
+        <Check className="h-3 w-3 text-green-600" />
+      ) : (
+        <Copy className="h-3 w-3" />
+      )}
+      {label ?? text}
+    </Button>
+  );
 };
 
 interface OrderManagementProps {
@@ -173,12 +227,74 @@ const OrderManagement = ({ businessId }: OrderManagementProps) => {
               </DialogHeader>
 
               <div className="space-y-3">
+                {/* Consumption type */}
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="text-xs">
+                    {CONSUMPTION_LABELS[selectedOrder.consumption_option] ?? selectedOrder.consumption_option}
+                  </Badge>
+                </div>
+
+                {/* Customer info */}
                 <div>
                   <p className="text-xs font-medium text-muted-foreground">{t("orderManagement.customer")}</p>
                   <p className="text-sm font-medium">{selectedOrder.customer_name}</p>
-                  <p className="text-xs text-muted-foreground">{selectedOrder.customer_phone}</p>
                 </div>
 
+                {/* Delivery info — prominent for entrega */}
+                {selectedOrder.consumption_option === "entrega" && (
+                  <div className="rounded-lg border-2 border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950 p-3 space-y-2">
+                    <p className="text-xs font-bold text-blue-700 dark:text-blue-300 uppercase tracking-wide flex items-center gap-1">
+                      <Truck className="h-3.5 w-3.5" /> {t("orderManagement.deliveryInfo")}
+                    </p>
+                    {selectedOrder.customer_phone && (
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Phone className="h-4 w-4 text-blue-600" />
+                          <span className="text-sm font-bold">{selectedOrder.customer_phone}</span>
+                        </div>
+                        <CopyButton text={selectedOrder.customer_phone} />
+                      </div>
+                    )}
+                    {selectedOrder.bairro && (
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <MapPin className="h-4 w-4 text-blue-600" />
+                          <span className="text-sm font-semibold">{selectedOrder.bairro}</span>
+                        </div>
+                        <CopyButton text={selectedOrder.bairro} />
+                      </div>
+                    )}
+                    {selectedOrder.address && (
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-start gap-2 min-w-0">
+                          <MapPin className="h-4 w-4 text-blue-600 mt-0.5 shrink-0" />
+                          <span className="text-xs text-muted-foreground break-words">{selectedOrder.address}</span>
+                        </div>
+                        <CopyButton text={selectedOrder.address} label={t("common.copy")} />
+                      </div>
+                    )}
+                    {/* Copy all delivery info button */}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full gap-1.5 text-xs"
+                      onClick={() => {
+                        const info = [
+                          selectedOrder.customer_name,
+                          selectedOrder.customer_phone,
+                          selectedOrder.bairro,
+                          selectedOrder.address,
+                        ].filter(Boolean).join("\n");
+                        navigator.clipboard.writeText(info);
+                      }}
+                    >
+                      <Copy className="h-3.5 w-3.5" />
+                      {t("orderManagement.copyAllDelivery")}
+                    </Button>
+                  </div>
+                )}
+
+                {/* Order items */}
                 <div>
                   <p className="text-xs font-medium text-muted-foreground">{t("orderTracking.orderDetails")}</p>
                   <div className="space-y-1 mt-1">
@@ -202,10 +318,13 @@ const OrderManagement = ({ businessId }: OrderManagementProps) => {
                   </div>
                 )}
 
-                <div>
-                  <p className="text-xs font-medium text-muted-foreground">{t("orderTracking.deliveryAddress")}</p>
-                  <p className="text-sm">{selectedOrder.address ?? t("orderManagement.notDelivery")}</p>
-                </div>
+                {/* Non-delivery address */}
+                {selectedOrder.consumption_option !== "entrega" && selectedOrder.address && (
+                  <div>
+                    <p className="text-xs font-medium text-muted-foreground">{t("orderTracking.deliveryAddress")}</p>
+                    <p className="text-sm">{selectedOrder.address}</p>
+                  </div>
+                )}
 
                 {selectedOrder.preparation_time && (
                   <div>
@@ -226,7 +345,9 @@ const OrderManagement = ({ businessId }: OrderManagementProps) => {
                       handleStatusChange(selectedOrder.id, newStatus);
                     }}
                     disabled={updateStatus.isPending}
+                    className="gap-1"
                   >
+                    {newStatus === "saiu_para_entrega" && <Truck className="h-3.5 w-3.5" />}
                     {t(`orderStatus.${newStatus}`, newStatus)}
                   </Button>
                 ))}
@@ -295,8 +416,29 @@ const OrderCard = ({
               <span className="text-xs text-muted-foreground">
                 {new Date(order.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
               </span>
+              {order.consumption_option === "entrega" && (
+                <Badge variant="outline" className="text-[10px] gap-1">
+                  <Truck className="h-2.5 w-2.5" />
+                  {t("orderStatus.outForDelivery").split(" ")[0]}
+                </Badge>
+              )}
             </div>
             <p className="text-sm font-medium">{order.customer_name}</p>
+
+            {/* Delivery summary inline */}
+            {order.consumption_option === "entrega" && order.customer_phone && (
+              <div className="flex items-center gap-3 mt-0.5">
+                <span className="text-xs text-muted-foreground flex items-center gap-1">
+                  <Phone className="h-3 w-3" /> {order.customer_phone}
+                </span>
+                {order.bairro && (
+                  <span className="text-xs text-muted-foreground flex items-center gap-1">
+                    <MapPin className="h-3 w-3" /> {order.bairro}
+                  </span>
+                )}
+              </div>
+            )}
+
             <p className="text-xs text-muted-foreground truncate">
               {order.items.map((i) => `${i.name} x${i.qty}`).join(", ")}
             </p>
@@ -314,6 +456,7 @@ const OrderCard = ({
                 disabled={false}
                 className="gap-1"
               >
+                {nextStatuses[0] === "saiu_para_entrega" && <Truck className="h-3.5 w-3.5" />}
                 {t(`orderStatus.${nextStatuses[0]}`, nextStatuses[0])}
               </Button>
             )}
