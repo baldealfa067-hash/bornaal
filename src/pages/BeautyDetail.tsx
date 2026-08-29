@@ -1,4 +1,4 @@
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useRef, useState } from "react";
 import { AlertCircle, MapPin, Phone, BadgeCheck, CheckCircle2, ShieldAlert, Scissors, Loader2, ShoppingCart, Plus, Minus, MessageSquare, MessageCircle } from "lucide-react";
@@ -22,7 +22,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import { sanitizeName, sanitizeComment, sanitizeReason, sanitizeDescription, sanitizeContact } from "@/lib/sanitize";
 import { useBeautyCategories } from "@/hooks/useProviders";
 import { translateCategoryName } from "@/lib/categoryI18n";
-import { ChatDialog } from "@/components/ChatDialog";
 import { useUnreadFromUser } from "@/hooks/useChat";
 import { useCreateAppointment } from "@/hooks/useAppointments";
 import { Calendar } from "@/components/ui/calendar";
@@ -42,6 +41,7 @@ type Review = { id: string; rating: number; comment: string | null; created_at: 
 const BeautyDetail = () => {
   const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { data: beautyCats = [] } = useBeautyCategories();
   const [loading, setLoading] = useState(true);
@@ -62,7 +62,6 @@ const BeautyDetail = () => {
   const [submitting, setSubmitting] = useState(false);
   const [cart, setCart] = useState<Record<string, number>>({});
   const [sending, setSending] = useState(false);
-  const [chatOpen, setChatOpen] = useState(false);
   const [appointmentOpen, setAppointmentOpen] = useState(false);
   const [selectedService, setSelectedService] = useState<BeautyItem | null>(null);
   const [appointmentName, setAppointmentName] = useState("");
@@ -385,7 +384,7 @@ const BeautyDetail = () => {
         {!isOwnProfile && (
           <Button
             className="w-full gap-2 h-12 text-base font-semibold relative"
-            onClick={() => setChatOpen(true)}
+            onClick={() => beautyUserId && navigate(`/mensagem/${beautyUserId}`)}
           >
             <MessageSquare className="h-5 w-5" />
             {t("common.message")}
@@ -403,15 +402,6 @@ const BeautyDetail = () => {
           </Button>
         </a>
       </div>
-
-      <ChatDialog
-        open={chatOpen}
-        onOpenChange={setChatOpen}
-        otherUserId={String((business as Record<string, unknown>).user_id ?? "")}
-        otherUserName={name}
-        otherUserPhone={phone}
-        otherUserPhoto={photoUrl}
-      />
 
       <section>
         <h2 className="font-semibold mb-3">{t("businessDetail.reviewsCount", { count: reviews.length })}</h2>

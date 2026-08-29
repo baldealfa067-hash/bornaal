@@ -40,6 +40,7 @@ const OrderTrackingPage = lazy(() => import("./pages/OrderTrackingPage"));
 const MyAppointmentsPage = lazy(() => import("./pages/MyAppointmentsPage"));
 const DriverDashboard = lazy(() => import("./pages/DriverDashboard"));
 const NotificationsPage = lazy(() => import("./pages/NotificationsPage"));
+const ChatPage = lazy(() => import("./pages/ChatPage"));
 
 const queryClient = new QueryClient();
 
@@ -81,6 +82,7 @@ const App = () => (
               <Route path="/painel-beleza/editar" element={<BeautyEdit />} />
               <Route path="/painel-motorista" element={<DriverDashboard />} />
               <Route path="/notificacoes" element={<NotificationsPage />} />
+              <Route path="/mensagem/:userId" element={<ChatPage />} />
               <Route element={<Layout />}>
                 <Route path="/inicio" element={<Index />} />
                 <Route path="/explorar" element={<Explore />} />

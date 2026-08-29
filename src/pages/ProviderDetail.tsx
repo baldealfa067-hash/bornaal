@@ -1,4 +1,4 @@
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useRef, useState } from "react";
 import { AlertCircle, MapPin, Phone, Wallet, BadgeCheck, CheckCircle2, ShieldAlert, MessageSquare } from "lucide-react";
@@ -20,7 +20,6 @@ import { useTranslation } from "react-i18next";
 import i18n from "@/i18n";
 import { useQueryClient } from "@tanstack/react-query";
 import { sanitizeName, sanitizeComment, sanitizeReason, sanitizeDescription, sanitizeContact } from "@/lib/sanitize";
-import { ChatDialog } from "@/components/ChatDialog";
 import { useUnreadFromUser } from "@/hooks/useChat";
 
 type ReportReasonKey = "notDone" | "charge" | "behaviour" | "fake" | "other";
@@ -35,6 +34,7 @@ const REPORT_REASONS: { key: ReportReasonKey; labelKey: string }[] = [
 const ProviderDetail = () => {
   const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const { data: provider, isLoading } = useProvider(id!);
   const { data: categories = [] } = useCategories();
   const [portfolio, setPortfolio] = useState<{ id: string; image_url: string }[]>([]);
@@ -51,7 +51,6 @@ const ProviderDetail = () => {
   const [reviewerName, setReviewerName] = useState("");
   const [comment, setComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [chatOpen, setChatOpen] = useState(false);
   const providerUserId = (provider as { user_id?: string | null } | null)?.user_id ?? null;
   const isOwnProfile = user?.id === providerUserId;
   const { data: unreadCount = 0 } = useUnreadFromUser(user?.id ?? null, providerUserId);
@@ -263,7 +262,7 @@ const ProviderDetail = () => {
         {!isOwnProfile && (
           <Button
             className="w-full gap-2 h-12 text-base font-semibold relative"
-            onClick={() => setChatOpen(true)}
+            onClick={() => providerUserId && navigate(`/mensagem/${providerUserId}`)}
           >
             <MessageSquare className="h-5 w-5" />
             {t("common.message")}
@@ -281,15 +280,6 @@ const ProviderDetail = () => {
           </Button>
         </a>
       </div>
-
-      <ChatDialog
-        open={chatOpen}
-        onOpenChange={setChatOpen}
-        otherUserId={(provider as { user_id?: string }).user_id ?? ""}
-        otherUserName={provider.name}
-        otherUserPhone={provider.phone}
-        otherUserPhoto={provider.photo_url}
-      />
 
       <section>
         <h2 className="font-semibold mb-3">{t("providerDetail.reviewsCount", { count: provider.reviewCount })}</h2>

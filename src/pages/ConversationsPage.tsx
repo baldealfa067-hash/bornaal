@@ -9,7 +9,6 @@ import { useConversations, type ConversationPreview } from "@/hooks/useChat";
 import { useBlockedUserIds } from "@/hooks/useBlockedUsers";
 import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from "react-i18next";
-import { ChatDialog } from "@/components/ChatDialog";
 
 type ProfileInfo = {
   user_id: string;
@@ -25,8 +24,6 @@ const ConversationsPage = () => {
   const { data: conversations = [], isLoading } = useConversations(user?.id ?? null);
   const { data: blockedIds = new Set<string>() } = useBlockedUserIds(user?.id ?? null);
   const [profiles, setProfiles] = useState<Map<string, ProfileInfo>>(new Map());
-  const [chatOpen, setChatOpen] = useState(false);
-  const [selectedConversation, setSelectedConversation] = useState<ConversationPreview | null>(null);
   const fetchIdsRef = useRef<string>("");
 
   // Filter out blocked users from conversations
@@ -110,8 +107,7 @@ const ConversationsPage = () => {
                 key={conv.otherUserId}
                 className="w-full flex items-center gap-3 px-1 py-3 hover:bg-muted/50 transition-colors text-left"
                 onClick={() => {
-                  setSelectedConversation(conv);
-                  setChatOpen(true);
+                  navigate(`/mensagem/${conv.otherUserId}`);
                 }}
               >
                 <Avatar className="h-12 w-12 shrink-0">
@@ -151,16 +147,6 @@ const ConversationsPage = () => {
         </div>
       )}
 
-      {selectedConversation && (
-        <ChatDialog
-          open={chatOpen}
-          onOpenChange={setChatOpen}
-          otherUserId={selectedConversation.otherUserId}
-          otherUserName={profiles.get(selectedConversation.otherUserId)?.name ?? selectedConversation.otherUserId}
-          otherUserPhone={undefined}
-          otherUserPhoto={profiles.get(selectedConversation.otherUserId)?.photo_url ?? null}
-        />
-      )}
     </div>
   );
 };
