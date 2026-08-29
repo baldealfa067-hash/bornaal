@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 export interface Notification {
@@ -108,19 +109,36 @@ export const useMarkAllAsRead = () => {
 // Realtime subscription for notifications
 export const useNotificationsRealtime = (userId: string | null) => {
   const qc = useQueryClient();
-  if (!userId) return;
+  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
-  supabase
-    .channel("notifications-realtime")
-    .on(
-      "postgres_changes",
-      { event: "INSERT", schema: "public", table: "notifications", filter: `user_id=eq.${userId}` },
-      () => {
-        qc.invalidateQueries({ queryKey: ["notifications"] });
-        qc.invalidateQueries({ queryKey: ["notifications-unread"] });
-      }
-    )
-    .subscribe();
+  useEffect(() => {
+    if (!userId) return;
+
+    // Cleanup previous channel if exists
+    if (channelRef.current) {
+      supabase.removeChannel(channelRef.current);
+      channelRef.current = null;
+    }
+
+    const channel = supabase
+      .channel("notifications-realtime")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "notifications", filter: `user_id=eq.${userId}` },
+        () => {
+          qc.invalidateQueries({ queryKey: ["notifications"] });
+          qc.invalidateQueries({ queryKey: ["notifications-unread"] });
+        }
+      )
+      .subscribe();
+
+    channelRef.current = channel;
+
+    return () => {
+      supabase.removeChannel(channel);
+      channelRef.current = null;
+    };
+  }, [userId, qc]);
 };
 
 export const useCreateNotification = () => {
