@@ -24,6 +24,7 @@ import { useBusinessCategories } from "@/hooks/useProviders";
 import { translateCategoryName } from "@/lib/categoryI18n";
 import { ChatDialog } from "@/components/ChatDialog";
 import { useUnreadFromUser } from "@/hooks/useChat";
+import { useCreateOrder } from "@/hooks/useOrders";
 
 type ReportReasonKey = "food" | "charge" | "behaviour" | "fake" | "hygiene" | "other";
 const REPORT_REASONS: { key: ReportReasonKey; labelKey: string }[] = [
@@ -72,6 +73,11 @@ const BusinessDetail = () => {
   const [address, setAddress] = useState("");
   const [sending, setSending] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
+  const [orderConfirmOpen, setOrderConfirmOpen] = useState(false);
+  const [orderCustomerName, setOrderCustomerName] = useState("");
+  const [orderCustomerPhone, setOrderCustomerPhone] = useState("");
+  const [orderNotes, setOrderNotes] = useState("");
+  const createOrder = useCreateOrder();
   const bizUserId = business ? String((business as Record<string, unknown>).user_id ?? "") : "";
   const isOwnProfile = user?.id === bizUserId && !!user;
   const { data: unreadCount = 0 } = useUnreadFromUser(user?.id ?? null, bizUserId || null);
@@ -149,32 +155,39 @@ const BusinessDetail = () => {
     if (activeConsumption === "entrega" && !address.trim()) {
       return toast.error(t("businessDetail.enterAddress"));
     }
+    setOrderConfirmOpen(true);
+  };
+
+  const confirmOrder = async () => {
+    if (!id) return;
+    if (!orderCustomerName.trim()) return toast.error(t("businessDetail.enterName"));
+    if (!orderCustomerPhone.trim()) return toast.error(t("businessDetail.enterPhone"));
     setSending(true);
-    const lines = cartItems
-      .map((i) => `• ${i.name} x${cart[i.id]} — ${formatCFA(i.price * (cart[i.id] ?? 0))}`)
-      .join("\n");
-    const consumptionLabel = activeConsumption ? t(CONSUMPTION_LABEL_KEYS[activeConsumption] ?? activeConsumption) : activeConsumption;
-    const addressLine = activeConsumption === "entrega" ? `\n${t("businessDetailExtra.deliveryAddressLine", { address: address.trim() })}` : "";
-    const message =
-      `${t("businessDetailExtra.orderGreeting", { name })}\n\n${lines}\n\n` +
-      `${t("businessDetailExtra.orderConsumption", { option: consumptionLabel })}${addressLine}\n${t("businessDetailExtra.orderTotal", { total: formatCFA(cartTotal) })}`;
-    const waUrl = `https://wa.me/${phone.replace(/\D/g, "")}?text=${encodeURIComponent(message)}`;
-    const { error } = await supabase.rpc("record_business_order", {
-      p_business_id: id,
-      p_items: cartItems.map((i) => ({ name: i.name, price: i.price, qty: cart[i.id] })),
-      p_total: cartTotal,
-      p_consumption_option: activeConsumption,
-      p_address: activeConsumption === "entrega" ? address.trim() : null,
-    });
-    setSending(false);
-    if (error) {
-      console.error("[order] error:", error.message);
-      return toast.error(t("businessDetail.orderError"));
+    try {
+      const orderId = await createOrder.mutateAsync({
+        businessId: id,
+        customerId: user?.id ?? null,
+        customerName: orderCustomerName.trim(),
+        customerPhone: orderCustomerPhone.trim(),
+        items: cartItems.map((i) => ({ name: i.name, price: i.price, qty: cart[i.id] ?? 0 })),
+        total: cartTotal,
+        consumptionOption: activeConsumption,
+        address: activeConsumption === "entrega" ? address.trim() : undefined,
+        notes: orderNotes.trim() || undefined,
+      });
+      toast.success(t("businessDetail.orderSuccess"));
+      setCart({});
+      setAddress("");
+      setOrderCustomerName("");
+      setOrderCustomerPhone("");
+      setOrderNotes("");
+      setOrderConfirmOpen(false);
+    } catch (err) {
+      console.error("[order] error:", err);
+      toast.error(t("businessDetail.orderError"));
+    } finally {
+      setSending(false);
     }
-    window.open(waUrl, "_blank");
-    toast.success(t("businessDetail.orderSuccess"));
-    setCart({});
-    setAddress("");
   };
 
   const groupedItems = (catId: string | null) => menuItems.filter((i) => i.category_id === catId);
@@ -399,9 +412,9 @@ const BusinessDetail = () => {
               </div>
             )}
 
-            <Button onClick={sendOrder} disabled={sending} className="w-full bg-[#25D366] hover:bg-[#1ebe57] text-white gap-2">
-              {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <MessageCircle className="h-5 w-5" />}
-              {sending ? t("businessDetail.registering") : t("businessDetail.sendOrder")}
+            <Button onClick={sendOrder} disabled={sending} className="w-full gap-2">
+              {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-5 w-5" />}
+              {sending ? t("businessDetail.registering") : t("businessDetail.placeOrder")}
             </Button>
             <p className="text-[11px] text-muted-foreground text-center mt-2">
               {t("businessDetail.orderHint")}
@@ -569,6 +582,68 @@ const BusinessDetail = () => {
               </DialogFooter>
             </>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Order Confirmation Dialog */}
+      <Dialog open={orderConfirmOpen} onOpenChange={setOrderConfirmOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t("businessDetail.confirmOrder")}</DialogTitle>
+            <DialogDescription>{t("businessDetail.confirmOrderDesc")}</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-2">
+            <div className="rounded-lg border bg-muted/50 p-3 text-sm">
+              {cartItems.map((i) => (
+                <div key={i.id} className="flex justify-between">
+                  <span>{i.name} x{i.id ? cart[i.id] : 0}</span>
+                  <span className="font-medium">{formatCFA(i.price * (cart[i.id] ?? 0))}</span>
+                </div>
+              ))}
+              <div className="flex justify-between font-bold border-t mt-1.5 pt-1.5">
+                <span>{t("businessDetail.total")}</span>
+                <span>{formatCFA(cartTotal)}</span>
+              </div>
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="order-name">{t("businessDetail.customerName")}</Label>
+              <Input
+                id="order-name"
+                placeholder={t("businessDetail.yourName")}
+                value={orderCustomerName}
+                onChange={(e) => setOrderCustomerName(e.target.value)}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="order-phone">{t("businessDetail.customerPhone")}</Label>
+              <Input
+                id="order-phone"
+                type="tel"
+                placeholder={t("businessDetail.phonePlaceholder")}
+                value={orderCustomerPhone}
+                onChange={(e) => setOrderCustomerPhone(e.target.value)}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="order-notes">{t("businessDetail.orderNotes")}</Label>
+              <Textarea
+                id="order-notes"
+                placeholder={t("businessDetail.orderNotesPlaceholder")}
+                value={orderNotes}
+                onChange={(e) => setOrderNotes(e.target.value)}
+                rows={2}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOrderConfirmOpen(false)}>
+              {t("common.cancel")}
+            </Button>
+            <Button onClick={confirmOrder} disabled={sending || !orderCustomerName.trim() || !orderCustomerPhone.trim()} className="gap-2">
+              {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
+              {sending ? t("businessDetail.registering") : t("businessDetail.confirmOrder")}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

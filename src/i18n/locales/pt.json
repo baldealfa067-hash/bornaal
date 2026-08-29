@@ -65,7 +65,38 @@
     "loginRequired": "Faça login para enviar mensagens.",
     "errorNoRecipient": "Não foi possível identificar o destinatário.",
     "sendError": "Erro ao enviar mensagem. Tente novamente.",
-    "anonymousHint": "A enviar como anónimo. As suas mensagens não ficam associadas a uma conta."
+    "anonymousHint": "A enviar como anónimo. As suas mensagens não ficam associadas a uma conta.",
+    "imageMessage": "Imagem",
+    "block": "Bloquear",
+    "unblock": "Desbloquear",
+    "blockTitle": "Bloquear utilizador",
+    "blockDesc": "Tem a certeza que pretende bloquear {{name}}? Não receberá mais mensagens desta pessoa.",
+    "blockError": "Erro ao bloquear. Tente novamente.",
+    "userBlocked": "Utilizador bloqueado.",
+    "reportUser": "Denunciar",
+    "reportTitle": "Denunciar utilizador",
+    "reportDesc": "Descreva o motivo da denúncia de {{name}}.",
+    "reportReason": "Motivo",
+    "selectReason": "Selecione um motivo",
+    "reportDetails": "Detalhes",
+    "reportDetailsPlaceholder": "Descreva o problema (opcional)...",
+    "reportSubmitted": "Denúncia enviada. Obrigado!",
+    "reportError": "Erro ao enviar denúncia.",
+    "reportReasons": {
+      "spam": "Spam",
+      "harassment": "Assédio",
+      "inappropriate": "Conteúdo inadequado",
+      "scam": "Burla",
+      "other": "Outro"
+    },
+    "blockedByThem": "Este utilizador bloqueou esta conversa. Não pode enviar mensagens.",
+    "cannotSend": "Não pode enviar mensagens..."
+  },
+  "conversations": {
+    "title": "Conversas",
+    "empty": "Sem conversas ainda",
+    "emptyHint": "As suas conversas com prestadores e restaurantes aparecerão aqui.",
+    "image": "Imagem"
   },
   "header": {
     "language": "Idioma"
@@ -73,6 +104,7 @@
   "bottomNav": {
     "home": "Início",
     "explore": "Explorar",
+    "chat": "Conversas",
     "requests": "Pedidos",
     "profile": "Perfil"
   },
@@ -298,7 +330,8 @@
     "whatsappContacts": "Contactos WhatsApp",
     "calls": "Ligações",
     "comments": "Comentários",
-    "viewPublic": "Ver página pública do estabelecimento"
+    "viewPublic": "Ver página pública do estabelecimento",
+    "ordersManagement": "Gestão de Pedidos"
   },
   "businessEdit": {
     "imageTooLarge": "Imagem demasiado grande (máx 5MB)",
@@ -388,8 +421,8 @@
     "addItems": "Adicione itens ao pedido.",
     "chooseConsumption": "Escolha a opção de consumo.",
     "enterAddress": "Indique a morada de entrega.",
-    "orderError": "Erro ao registar o pedido. Abre o WhatsApp na mesma?",
-    "orderSuccess": "Pedido registado! A abrir o WhatsApp...",
+    "orderError": "Erro ao registar o pedido. Tenta novamente.",
+    "orderSuccess": "Pedido enviado com sucesso!",
     "chooseReasonDesc": "Escolhe um motivo e escreve uma descrição.",
     "reportError": "Erro ao enviar a denúncia. Tenta novamente.",
     "reportReasons": {
@@ -414,8 +447,19 @@
     "deliveryAddress": "Morada de entrega *",
     "addressPlaceholder": "Ex: Quelele, rua 2, casa 15",
     "sendOrder": "Enviar pedido por WhatsApp",
+    "placeOrder": "Fazer Pedido",
     "registering": "A registar...",
-    "orderHint": "O pedido abre no WhatsApp do estabelecimento, sem pagamento na app.",
+    "orderHint": "O pedido será enviado diretamente para o restaurante.",
+    "confirmOrder": "Confirmar Pedido",
+    "confirmOrderDesc": "Revise os detalhes do seu pedido antes de enviar.",
+    "customerName": "O seu nome",
+    "customerPhone": "Telefone de contacto",
+    "phonePlaceholder": "Ex: 956 123 456",
+    "orderNotes": "Observações (opcional)",
+    "orderNotesPlaceholder": "Ex: Sem cebola, pouco picante...",
+    "total": "Total",
+    "enterName": "Indique o seu nome.",
+    "enterPhone": "Indique o seu telefone.",
     "whatsapp": "WhatsApp",
     "call": "Ligar",
     "reviewsCount": "Avaliações ({{count}})",
@@ -943,6 +987,129 @@
   },
   "beautyDetail": {
     "notFound": "Negócio não encontrado.",
-    "catalogTitle": "Catálogo"
+    "catalogTitle": "Catálogo",
+    "bookService": "Agendar Serviço",
+    "customerName": "O seu nome",
+    "customerPhone": "Telefone de contacto",
+    "yourName": "Ex: Maria Silva",
+    "phonePlaceholder": "Ex: 956 123 456",
+    "appointmentDate": "Data",
+    "appointmentTime": "Hora",
+    "appointmentNotes": "Observações (opcional)",
+    "appointmentNotesPlaceholder": "Ex: Tranças grandes...",
+    "estimatedPrice": "Preço estimado",
+    "enterName": "Indique o seu nome.",
+    "enterPhone": "Indique o seu telefone.",
+    "selectDate": "Escolha a data.",
+    "selectTime": "Escolha a hora.",
+    "appointmentSuccess": "Agendamento enviado com sucesso!",
+    "appointmentError": "Erro ao enviar agendamento. Tente novamente."
+  },
+  "myOrders": {
+    "title": "Os Meus Pedidos",
+    "empty": "Sem pedidos ainda",
+    "emptyHint": "Faça o seu primeiro pedido num restaurante.",
+    "browseRestaurants": "Explorar Restaurantes",
+    "loginRequired": "Faça login para ver os seus pedidos.",
+    "items": "itens"
+  },
+  "orderTracking": {
+    "title": "Pedido",
+    "notFound": "Pedido não encontrado.",
+    "orderDetails": "Detalhes do Pedido",
+    "total": "Total",
+    "notes": "Observações",
+    "progress": "Estado do Pedido",
+    "deliveryAddress": "Morada de Entrega",
+    "messageRestaurant": "Contactar Restaurante",
+    "estimatedTime": "Aproximadamente {{time}} minutos"
+  },
+  "orderStatus": {
+    "novo": "Novo Pedido",
+    "confirmado": "Confirmado",
+    "em_preparacao": "Em Preparação",
+    "na_cozinha": "Na Cozinha",
+    "pronto": "Pronto",
+    "aguardando_motorista": "A Aguardar Motorista",
+    "motorista_encontrado": "Motorista Encontrado",
+    "pedido_recolhido": "Pedido Recolhido",
+    "a_caminho": "A Caminho",
+    "entregue": "Entregue",
+    "concluido": "Concluído",
+    "cancelado": "Cancelado"
+  },
+  "orderManagement": {
+    "noOrders": "Sem pedidos nesta secção.",
+    "customer": "Cliente",
+    "notDelivery": "Retirada no local",
+    "prepTime": "Tempo de preparação",
+    "prepTimeTitle": "Tempo de Preparação",
+    "prepTimeDesc": "Indique o tempo estimado de preparação em minutos.",
+    "prepTimeMinutes": "Minutos"
+  },
+  "myAppointments": {
+    "title": "Os Meus Agendamentos",
+    "empty": "Sem agendamentos ainda",
+    "emptyHint": "Agende o seu primeiro serviço de beleza.",
+    "browseSalons": "Explorar Salões",
+    "loginRequired": "Faça login para ver os seus agendamentos."
+  },
+  "appointmentStatus": {
+    "solicitado": "Solicitado",
+    "confirmado": "Confirmado",
+    "em_atendimento": "Em Atendimento",
+    "concluido": "Concluído",
+    "avaliado": "Avaliado",
+    "cancelado": "Cancelado"
+  },
+  "appointmentManagement": {
+    "noAppointments": "Sem agendamentos nesta secção.",
+    "customer": "Cliente",
+    "notes": "Observações"
+  },
+  "beautyDashboard": {
+    "appointmentsManagement": "Gestão de Agendamentos"
+  },
+  "driverDashboard": {
+    "registerTitle": "Torne-se Motorista",
+    "registerDesc": "Registe-se para fazer entregas no BORNAAL.",
+    "register": "Registar como Motorista",
+    "namePlaceholder": "O seu nome",
+    "phonePlaceholder": "Ex: 956 123 456",
+    "vehicleType": "Tipo de veículo",
+    "vehicle": {
+      "moto": "Motocicleta",
+      "bicicleta": "Bicicleta",
+      "carro": "Carro",
+      "pe": "A pé"
+    },
+    "available": "Disponível",
+    "offline": "Offline",
+    "goOnline": "Ficar Disponível",
+    "goOffline": "Ficar Offline",
+    "delivered": "Entregues",
+    "active": "Ativas",
+    "availableDeliveries": "Disponíveis",
+    "myDeliveries": "As Minhas Entregas",
+    "noAvailable": "Sem entregas disponíveis de momento.",
+    "noDeliveries": "Sem entregas ainda.",
+    "accept": "Aceitar",
+    "pickup": "Recolher",
+    "deliver": "Entregar",
+    "callRestaurant": "Ligar ao Restaurante",
+    "notAvailable": "Não disponível",
+    "proof": "Comprovativo",
+    "proofTitle": "Comprovativo de Entrega",
+    "proofDesc": "Tire uma foto do local de entrega para confirmar.",
+    "takePhoto": "Tirar Foto",
+    "submitProof": "Enviar Comprovativo",
+    "qrTitle": "QR Code de Validação",
+    "qrDesc": "Mostre este QR code ao cliente para validação.",
+    "qrInstruction": "O cliente pode validar a entrega com este QR code.",
+    "qrValidate": "Validar Entrega"
+  },
+  "notifications": {
+    "title": "Notificações",
+    "empty": "Sem notificações de momento."
   }
 }

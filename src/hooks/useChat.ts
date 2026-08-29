@@ -9,6 +9,8 @@ export interface Message {
   content: string;
   read: boolean;
   created_at: string;
+  message_type?: string;
+  image_url?: string;
 }
 
 export interface ConversationPreview {
@@ -55,15 +57,18 @@ export const useSendMessage = () => {
       senderId,
       receiverId,
       content,
+      messageType,
     }: {
       senderId: string | null;
       receiverId: string;
       content: string;
+      messageType?: string;
     }) => {
       const { error: msgError } = await supabase.from("messages").insert({
         sender_id: senderId,
         receiver_id: receiverId,
         content,
+        message_type: messageType ?? "text",
       });
       if (msgError) throw msgError;
 
@@ -76,12 +81,14 @@ export const useSendMessage = () => {
           .maybeSingle()
           .then(({ data: senderProfile }) => {
             const senderName = senderProfile?.name || "Alguém";
-            return supabase.from("notifications").insert({
-              user_id: receiverId,
-              type: "chat_message",
-              title: "Nova mensagem",
-              body: `${senderName}: ${content.length > 80 ? content.slice(0, 80) + "..." : content}`,
-              link: null,
+            const truncated = content.length > 80 ? content.slice(0, 80) + "..." : content;
+            return supabase.rpc("create_notification", {
+              p_user_id: receiverId,
+              p_title: "Nova mensagem",
+              p_message: `${senderName}: ${truncated}`,
+              p_type: "chat_message",
+              p_reference_type: "chat",
+              p_reference_id: null,
             });
           })
           .catch((err) => console.error("[chat] notification error:", err));
@@ -155,7 +162,7 @@ export const useConversations = (userId: string | null) =>
       if (error) throw error;
       if (!messages || messages.length === 0) return [];
 
-      // Group by conversation partner
+      // Group by conversation partner, count unread in one pass
       const convMap = new Map<
         string,
         { lastMessage: string; lastMessageAt: string; unreadCount: number }
@@ -164,36 +171,31 @@ export const useConversations = (userId: string | null) =>
       for (const msg of messages as Message[]) {
         const otherId =
           msg.sender_id === userId ? msg.receiver_id : msg.sender_id;
+        if (!otherId) continue;
         if (!convMap.has(otherId)) {
-          const unreadFromThem =
-            msg.receiver_id === userId && !msg.read ? 1 : 0;
           convMap.set(otherId, {
             lastMessage: msg.content,
             lastMessageAt: msg.created_at,
-            unreadCount: unreadFromThem,
+            unreadCount: 0,
           });
+        }
+        const conv = convMap.get(otherId)!;
+        // Count messages from partner that are unread
+        if (msg.receiver_id === userId && !msg.read) {
+          conv.unreadCount++;
         }
       }
 
-      // Count actual unread per partner
-      const previews: ConversationPreview[] = [];
-      for (const [otherUserId, preview] of convMap) {
-        const { count } = await supabase
-          .from("messages")
-          .select("id", { count: "exact", head: true })
-          .eq("receiver_id", userId)
-          .eq("sender_id", otherUserId)
-          .eq("read", false);
-
-        previews.push({
+      // Convert to array and sort by most recent
+      const previews: ConversationPreview[] = Array.from(convMap.entries()).map(
+        ([otherUserId, preview]) => ({
           otherUserId,
           lastMessage: preview.lastMessage,
           lastMessageAt: preview.lastMessageAt,
-          unreadCount: count ?? 0,
-        });
-      }
+          unreadCount: preview.unreadCount,
+        })
+      );
 
-      // Sort by most recent
       previews.sort(
         (a, b) =>
           new Date(b.lastMessageAt).getTime() -

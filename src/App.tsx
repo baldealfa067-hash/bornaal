@@ -34,6 +34,12 @@ const Requests = lazy(() => import("./pages/Requests"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Models = lazy(() => import("./pages/Models"));
 const Profile = lazy(() => import("./pages/Profile"));
+const ConversationsPage = lazy(() => import("./pages/ConversationsPage"));
+const MyOrdersPage = lazy(() => import("./pages/MyOrdersPage"));
+const OrderTrackingPage = lazy(() => import("./pages/OrderTrackingPage"));
+const MyAppointmentsPage = lazy(() => import("./pages/MyAppointmentsPage"));
+const DriverDashboard = lazy(() => import("./pages/DriverDashboard"));
+const NotificationsPage = lazy(() => import("./pages/NotificationsPage"));
 
 const queryClient = new QueryClient();
 
@@ -73,9 +79,15 @@ const App = () => (
               <Route path="/painel-loja/editar" element={<BusinessEdit />} />
               <Route path="/painel-beleza" element={<BeautyDashboard />} />
               <Route path="/painel-beleza/editar" element={<BeautyEdit />} />
+              <Route path="/painel-motorista" element={<DriverDashboard />} />
+              <Route path="/notificacoes" element={<NotificationsPage />} />
               <Route element={<Layout />}>
                 <Route path="/inicio" element={<Index />} />
                 <Route path="/explorar" element={<Explore />} />
+                <Route path="/conversas" element={<ConversationsPage />} />
+                <Route path="/meus-pedidos" element={<MyOrdersPage />} />
+                <Route path="/pedido/:id" element={<OrderTrackingPage />} />
+                <Route path="/meus-agendamentos" element={<MyAppointmentsPage />} />
                 <Route path="/pedidos" element={<Requests />} />
                 <Route path="/perfil" element={<Profile />} />
                 <Route path="/prestador/:id" element={<ProviderDetail />} />

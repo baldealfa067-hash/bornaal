@@ -65,7 +65,38 @@
     "loginRequired": "Please log in to send messages.",
     "errorNoRecipient": "Could not identify the recipient.",
     "sendError": "Error sending message. Please try again.",
-    "anonymousHint": "Sending as anonymous. Your messages are not linked to an account."
+    "anonymousHint": "Sending as anonymous. Your messages are not linked to an account.",
+    "imageMessage": "Image",
+    "block": "Block",
+    "unblock": "Unblock",
+    "blockTitle": "Block user",
+    "blockDesc": "Are you sure you want to block {{name}}? You will no longer receive messages from this person.",
+    "blockError": "Error blocking. Please try again.",
+    "userBlocked": "User blocked.",
+    "reportUser": "Report",
+    "reportTitle": "Report user",
+    "reportDesc": "Describe the reason for reporting {{name}}.",
+    "reportReason": "Reason",
+    "selectReason": "Select a reason",
+    "reportDetails": "Details",
+    "reportDetailsPlaceholder": "Describe the problem (optional)...",
+    "reportSubmitted": "Report submitted. Thank you!",
+    "reportError": "Error submitting report.",
+    "reportReasons": {
+      "spam": "Spam",
+      "harassment": "Harassment",
+      "inappropriate": "Inappropriate content",
+      "scam": "Scam",
+      "other": "Other"
+    },
+    "blockedByThem": "This user has blocked this conversation. You cannot send messages.",
+    "cannotSend": "Cannot send messages..."
+  },
+  "conversations": {
+    "title": "Conversations",
+    "empty": "No conversations yet",
+    "emptyHint": "Your conversations with providers and restaurants will appear here.",
+    "image": "Image"
   },
   "header": {
     "language": "Language"
@@ -73,6 +104,7 @@
   "bottomNav": {
     "home": "Home",
     "explore": "Explore",
+    "chat": "Chat",
     "requests": "Requests",
     "profile": "Profile"
   },
@@ -298,7 +330,8 @@
     "whatsappContacts": "WhatsApp contacts",
     "calls": "Calls",
     "comments": "Comments",
-    "viewPublic": "View public page"
+    "viewPublic": "View public page",
+    "ordersManagement": "Order Management"
   },
   "businessEdit": {
     "imageTooLarge": "Image too large (max 5 MB)",
@@ -388,8 +421,8 @@
     "addItems": "Add items to the order.",
     "chooseConsumption": "Please choose a consumption option.",
     "enterAddress": "Please enter the delivery address.",
-    "orderError": "Error registering order. Open WhatsApp anyway?",
-    "orderSuccess": "Order registered! Opening WhatsApp...",
+    "orderError": "Error placing order. Please try again.",
+    "orderSuccess": "Order placed successfully!",
     "chooseReasonDesc": "Please choose a reason and write a description.",
     "reportError": "Error sending report. Please try again.",
     "reportReasons": {
@@ -414,8 +447,19 @@
     "deliveryAddress": "Delivery address *",
     "addressPlaceholder": "E.g. Quelele, street 2, house 15",
     "sendOrder": "Send order via WhatsApp",
+    "placeOrder": "Place Order",
     "registering": "Registering...",
-    "orderHint": "The order opens in the business's WhatsApp, no payment in the app.",
+    "orderHint": "The order will be sent directly to the restaurant.",
+    "confirmOrder": "Confirm Order",
+    "confirmOrderDesc": "Review your order details before sending.",
+    "customerName": "Your name",
+    "customerPhone": "Contact phone",
+    "phonePlaceholder": "E.g. 956 123 456",
+    "orderNotes": "Notes (optional)",
+    "orderNotesPlaceholder": "E.g. No onions, mild spice...",
+    "total": "Total",
+    "enterName": "Please enter your name.",
+    "enterPhone": "Please enter your phone.",
     "whatsapp": "WhatsApp",
     "call": "Call",
     "reviewsCount": "Reviews ({{count}})",
@@ -943,6 +987,129 @@
   },
   "beautyDetail": {
     "notFound": "Business not found.",
-    "catalogTitle": "Catalog"
+    "catalogTitle": "Catalog",
+    "bookService": "Book Service",
+    "customerName": "Your name",
+    "customerPhone": "Contact phone",
+    "yourName": "E.g. Maria Silva",
+    "phonePlaceholder": "E.g. 956 123 456",
+    "appointmentDate": "Date",
+    "appointmentTime": "Time",
+    "appointmentNotes": "Notes (optional)",
+    "appointmentNotesPlaceholder": "E.g. Large braids...",
+    "estimatedPrice": "Estimated price",
+    "enterName": "Please enter your name.",
+    "enterPhone": "Please enter your phone.",
+    "selectDate": "Please select a date.",
+    "selectTime": "Please select a time.",
+    "appointmentSuccess": "Appointment booked successfully!",
+    "appointmentError": "Error booking appointment. Please try again."
+  },
+  "myOrders": {
+    "title": "My Orders",
+    "empty": "No orders yet",
+    "emptyHint": "Place your first order at a restaurant.",
+    "browseRestaurants": "Browse Restaurants",
+    "loginRequired": "Please log in to view your orders.",
+    "items": "items"
+  },
+  "orderTracking": {
+    "title": "Order",
+    "notFound": "Order not found.",
+    "orderDetails": "Order Details",
+    "total": "Total",
+    "notes": "Notes",
+    "progress": "Order Status",
+    "deliveryAddress": "Delivery Address",
+    "messageRestaurant": "Contact Restaurant",
+    "estimatedTime": "Approximately {{time}} minutes"
+  },
+  "orderStatus": {
+    "novo": "New Order",
+    "confirmado": "Confirmed",
+    "em_preparacao": "Preparing",
+    "na_cozinha": "In the Kitchen",
+    "pronto": "Ready",
+    "aguardando_motorista": "Waiting for Driver",
+    "motorista_encontrado": "Driver Found",
+    "pedido_recolhido": "Picked Up",
+    "a_caminho": "On the Way",
+    "entregue": "Delivered",
+    "concluido": "Completed",
+    "cancelado": "Cancelled"
+  },
+  "orderManagement": {
+    "noOrders": "No orders in this section.",
+    "customer": "Customer",
+    "notDelivery": "Pickup",
+    "prepTime": "Preparation time",
+    "prepTimeTitle": "Preparation Time",
+    "prepTimeDesc": "Enter the estimated preparation time in minutes.",
+    "prepTimeMinutes": "Minutes"
+  },
+  "myAppointments": {
+    "title": "My Appointments",
+    "empty": "No appointments yet",
+    "emptyHint": "Book your first beauty service.",
+    "browseSalons": "Browse Salons",
+    "loginRequired": "Please log in to view your appointments."
+  },
+  "appointmentStatus": {
+    "solicitado": "Requested",
+    "confirmado": "Confirmed",
+    "em_atendimento": "In Progress",
+    "concluido": "Completed",
+    "avaliado": "Reviewed",
+    "cancelado": "Cancelled"
+  },
+  "appointmentManagement": {
+    "noAppointments": "No appointments in this section.",
+    "customer": "Customer",
+    "notes": "Notes"
+  },
+  "beautyDashboard": {
+    "appointmentsManagement": "Appointment Management"
+  },
+  "driverDashboard": {
+    "registerTitle": "Become a Driver",
+    "registerDesc": "Register to make deliveries on BORNAAL.",
+    "register": "Register as Driver",
+    "namePlaceholder": "Your name",
+    "phonePlaceholder": "E.g. 956 123 456",
+    "vehicleType": "Vehicle type",
+    "vehicle": {
+      "moto": "Motorcycle",
+      "bicicleta": "Bicycle",
+      "carro": "Car",
+      "pe": "Walking"
+    },
+    "available": "Available",
+    "offline": "Offline",
+    "goOnline": "Go Online",
+    "goOffline": "Go Offline",
+    "delivered": "Delivered",
+    "active": "Active",
+    "availableDeliveries": "Available",
+    "myDeliveries": "My Deliveries",
+    "noAvailable": "No available deliveries at the moment.",
+    "noDeliveries": "No deliveries yet.",
+    "accept": "Accept",
+    "pickup": "Pick Up",
+    "deliver": "Deliver",
+    "callRestaurant": "Call Restaurant",
+    "notAvailable": "Not available",
+    "proof": "Proof",
+    "proofTitle": "Delivery Proof",
+    "proofDesc": "Take a photo of the delivery location to confirm.",
+    "takePhoto": "Take Photo",
+    "submitProof": "Submit Proof",
+    "qrTitle": "QR Validation Code",
+    "qrDesc": "Show this QR code to the customer for validation.",
+    "qrInstruction": "The customer can validate delivery with this QR code.",
+    "qrValidate": "Validate Delivery"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "empty": "No notifications yet."
   }
 }

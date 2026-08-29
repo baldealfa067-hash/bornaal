@@ -65,7 +65,38 @@
     "loginRequired": "Fasi login pa tenu mandi mensajen.",
     "errorNoRecipient": "N na posivel identifika destinatariu.",
     "sendError": "Ero na mandi mensajen. Tenta di nobu.",
-    "anonymousHint": "Ta mandi komu anónimu. To mensajen na ta liga na nenhuma konta."
+    "anonymousHint": "Ta mandi komu anónimu. To mensajen na ta liga na nenhuma konta.",
+    "imageMessage": "Imajen",
+    "block": "Blokea",
+    "unblock": "Desblokea",
+    "blockTitle": "Blokea utilizadur",
+    "blockDesc": "Tus certu kile blokea {{name}}? Na ta resivi mais mensajen dis persoa.",
+    "blockError": "Ero na blokea. Tenta di nobu.",
+    "userBlocked": "Utilizadur blokadu.",
+    "reportUser": "Denunsia",
+    "reportTitle": "Denunsia utilizadur",
+    "reportDesc": "Deskripsi to motivu pa denunsia {{name}}.",
+    "reportReason": "Motivu",
+    "selectReason": "Skolhe un motivu",
+    "reportDetails": "Detalis",
+    "reportDetailsPlaceholder": "Deskripsi to problemu (opsionau)...",
+    "reportSubmitted": "Denunsia mandadu. Obrigadu!",
+    "reportError": "Ero na mandi denunsia.",
+    "reportReasons": {
+      "spam": "Spam",
+      "harassment": "Aseitu",
+      "inappropriate": "Kontradu inapropiadu",
+      "scam": "Burla",
+      "other": "Outru"
+    },
+    "blockedByThem": "Uzuizadur blokeu koversa na. N pa posivel manda mensajen.",
+    "cannotSend": "N pa posivel manda mensajen..."
+  },
+  "conversations": {
+    "title": "Koversas",
+    "empty": "Nada koversa ain",
+    "emptyHint": "To koversa ku prestaduris i restaurantis na ta aparese nesi.",
+    "image": "Imajen"
   },
   "header": {
     "language": "Lingua"
@@ -73,6 +104,7 @@
   "bottomNav": {
     "home": "Inisiu",
     "explore": "Esplore",
+    "chat": "Koversas",
     "requests": "Pedidus",
     "profile": "Perfil"
   },
@@ -443,5 +475,132 @@
   "notFoundPage": {
     "notFound": "Opa! Pagina nu enkontrada",
     "home": "Inisiu"
+  },
+  "myOrders": {
+    "title": "Nha Pedidus",
+    "empty": "Nenhum pedidu ain",
+    "emptyHint": "Fasi to pedidu nobu na un resturanti.",
+    "browseRestaurants": "Buska Resturantis",
+    "loginRequired": "Fasi login pa berti to pedidus.",
+    "items": "itensis"
+  },
+  "orderTracking": {
+    "title": "Pedidu",
+    "notFound": "Pedidu na kuskutra.",
+    "orderDetails": "Detalis di Pedidu",
+    "total": "Total",
+    "notes": "Nota",
+    "progress": "Estadu di Pedidu",
+    "deliveryAddress": "Endirisu di Entrega",
+    "messageRestaurant": "Kontata Resturanti",
+    "estimatedTime": "Aproximadamenti {{time}} minutus"
+  },
+  "orderStatus": {
+    "novo": "Pedidu Nobu",
+    "confirmado": "Kofirmadu",
+    "em_preparacao": "Ta Prepara",
+    "na_cozinha": "Na Cozinha",
+    "pronto": "Prontu",
+    "aguardando_motorista": "Ta Spira Motorista",
+    "motorista_encontrado": "Motorista Kuskutra",
+    "pedido_recolhido": "Rekuliadu",
+    "a_caminho": "Na Kamini",
+    "entregue": "Entregadu",
+    "concluido": "Kumatu",
+    "cancelado": "Anuladu"
+  },
+  "orderManagement": {
+    "noOrders": "Nenhum pedidu na esison.",
+    "customer": "Klienti",
+    "notDelivery": "Tiradi na lokal",
+    "prepTime": "Tempu di preparason",
+    "prepTimeTitle": "Tempu di Preparason",
+    "prepTimeDesc": "Indika tempu estimadu di preparason na minutus.",
+    "prepTimeMinutes": "Minutus"
+  },
+  "beautyDetail": {
+    "notFound": "Négoisiu na kuskutra.",
+    "catalogTitle": "Katalogu",
+    "bookService": "Marka Servisu",
+    "customerName": "To nomi",
+    "customerPhone": "Telfoni di kontatu",
+    "yourName": "Ex: Maria Silva",
+    "phonePlaceholder": "Ex: 956 123 456",
+    "appointmentDate": "Data",
+    "appointmentTime": "Hora",
+    "appointmentNotes": "Nota (opsionau)",
+    "appointmentNotesPlaceholder": "Ex: Transas djundi...",
+    "estimatedPrice": "Prezu estimadu",
+    "enterName": "Indika to nomin.",
+    "enterPhone": "Indika to telfoni.",
+    "selectDate": "Skolhe data.",
+    "selectTime": "Skolhe hora.",
+    "appointmentSuccess": "Markason mandadu kumpridu!",
+    "appointmentError": "Ero na marka. Tenta di nobu."
+  },
+  "myAppointments": {
+    "title": "Nha Markasons",
+    "empty": "Nenhum markason ain",
+    "emptyHint": "Marka to servisu di beleza nobu.",
+    "browseSalons": "Buska Salons",
+    "loginRequired": "Fasi login pa berti to markasons."
+  },
+  "appointmentStatus": {
+    "solicitado": "Pedidu",
+    "confirmado": "Kofirmadu",
+    "em_atendimento": "Na Servisu",
+    "concluido": "Kumatu",
+    "avaliado": "Awaliadu",
+    "cancelado": "Anuladu"
+  },
+  "appointmentManagement": {
+    "noAppointments": "Nenhum markason na esison.",
+    "customer": "Klienti",
+    "notes": "Nota"
+  },
+  "beautyDashboard": {
+    "appointmentsManagement": "Gestason di Markasons"
+  },
+  "driverDashboard": {
+    "registerTitle": "Torna Motorista",
+    "registerDesc": "Regista pa fazi entregas na BORNAAL.",
+    "register": "Regista komu Motorista",
+    "namePlaceholder": "To nomin",
+    "phonePlaceholder": "Ex: 956 123 456",
+    "vehicleType": "Tipu di veikulu",
+    "vehicle": {
+      "moto": "Motusikleta",
+      "bicicleta": "Bisikleta",
+      "carro": "Karru",
+      "pe": "A pe"
+    },
+    "available": "Dispunivel",
+    "offline": "Ofliini",
+    "goOnline": "Fika Dispunivel",
+    "goOffline": "Fika Ofliini",
+    "delivered": "Entregadus",
+    "active": "Ativus",
+    "availableDeliveries": "Dispunivis",
+    "myDeliveries": "Nha Entregas",
+    "noAvailable": "Nenhum entrega dispunivel na momentu.",
+    "noDeliveries": "Nenhum entrega ain.",
+    "accept": "Aseita",
+    "pickup": "Rekuli",
+    "deliver": "Entrega",
+    "callRestaurant": "Liga Resturanti",
+    "notAvailable": "Na dispunivel",
+    "proof": "Komprovativu",
+    "proofTitle": "Komprovativu di Entrega",
+    "proofDesc": "Tira foto di lokal di entrega pa konfirma.",
+    "takePhoto": "Tira Foto",
+    "submitProof": "Manda Komprovativu",
+    "qrTitle": "Kodigu QR di Validason",
+    "qrDesc": "Mustra kodigu QR ase pa validason.",
+    "qrInstruction": "Klienti pu valida entrega kum kodigu QR.",
+    "qrValidate": "Valida Entrega"
+  },
+  "notifications": {
+    "title": "Notifikasons",
+    "empty": "Nenhum notifikason na momentu."
   }
 }

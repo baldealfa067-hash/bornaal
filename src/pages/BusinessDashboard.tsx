@@ -27,6 +27,7 @@ import { useTranslation } from "react-i18next";
 import { LanguageSelector } from "@/components/LanguageSelector";
 import { useBusinessCategories } from "@/hooks/useProviders";
 import { translateCategoryName } from "@/lib/categoryI18n";
+import OrderManagement from "@/components/OrderManagement";
 
 type DashboardProfile = {
   id: string;
@@ -216,6 +217,13 @@ const BusinessDashboard = () => {
               <Link to={`/loja/${profile.id}`} className="text-xs text-primary hover:underline inline-flex items-center justify-center min-h-11 w-full">
                 {t("businessDashboard.viewPublic")}
               </Link>
+            </div>
+
+            <div className="mt-6">
+              <h2 className="font-semibold mb-3 flex items-center gap-2">
+                <ShoppingCart className="h-5 w-5 text-primary" /> {t("businessDashboard.ordersManagement")}
+              </h2>
+              <OrderManagement businessId={profile.id} />
             </div>
           </>
         )}

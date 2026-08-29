@@ -1,7 +1,7 @@
 import { useParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useRef, useState } from "react";
-import { AlertCircle, MapPin, Phone, BadgeCheck, CheckCircle2, ShieldAlert, Scissors, Loader2, ShoppingCart, Plus, Minus, MessageSquare } from "lucide-react";
+import { AlertCircle, MapPin, Phone, BadgeCheck, CheckCircle2, ShieldAlert, Scissors, Loader2, ShoppingCart, Plus, Minus, MessageSquare, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -24,6 +24,8 @@ import { useBeautyCategories } from "@/hooks/useProviders";
 import { translateCategoryName } from "@/lib/categoryI18n";
 import { ChatDialog } from "@/components/ChatDialog";
 import { useUnreadFromUser } from "@/hooks/useChat";
+import { useCreateAppointment } from "@/hooks/useAppointments";
+import { Calendar } from "@/components/ui/calendar";
 
 type ReportReasonKey = "food" | "charge" | "behaviour" | "fake" | "hygiene" | "other";
 const REPORT_REASONS: { key: ReportReasonKey; labelKey: string }[] = [
@@ -61,6 +63,14 @@ const BeautyDetail = () => {
   const [cart, setCart] = useState<Record<string, number>>({});
   const [sending, setSending] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
+  const [appointmentOpen, setAppointmentOpen] = useState(false);
+  const [selectedService, setSelectedService] = useState<BeautyItem | null>(null);
+  const [appointmentName, setAppointmentName] = useState("");
+  const [appointmentPhone, setAppointmentPhone] = useState("");
+  const [appointmentDate, setAppointmentDate] = useState("");
+  const [appointmentTime, setAppointmentTime] = useState("");
+  const [appointmentNotes, setAppointmentNotes] = useState("");
+  const createAppointment = useCreateAppointment();
   const beautyUserId = business ? String((business as Record<string, unknown>).user_id ?? "") : "";
   const isOwnProfile = user?.id === beautyUserId && !!user;
   const { data: unreadCount = 0 } = useUnreadFromUser(user?.id ?? null, beautyUserId || null);
@@ -147,6 +157,45 @@ const BeautyDetail = () => {
     setSending(false);
     toast.success(t("businessDetail.orderSuccess"));
     setCart({});
+  };
+
+  const openAppointment = (service: BeautyItem) => {
+    setSelectedService(service);
+    setAppointmentName("");
+    setAppointmentPhone("");
+    setAppointmentDate("");
+    setAppointmentTime("");
+    setAppointmentNotes("");
+    setAppointmentOpen(true);
+  };
+
+  const confirmAppointment = async () => {
+    if (!id || !selectedService) return;
+    if (!appointmentName.trim()) return toast.error(t("beautyDetail.enterName"));
+    if (!appointmentPhone.trim()) return toast.error(t("beautyDetail.enterPhone"));
+    if (!appointmentDate) return toast.error(t("beautyDetail.selectDate"));
+    if (!appointmentTime) return toast.error(t("beautyDetail.selectTime"));
+    setSending(true);
+    try {
+      await createAppointment.mutateAsync({
+        businessId: id,
+        customerId: user?.id ?? null,
+        customerName: appointmentName.trim(),
+        customerPhone: appointmentPhone.trim(),
+        serviceName: selectedService.name,
+        servicePrice: selectedService.price_type === "fixo" ? selectedService.price : null,
+        appointmentDate,
+        appointmentTime,
+        notes: appointmentNotes.trim() || undefined,
+      });
+      toast.success(t("beautyDetail.appointmentSuccess"));
+      setAppointmentOpen(false);
+    } catch (err) {
+      console.error("[appointment] error:", err);
+      toast.error(t("beautyDetail.appointmentError"));
+    } finally {
+      setSending(false);
+    }
   };
 
   const openReport = () => {
@@ -491,6 +540,85 @@ const BeautyDetail = () => {
               </DialogFooter>
             </>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Appointment Dialog */}
+      <Dialog open={appointmentOpen} onOpenChange={setAppointmentOpen}>
+        <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{t("beautyDetail.bookService")}</DialogTitle>
+            <DialogDescription>{selectedService?.name}</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-2">
+            <div className="grid gap-2">
+              <Label htmlFor="apt-name">{t("beautyDetail.customerName")}</Label>
+              <Input
+                id="apt-name"
+                placeholder={t("beautyDetail.yourName")}
+                value={appointmentName}
+                onChange={(e) => setAppointmentName(e.target.value)}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="apt-phone">{t("beautyDetail.customerPhone")}</Label>
+              <Input
+                id="apt-phone"
+                type="tel"
+                placeholder={t("beautyDetail.phonePlaceholder")}
+                value={appointmentPhone}
+                onChange={(e) => setAppointmentPhone(e.target.value)}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="apt-date">{t("beautyDetail.appointmentDate")}</Label>
+              <Input
+                id="apt-date"
+                type="date"
+                min={new Date().toISOString().split("T")[0]}
+                value={appointmentDate}
+                onChange={(e) => setAppointmentDate(e.target.value)}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="apt-time">{t("beautyDetail.appointmentTime")}</Label>
+              <Input
+                id="apt-time"
+                type="time"
+                value={appointmentTime}
+                onChange={(e) => setAppointmentTime(e.target.value)}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="apt-notes">{t("beautyDetail.appointmentNotes")}</Label>
+              <Textarea
+                id="apt-notes"
+                placeholder={t("beautyDetail.appointmentNotesPlaceholder")}
+                value={appointmentNotes}
+                onChange={(e) => setAppointmentNotes(e.target.value)}
+                rows={2}
+              />
+            </div>
+            {selectedService && selectedService.price_type === "fixo" && selectedService.price != null && (
+              <div className="p-2 bg-muted/50 rounded-lg">
+                <p className="text-xs text-muted-foreground">{t("beautyDetail.estimatedPrice")}</p>
+                <p className="text-sm font-bold">{formatCFA(selectedService.price)}</p>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAppointmentOpen(false)}>
+              {t("common.cancel")}
+            </Button>
+            <Button
+              onClick={confirmAppointment}
+              disabled={sending || !appointmentName.trim() || !appointmentPhone.trim() || !appointmentDate || !appointmentTime}
+              className="gap-2"
+            >
+              {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Calendar className="h-4 w-4" />}
+              {sending ? t("common.saving") : t("beautyDetail.bookService")}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

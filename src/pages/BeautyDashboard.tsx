@@ -26,6 +26,7 @@ import { useTranslation } from "react-i18next";
 import { LanguageSelector } from "@/components/LanguageSelector";
 import { useBeautyCategories } from "@/hooks/useProviders";
 import { translateCategoryName } from "@/lib/categoryI18n";
+import AppointmentManagement from "@/components/AppointmentManagement";
 
 type DashboardProfile = {
   id: string;
@@ -203,6 +204,13 @@ const BeautyDashboard = () => {
               <Link to={`/beleza/${profile.id}`} className="text-xs text-primary hover:underline inline-flex items-center justify-center min-h-11 w-full">
                 {t("businessDashboard.viewPublic")}
               </Link>
+            </div>
+
+            <div className="mt-6">
+              <h2 className="font-semibold mb-3 flex items-center gap-2">
+                <Calendar className="h-5 w-5 text-primary" /> {t("beautyDashboard.appointmentsManagement")}
+              </h2>
+              <AppointmentManagement businessId={profile.id} />
             </div>
           </>
         )}
