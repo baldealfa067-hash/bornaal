@@ -90,7 +90,9 @@
       "other": "Autre"
     },
     "blockedByThem": "Cet utilisateur a bloqué cette conversation. Vous ne pouvez pas envoyer de messages.",
-    "cannotSend": "Impossible d'envoyer des messages..."
+    "cannotSend": "Impossible d'envoyer des messages...",
+    "loadError": "Erreur lors du chargement des messages.",
+    "loadErrorHint": "Vérifiez votre connexion et réessayez."
   },
   "conversations": {
     "title": "Conversations",

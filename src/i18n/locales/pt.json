@@ -90,7 +90,9 @@
       "other": "Outro"
     },
     "blockedByThem": "Este utilizador bloqueou esta conversa. Não pode enviar mensagens.",
-    "cannotSend": "Não pode enviar mensagens..."
+    "cannotSend": "Não pode enviar mensagens...",
+    "loadError": "Erro ao carregar mensagens.",
+    "loadErrorHint": "Verifique a sua ligação e tente novamente."
   },
   "conversations": {
     "title": "Conversas",

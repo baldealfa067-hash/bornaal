@@ -80,7 +80,7 @@ export const ChatDialog = ({
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
 
-  const { data: messages = [], isLoading } = useMessages(myId, otherUserId);
+  const { data: messages = [], isLoading, isError } = useMessages(myId, otherUserId);
   const sendMessage = useSendMessage();
   const markAsRead = useMarkMessagesAsRead();
   const { data: isBlocked = false } = useIsBlockedByMe(myId, otherUserId);
@@ -318,13 +318,26 @@ export const ChatDialog = ({
 
       {/* Messages — scrollable area */}
       <div style={{ flex: 1, overflowY: "auto", padding: "16px 16px 8px 16px" }}>
-        {isLoading && messages.length === 0 && (
+        {!otherUserId && (
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", textAlign: "center", color: "var(--muted-foreground)" }}>
+            <p style={{ fontSize: 14 }}>{t("chat.errorNoRecipient")}</p>
+          </div>
+        )}
+
+        {otherUserId && isLoading && messages.length === 0 && (
           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", color: "var(--muted-foreground)" }}>
             <p style={{ fontSize: 14 }}>{t("common.loading")}</p>
           </div>
         )}
 
-        {!isLoading && messages.length === 0 && (
+        {otherUserId && isError && !isLoading && (
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", textAlign: "center", color: "var(--muted-foreground)" }}>
+            <p style={{ fontSize: 14, fontWeight: 500 }}>{t("chat.loadError")}</p>
+            <p style={{ fontSize: 12, marginTop: 4 }}>{t("chat.loadErrorHint")}</p>
+          </div>
+        )}
+
+        {otherUserId && !isLoading && !isError && messages.length === 0 && (
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", textAlign: "center", color: "var(--muted-foreground)" }}>
             <div style={{ width: 64, height: 64, borderRadius: "50%", background: "hsl(var(--primary) / 0.1)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 16 }}>
               <MessageSquare style={{ width: 32, height: 32, opacity: 0.5 }} />

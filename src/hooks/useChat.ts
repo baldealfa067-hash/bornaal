@@ -32,7 +32,6 @@ export const useMessages = (userId: string | null, otherUserId: string | null) =
         .order("created_at", { ascending: true });
 
       if (isAnon) {
-        // Anonymous user: fetch messages where sender_id matches their anon ID
         query = query.or(
           `sender_id.eq.${userId},receiver_id.eq.${otherUserId}`
         );
@@ -43,11 +42,15 @@ export const useMessages = (userId: string | null, otherUserId: string | null) =
       }
 
       const { data, error } = await query;
-      if (error) throw error;
+      if (error) {
+        console.error("[chat] useMessages error:", error.message, error);
+        throw error;
+      }
       return (data ?? []) as Message[];
     },
-    enabled: !!userId && !!otherUserId,
-    refetchInterval: 3000,
+    enabled: !!userId && !!otherUserId && otherUserId.length > 0,
+    retry: 1,
+    staleTime: 10000,
   });
 
 export const useSendMessage = () => {

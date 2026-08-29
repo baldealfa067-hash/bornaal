@@ -90,7 +90,9 @@
       "other": "Outru"
     },
     "blockedByThem": "Uzuizadur blokeu koversa na. N pa posivel manda mensajen.",
-    "cannotSend": "N pa posivel manda mensajen..."
+    "cannotSend": "N pa posivel manda mensajen...",
+    "loadError": "Ero na karga mensajen.",
+    "loadErrorHint": "Verifika to koneksaun i tenta di nobu."
   },
   "conversations": {
     "title": "Koversas",
