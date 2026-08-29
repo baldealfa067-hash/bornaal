@@ -180,12 +180,21 @@ const ChatPage = () => {
     if (!recorder.audioBlob || !userId || !user?.id) return;
     setUploading(true);
     try {
-      const ext = recorder.audioBlob.type.includes("webm") ? "webm" : "mp4";
+      const blob = recorder.audioBlob;
+      if (blob.size === 0) {
+        toast.error(t("chat.sendError"));
+        setUploading(false);
+        return;
+      }
+      const ext = blob.type.includes("webm") ? "webm" : blob.type.includes("mp4") ? "mp4" : "webm";
       const fileName = `${user.id}/chat/voice/${Date.now()}-${crypto.randomUUID()}.${ext}`;
       const { error: uploadError } = await supabase.storage
         .from("portfolio")
-        .upload(fileName, recorder.audioBlob, { contentType: recorder.audioBlob.type });
-      if (uploadError) throw uploadError;
+        .upload(fileName, blob, { contentType: blob.type || "audio/webm" });
+      if (uploadError) {
+        console.error("[chat] voice upload error:", uploadError);
+        throw uploadError;
+      }
 
       const { data: urlData } = supabase.storage.from("portfolio").getPublicUrl(fileName);
       await sendMessage.mutateAsync({
