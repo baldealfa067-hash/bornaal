@@ -150,6 +150,8 @@ export type Database = {
           read: boolean
           receiver_id: string
           sender_id: string
+          message_type: string | null
+          image_url: string | null
         }
         Insert: {
           content: string
@@ -158,6 +160,8 @@ export type Database = {
           read?: boolean
           receiver_id: string
           sender_id: string
+          message_type?: string | null
+          image_url?: string | null
         }
         Update: {
           content?: string
@@ -166,6 +170,8 @@ export type Database = {
           read?: boolean
           receiver_id?: string
           sender_id?: string
+          message_type?: string | null
+          image_url?: string | null
         }
         Relationships: []
       }
