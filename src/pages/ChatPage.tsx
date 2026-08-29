@@ -14,6 +14,7 @@ import {
   Play,
   Pause,
   Loader2,
+  Image as ImageIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -110,6 +111,9 @@ const ChatPage = () => {
   const markAsRead = useMarkMessagesAsRead();
   const recorder = useVoiceRecorder();
   const [uploading, setUploading] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useMessagesRealtime(user?.id ?? null, userId ?? null);
 
@@ -220,6 +224,49 @@ const ChatPage = () => {
     }
   };
 
+  const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > MAX_IMAGE_SIZE) {
+      toast.error(t("common.imageTooLarge"));
+      return;
+    }
+    setSelectedFile(file);
+    const reader = new FileReader();
+    reader.onload = (ev) => setImagePreview(ev.target?.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  const handleSendImage = async () => {
+    if (!selectedFile || !userId || !user?.id) return;
+    setUploading(true);
+    try {
+      const fileName = `${user.id}/chat/images/${Date.now()}-${crypto.randomUUID()}.jpg`;
+      const { error: uploadError } = await supabase.storage
+        .from("portfolio")
+        .upload(fileName, selectedFile, { contentType: selectedFile.type });
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage.from("portfolio").getPublicUrl(fileName);
+      await sendMessage.mutateAsync({
+        senderId: user.id,
+        receiverId: userId,
+        content: urlData.publicUrl,
+        messageType: "image",
+        imageUrl: urlData.publicUrl,
+      });
+      setImagePreview(null);
+      setSelectedFile(null);
+    } catch (err) {
+      console.error("[chat] image send error:", err);
+      toast.error(t("chat.sendError"));
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const groupedMessages: { date: string; messages: Message[] }[] = [];
   let currentDate = "";
   for (const msg of messages) {
@@ -322,6 +369,9 @@ const ChatPage = () => {
                   new Date(nextMsg.created_at).getTime() - new Date(msg.created_at).getTime() > 5 * 60 * 1000);
 
               const isVoice = msg.message_type === "voice";
+              const isImage = msg.message_type === "image" ||
+                msg.content.match(/\.(jpg|jpeg|png|gif|webp)/i) ||
+                (msg.image_url && msg.image_url.length > 0);
 
               return (
                 <div
@@ -350,6 +400,13 @@ const ChatPage = () => {
                   >
                     {isVoice ? (
                       <VoiceMessagePlayer url={msg.content} isMine={isMine} />
+                    ) : isImage ? (
+                      <img
+                        src={msg.image_url || msg.content}
+                        alt={t("chat.imageMessage")}
+                        style={{ borderRadius: 8, maxWidth: "100%", maxHeight: 256, objectFit: "cover", cursor: "pointer" }}
+                        onClick={() => window.open(msg.image_url || msg.content, "_blank")}
+                      />
                     ) : (
                       <p style={{ margin: 0, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{msg.content}</p>
                     )}
@@ -395,8 +452,28 @@ const ChatPage = () => {
         <div ref={messagesEndRef} />
       </div>
 
+      {/* Image Preview */}
+      {imagePreview && (
+        <div style={{ borderTop: "1px solid var(--border)", background: "var(--card)", padding: "8px 12px", flexShrink: 0 }}>
+          <div style={{ position: "relative", display: "inline-block" }}>
+            <img src={imagePreview} alt="Preview" style={{ height: 80, borderRadius: 8, objectFit: "cover" }} />
+            <button
+              onClick={() => { setImagePreview(null); setSelectedFile(null); }}
+              style={{
+                position: "absolute", top: -6, right: -6,
+                background: "hsl(var(--destructive))", color: "white",
+                borderRadius: "50%", padding: 2, border: "none", cursor: "pointer",
+                display: "flex", alignItems: "center", justifyContent: "center",
+              }}
+            >
+              <X style={{ width: 12, height: 12 }} />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Input / Voice Recorder */}
-      <div style={{ borderTop: "1px solid var(--border)", background: "var(--card)", padding: "10px 12px", flexShrink: 0, paddingBottom: "max(10px, env(safe-area-inset-bottom))" }}>
+      <div style={{ borderTop: imagePreview ? "none" : "1px solid var(--border)", background: "var(--card)", padding: "10px 12px", flexShrink: 0, paddingBottom: "max(10px, env(safe-area-inset-bottom))" }}>
         {recorder.state === "recording" ? (
           /* Recording UI */
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -454,6 +531,23 @@ const ChatPage = () => {
         ) : (
           /* Normal text input */
           <div style={{ display: "flex", gap: 8, alignItems: "flex-end" }}>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleImageSelect}
+              style={{ display: "none" }}
+            />
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+              style={{ width: 40, height: 40, flexShrink: 0, borderRadius: 12 }}
+              title={t("common.addImage") as string}
+            >
+              <ImageIcon style={{ width: 20, height: 20 }} />
+            </Button>
             <Button
               variant="ghost"
               size="icon"
@@ -474,11 +568,15 @@ const ChatPage = () => {
             />
             <Button
               size="icon"
-              onClick={handleSend}
-              disabled={!input.trim() || sendMessage.isPending}
+              onClick={imagePreview ? handleSendImage : handleSend}
+              disabled={(!input.trim() && !imagePreview) || sendMessage.isPending || uploading}
               style={{ width: 40, height: 40, flexShrink: 0, borderRadius: 12 }}
             >
-              <Send style={{ width: 16, height: 16 }} />
+              {uploading || sendMessage.isPending ? (
+                <Loader2 style={{ width: 16, height: 16 }} className="animate-spin" />
+              ) : (
+                <Send style={{ width: 16, height: 16 }} />
+              )}
             </Button>
           </div>
         )}
