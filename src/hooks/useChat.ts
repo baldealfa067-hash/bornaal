@@ -92,7 +92,46 @@ export const useSendMessage = () => {
           .catch((err) => console.error("[chat] notification error:", err));
       }
     },
-    onSuccess: (_data, variables) => {
+    onMutate: async (variables) => {
+      if (!variables.senderId) return;
+
+      // Cancel outgoing refetches
+      await qc.cancelQueries({
+        queryKey: ["messages", variables.senderId, variables.receiverId],
+      });
+
+      // Snapshot current cache
+      const previous = qc.getQueryData<Message[]>(
+        ["messages", variables.senderId, variables.receiverId]
+      );
+
+      // Optimistically insert message
+      const optimistic: Message = {
+        id: crypto.randomUUID(),
+        sender_id: variables.senderId,
+        receiver_id: variables.receiverId,
+        content: variables.content,
+        read: false,
+        created_at: new Date().toISOString(),
+      };
+
+      qc.setQueryData<Message[]>(
+        ["messages", variables.senderId, variables.receiverId],
+        (old) => [...(old ?? []), optimistic]
+      );
+
+      return { previous };
+    },
+    onError: (_err, variables, context) => {
+      // Rollback on error
+      if (context?.previous !== undefined && variables.senderId) {
+        qc.setQueryData(
+          ["messages", variables.senderId, variables.receiverId],
+          context.previous
+        );
+      }
+    },
+    onSettled: (_data, _error, variables) => {
       if (variables.senderId) {
         qc.invalidateQueries({
           queryKey: ["messages", variables.senderId, variables.receiverId],
