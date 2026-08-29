@@ -9,6 +9,8 @@ export interface Message {
   content: string;
   read: boolean;
   created_at: string;
+  message_type?: string | null;
+  image_url?: string | null;
 }
 
 export interface ConversationPreview {
@@ -58,16 +60,23 @@ export const useSendMessage = () => {
       senderId,
       receiverId,
       content,
+      messageType,
+      imageUrl,
     }: {
       senderId: string | null;
       receiverId: string;
       content: string;
+      messageType?: string;
+      imageUrl?: string;
     }) => {
-      const { error: msgError } = await supabase.from("messages").insert({
+      const insertData: Record<string, unknown> = {
         sender_id: senderId,
         receiver_id: receiverId,
         content,
-      });
+      };
+      if (messageType) insertData.message_type = messageType;
+      if (imageUrl) insertData.image_url = imageUrl;
+      const { error: msgError } = await supabase.from("messages").insert(insertData);
       if (msgError) throw msgError;
 
       // Create notification for the receiver (non-blocking, only for authenticated senders)
@@ -113,6 +122,8 @@ export const useSendMessage = () => {
         content: variables.content,
         read: false,
         created_at: new Date().toISOString(),
+        message_type: variables.messageType ?? null,
+        image_url: variables.imageUrl ?? null,
       };
 
       qc.setQueryData<Message[]>(

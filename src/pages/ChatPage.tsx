@@ -8,6 +8,12 @@ import {
   ArrowLeft,
   Check,
   CheckCheck,
+  Mic,
+  Square,
+  X,
+  Play,
+  Pause,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -18,8 +24,70 @@ import {
   useMarkMessagesAsRead,
   useMessagesRealtime,
 } from "@/hooks/useChat";
+import { useVoiceRecorder, formatDuration } from "@/hooks/useVoiceRecorder";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { Message } from "@/hooks/useChat";
+
+const VoiceMessagePlayer = ({ url, isMine }: { url: string; isMine: boolean }) => {
+  const [playing, setPlaying] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    const audio = new Audio(url);
+    audioRef.current = audio;
+    audio.addEventListener("timeupdate", () => {
+      if (audio.duration) setProgress((audio.currentTime / audio.duration) * 100);
+    });
+    audio.addEventListener("ended", () => {
+      setPlaying(false);
+      setProgress(0);
+    });
+    return () => {
+      audio.pause();
+      audio.src = "";
+    };
+  }, [url]);
+
+  const toggle = () => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    if (playing) {
+      audio.pause();
+      setPlaying(false);
+    } else {
+      audio.play();
+      setPlaying(true);
+    }
+  };
+
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 180 }}>
+      <button
+        onClick={toggle}
+        style={{
+          width: 32,
+          height: 32,
+          borderRadius: "50%",
+          border: "none",
+          background: isMine ? "hsl(var(--primary-foreground) / 0.2)" : "hsl(var(--primary) / 0.15)",
+          color: "inherit",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          cursor: "pointer",
+          flexShrink: 0,
+        }}
+      >
+        {playing ? <Pause style={{ width: 14, height: 14 }} /> : <Play style={{ width: 14, height: 14, marginLeft: 2 }} />}
+      </button>
+      <div style={{ flex: 1, height: 4, borderRadius: 2, background: isMine ? "hsl(var(--primary-foreground) / 0.2)" : "hsl(var(--muted))", overflow: "hidden" }}>
+        <div style={{ height: "100%", width: `${progress}%`, borderRadius: 2, background: isMine ? "hsl(var(--primary-foreground) / 0.7)" : "hsl(var(--primary))", transition: "width 0.1s" }} />
+      </div>
+    </div>
+  );
+};
 
 const ChatPage = () => {
   const { userId } = useParams<{ userId: string }>();
@@ -40,6 +108,8 @@ const ChatPage = () => {
   const { data: messages = [], isLoading, isError } = useMessages(myId || null, userId ?? null);
   const sendMessage = useSendMessage();
   const markAsRead = useMarkMessagesAsRead();
+  const recorder = useVoiceRecorder();
+  const [uploading, setUploading] = useState(false);
 
   useMessagesRealtime(user?.id ?? null, userId ?? null);
 
@@ -106,6 +176,34 @@ const ChatPage = () => {
     }
   };
 
+  const handleSendVoice = async () => {
+    if (!recorder.audioBlob || !userId || !user?.id) return;
+    setUploading(true);
+    try {
+      const ext = recorder.audioBlob.type.includes("webm") ? "webm" : "mp4";
+      const fileName = `${user.id}/chat/voice/${Date.now()}-${crypto.randomUUID()}.${ext}`;
+      const { error: uploadError } = await supabase.storage
+        .from("portfolio")
+        .upload(fileName, recorder.audioBlob, { contentType: recorder.audioBlob.type });
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage.from("portfolio").getPublicUrl(fileName);
+      await sendMessage.mutateAsync({
+        senderId: user.id,
+        receiverId: userId,
+        content: urlData.publicUrl,
+        messageType: "voice",
+        imageUrl: urlData.publicUrl,
+      });
+      recorder.reset();
+    } catch (err) {
+      console.error("[chat] voice send error:", err);
+      toast.error(t("chat.sendError"));
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -113,7 +211,7 @@ const ChatPage = () => {
     }
   };
 
-  const groupedMessages: { date: string; messages: typeof messages }[] = [];
+  const groupedMessages: { date: string; messages: Message[] }[] = [];
   let currentDate = "";
   for (const msg of messages) {
     const msgDate = new Date(msg.created_at).toLocaleDateString();
@@ -214,6 +312,8 @@ const ChatPage = () => {
                 (nextMsg &&
                   new Date(nextMsg.created_at).getTime() - new Date(msg.created_at).getTime() > 5 * 60 * 1000);
 
+              const isVoice = msg.message_type === "voice";
+
               return (
                 <div
                   key={msg.id}
@@ -226,7 +326,7 @@ const ChatPage = () => {
                   <div
                     style={{
                       maxWidth: "78%",
-                      padding: "8px 14px",
+                      padding: isVoice ? "8px 14px" : "8px 14px",
                       fontSize: 13,
                       lineHeight: 1.5,
                       background: isMine ? "hsl(var(--primary))" : "hsl(var(--muted))",
@@ -239,7 +339,11 @@ const ChatPage = () => {
                       wordBreak: "break-word",
                     }}
                   >
-                    <p style={{ margin: 0, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{msg.content}</p>
+                    {isVoice ? (
+                      <VoiceMessagePlayer url={msg.content} isMine={isMine} />
+                    ) : (
+                      <p style={{ margin: 0, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{msg.content}</p>
+                    )}
                     {showTime && (
                       <div
                         style={{
@@ -282,27 +386,93 @@ const ChatPage = () => {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input */}
+      {/* Input / Voice Recorder */}
       <div style={{ borderTop: "1px solid var(--border)", background: "var(--card)", padding: "10px 12px", flexShrink: 0, paddingBottom: "max(10px, env(safe-area-inset-bottom))" }}>
-        <div style={{ display: "flex", gap: 8, alignItems: "flex-end" }}>
-          <textarea
-            ref={textareaRef}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder={t("chat.typeMessage")}
-            rows={1}
-            style={{ flex: 1, minHeight: 40, maxHeight: 120, padding: "8px 12px", fontSize: 14, lineHeight: 1.4, borderRadius: 12, border: "1px solid var(--input)", background: "var(--background)", color: "var(--foreground)", resize: "none", outline: "none", fontFamily: "inherit" }}
-          />
-          <Button
-            size="icon"
-            onClick={handleSend}
-            disabled={!input.trim() || sendMessage.isPending}
-            style={{ width: 40, height: 40, flexShrink: 0, borderRadius: 12 }}
-          >
-            <Send style={{ width: 16, height: 16 }} />
-          </Button>
-        </div>
+        {recorder.state === "recording" ? (
+          /* Recording UI */
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={recorder.cancelRecording}
+              style={{ width: 36, height: 36, flexShrink: 0 }}
+            >
+              <X style={{ width: 20, height: 20 }} />
+            </Button>
+            <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+              <div style={{ width: 8, height: 8, borderRadius: "50%", background: "hsl(var(--destructive))", animation: "pulse 1.5s infinite" }} />
+              <span style={{ fontSize: 14, fontWeight: 500, color: "hsl(var(--destructive))" }}>
+                {formatDuration(recorder.duration)}
+              </span>
+            </div>
+            <Button
+              size="icon"
+              onClick={recorder.stopRecording}
+              style={{ width: 40, height: 40, flexShrink: 0, borderRadius: 12, background: "hsl(var(--destructive))" }}
+            >
+              <Square style={{ width: 16, height: 16 }} />
+            </Button>
+          </div>
+        ) : recorder.state === "recorded" ? (
+          /* Preview & Send UI */
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={recorder.cancelRecording}
+              style={{ width: 36, height: 36, flexShrink: 0 }}
+            >
+              <X style={{ width: 20, height: 20 }} />
+            </Button>
+            <div style={{ flex: 1 }}>
+              {recorder.audioUrl && (
+                <audio src={recorder.audioUrl} controls style={{ width: "100%", height: 36, borderRadius: 8 }} />
+              )}
+            </div>
+            <Button
+              size="icon"
+              onClick={handleSendVoice}
+              disabled={uploading || sendMessage.isPending}
+              style={{ width: 40, height: 40, flexShrink: 0, borderRadius: 12 }}
+            >
+              {uploading || sendMessage.isPending ? (
+                <Loader2 style={{ width: 16, height: 16 }} className="animate-spin" />
+              ) : (
+                <Send style={{ width: 16, height: 16 }} />
+              )}
+            </Button>
+          </div>
+        ) : (
+          /* Normal text input */
+          <div style={{ display: "flex", gap: 8, alignItems: "flex-end" }}>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={recorder.startRecording}
+              style={{ width: 40, height: 40, flexShrink: 0, borderRadius: 12 }}
+              title={t("chat.voiceMessage") as string}
+            >
+              <Mic style={{ width: 20, height: 20 }} />
+            </Button>
+            <textarea
+              ref={textareaRef}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder={t("chat.typeMessage")}
+              rows={1}
+              style={{ flex: 1, minHeight: 40, maxHeight: 120, padding: "8px 12px", fontSize: 14, lineHeight: 1.4, borderRadius: 12, border: "1px solid var(--input)", background: "var(--background)", color: "var(--foreground)", resize: "none", outline: "none", fontFamily: "inherit" }}
+            />
+            <Button
+              size="icon"
+              onClick={handleSend}
+              disabled={!input.trim() || sendMessage.isPending}
+              style={{ width: 40, height: 40, flexShrink: 0, borderRadius: 12 }}
+            >
+              <Send style={{ width: 16, height: 16 }} />
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );

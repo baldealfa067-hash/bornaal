@@ -59,6 +59,7 @@
     "startConversation": "Kumensa koversa",
     "startConversationHint": "Tenu mensajen pa kumensa koversa.",
     "typeMessage": "Skrivi to mensajen...",
+    "voiceMessage": "Mensajen di bocu",
     "noResponseHint": "Sin risposta? Tenta liga diretu",
     "newMessage": "Mensajen nobu",
     "messageFrom": "{{name}}: {{content}}",
