@@ -42,13 +42,20 @@ const Login = () => {
 
     // Handle Google OAuth callback — assign the role that was selected before redirect
     if (searchParams.get("fromGoogle") === "true") {
+      const savedMode = sessionStorage.getItem("bornaal:google_mode");
       const savedType = sessionStorage.getItem("bornaal:google_profile_type");
+      sessionStorage.removeItem("bornaal:google_mode");
       sessionStorage.removeItem("bornaal:google_profile_type");
 
       const assignRoleAndRedirect = async () => {
         signingUp.current = true;
         try {
-          if (savedType === "business") {
+          if (savedMode === "client") {
+            const { error } = await supabase.rpc("register_as_client");
+            if (error) console.error("Role error:", error);
+            sessionStorage.setItem(JUST_SIGNED_UP_KEY, "1");
+            navigate("/pedidos", { replace: true });
+          } else if (savedType === "business") {
             const { error } = await supabase.rpc("register_as_business");
             if (error) console.error("Role error:", error);
             navigate("/painel-loja/editar", { replace: true });
@@ -149,6 +156,7 @@ const Login = () => {
   };
 
   const handleGoogleLogin = async () => {
+    sessionStorage.setItem("bornaal:google_mode", isClientFlow ? "client" : "professional");
     if (!isClientFlow) {
       sessionStorage.setItem("bornaal:google_profile_type", profileType);
     }
