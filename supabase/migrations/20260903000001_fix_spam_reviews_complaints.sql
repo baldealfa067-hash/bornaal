@@ -16,6 +16,15 @@
 -- ============================================================
 
 -- 1. REVIEWS — índice único para diretas (evita spam mesmo user)
+-- Deduplicar antes: há spam real já em prod que impede criar o índice (ex: 24f51443/7be341e2)
+DELETE FROM public.reviews a
+USING public.reviews b
+WHERE a.request_id IS NULL AND b.request_id IS NULL
+  AND a.user_id IS NOT NULL AND b.user_id IS NOT NULL
+  AND a.provider_id = b.provider_id
+  AND a.user_id = b.user_id
+  AND a.id > b.id;
+
 DROP INDEX IF EXISTS reviews_direct_once_per_user;
 CREATE UNIQUE INDEX reviews_direct_once_per_user
   ON public.reviews (provider_id, user_id)

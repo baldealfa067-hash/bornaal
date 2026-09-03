@@ -29,17 +29,14 @@ AS $$
 DECLARE
   v_key text;
 BEGIN
-  -- 1. Tentar Vault
+  -- 1. Tentar Vault (usar EXECUTE para evitar erro de compilação se schema vault não existir)
   BEGIN
-    SELECT decrypted_secret INTO v_key
-    FROM vault.decrypted_secrets
-    WHERE name = 'supabase_anon_key'
-    LIMIT 1;
+    EXECUTE 'SELECT decrypted_secret FROM vault.decrypted_secrets WHERE name = ''supabase_anon_key'' LIMIT 1' INTO v_key;
     IF v_key IS NOT NULL AND v_key <> '' THEN
       RETURN v_key;
     END IF;
-  EXCEPTION WHEN undefined_table OR undefined_schema THEN
-    -- vault não instalado, ignora
+  EXCEPTION WHEN others THEN
+    -- vault não instalado ou sem permissão, ignora
     NULL;
   END;
 
