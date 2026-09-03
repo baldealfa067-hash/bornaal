@@ -332,4 +332,6 @@ rg -n "zod" src
 grep -n "path=\"/admin" src/App.tsx
 ```
 
+*Atualização 2026-09-03: os ficheiros `migration_completa.sql` e `rls_fix_seguro.sql` referenciados acima **foram removidos do repositório** — não existem mais em disco. A fonte única de verdade é `supabase/migrations/*` incrementais. Não recriar snapshots antigos sem regenerar a partir do estado final.*
+
 *Fim da auditoria — nenhum ficheiro foi modificado além da criação deste relatório.*

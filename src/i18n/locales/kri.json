@@ -176,7 +176,7 @@
     "creatingAccount": "Ta kria konta...",
     "createProviderAccount": "Kria konta di prestaduri",
     "createBusinessAccount": "Kria konta di restoranti",
-    "createClientAccount": "Kria konta di klienti",
+    "createClientAccount": "Kria Konta",
     "afterProvider": "Depu di entra, kompleta o perfil pa apareci na diretoriu.",
     "afterBusiness": "Depu di entra, kompleta o perfil i ajunta o menu.",
     "afterClient": "Publika pedidos e kontrata serviços",
@@ -187,17 +187,15 @@
     "accountCreated": "Konta kriadu. Ta entra...",
     "clientSignupTitle": "Kria Konta di Kliente",
     "clientSignupDesc": "Nom i telefoni nomu — sin email, sin password.",
-    "name": "Nom",
     "namePlaceholder": "Nó imi",
     "phone": "Telefoni",
     "phonePlaceholder": "Ex: 956 123 456",
-    "creatingAccount": "Ta kria konta...",
-    "createClientAccount": "Kria Konta",
     "accountRequired": "Sesoni nesesitu pa disaizon.",
     "belezaProfile": "Beleza i Estetika",
     "belezaName": "Nom di negocio",
     "createBelezaAccount": "Kria konta di Beleza i Estetika",
-    "afterBeleza": "Depu di entra, kompleta o perfil i ajunta katalogu di servisus."
+    "afterBeleza": "Depu di entra, kompleta o perfil i ajunta katalogu di servisus.",
+    "checkEmailToConfirm": "Verifika bu email pa kofirma konta."
   },
   "forgotPassword": {
     "title": "Rikuperu palavra-pasi",

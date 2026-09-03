@@ -181,7 +181,7 @@
     "creatingAccount": "Creating account...",
     "createProviderAccount": "Create provider account",
     "createBusinessAccount": "Create restaurant account",
-    "createClientAccount": "Create customer account",
+    "createClientAccount": "Create Account",
     "afterProvider": "After signing in, complete your profile to appear in the directory.",
     "afterBusiness": "After signing in, complete your business profile and add the menu.",
     "afterClient": "Post requests and track the status of services.",
@@ -192,17 +192,15 @@
     "accountCreated": "Account created. Signing in...",
     "clientSignupTitle": "Create Client Account",
     "clientSignupDesc": "Name and phone only — no email, no password.",
-    "name": "Name",
     "namePlaceholder": "Your name",
     "phone": "Phone",
     "phonePlaceholder": "E.g. 956 123 456",
-    "creatingAccount": "Creating account...",
-    "createClientAccount": "Create Account",
     "accountRequired": "Login required for this action.",
     "belezaProfile": "Beauty & Aesthetics",
     "belezaName": "Business name",
     "createBelezaAccount": "Create Beauty & Aesthetics account",
-    "afterBeleza": "After signing in, complete your business profile and add your services catalog."
+    "afterBeleza": "After signing in, complete your business profile and add your services catalog.",
+    "checkEmailToConfirm": "Check your email to confirm your account."
   },
   "forgotPassword": {
     "title": "Recover password",

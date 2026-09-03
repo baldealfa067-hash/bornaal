@@ -16,6 +16,9 @@ dist-ssr
 .env
 .env.*
 !.env.example
+# Snapshots SQL antigos — nunca comitar (reintroduzem RLS vulnerável)
+migration_completa.sql
+rls_fix_seguro.sql
 
 # Source logo files (processed logo at src/assets/logo.png)
 imagem.png/

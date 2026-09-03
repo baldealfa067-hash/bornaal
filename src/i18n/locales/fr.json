@@ -181,7 +181,7 @@
     "creatingAccount": "Création du compte...",
     "createProviderAccount": "Créer un compte prestataire",
     "createBusinessAccount": "Créer un compte restaurant",
-    "createClientAccount": "Créer un compte client",
+    "createClientAccount": "Créer le compte",
     "afterProvider": "Après connexion, complétez votre profil pour apparaître dans l'annuaire.",
     "afterBusiness": "Après connexion, complétez le profil de votre établissement et ajoutez le menu.",
     "afterClient": "Publiez des demandes et suivez l'état des services.",
@@ -192,17 +192,15 @@
     "accountCreated": "Compte créé. Connexion...",
     "clientSignupTitle": "Créer un compte Client",
     "clientSignupDesc": "Nom et téléphone uniquement — pas d'email, pas de mot de passe.",
-    "name": "Nom",
     "namePlaceholder": "Votre nom",
     "phone": "Téléphone",
     "phonePlaceholder": "Ex: 956 123 456",
-    "creatingAccount": "Création du compte...",
-    "createClientAccount": "Créer le compte",
     "accountRequired": "Connexion requise pour cette action.",
     "belezaProfile": "Beauté & Esthétique",
     "belezaName": "Nom du commerce",
     "createBelezaAccount": "Créer un compte Beauté & Esthétique",
-    "afterBeleza": "Après connexion, complétez le profil de votre commerce et ajoutez votre catalogue de services."
+    "afterBeleza": "Après connexion, complétez le profil de votre commerce et ajoutez votre catalogue de services.",
+    "checkEmailToConfirm": "Vérifiez votre email pour confirmer le compte."
   },
   "forgotPassword": {
     "title": "Récupérer le mot de passe",

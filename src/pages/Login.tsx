@@ -119,18 +119,22 @@ const Login = () => {
         : profileType === "beleza" ? "/painel-beleza/editar"
         : "/painel";
 
+      // Passar profile_type no metadata para o trigger handle_new_user criar a role
+      // mesmo quando Confirm Email = ON (session === null)
+      const profileTypeForMeta = isClientFlow ? "client" : profileType;
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           emailRedirectTo: `${window.location.origin}${redirectPath}`,
-          data: { name },
+          data: { name, profile_type: profileTypeForMeta },
         },
       });
       if (error || !data.user) {
         return toast.error(error?.message ?? t("auth.registerError"));
       }
       if (data.session) {
+        // Confirm email OFF — session existe, garantir role via RPC também (trigger já fez, mas RPC é idempotente)
         if (isClientFlow) {
           const { error: roleErr } = await supabase.rpc("register_as_client");
           if (roleErr) console.error("Role error:", roleErr);
@@ -147,7 +151,9 @@ const Login = () => {
         sessionStorage.setItem(JUST_SIGNED_UP_KEY, "1");
         navigate(redirectPath, { replace: true });
       } else {
-        toast.success(t("auth.accountCreated"));
+        // Confirm email ON — sem session, role já criada pelo trigger handle_new_user via metadata
+        // Instruir utilizador a confirmar email
+        toast.success(t("auth.accountCreated") + " " + t("auth.checkEmailToConfirm", "Verifique o seu email para confirmar a conta."));
       }
     } finally {
       signingUp.current = false;

@@ -190,6 +190,7 @@
     "registerError": "Erro no registo",
     "loginSuccess": "Sessão iniciada",
     "accountCreated": "Conta criada. A entrar...",
+    "checkEmailToConfirm": "Verifique o seu email para confirmar a conta.",
     "clientSignupTitle": "Criar conta de Cliente",
     "clientSignupDesc": "Apenas nome e telefone — sem email, sem password.",
     "name": "Nome",
