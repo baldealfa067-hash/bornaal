@@ -260,10 +260,9 @@ const Login = () => {
         {!isClientFlow && (
           <div className="space-y-2">
             <Label>{t("auth.profileType")}</Label>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 gap-2">
               {([
                 { value: "provider", icon: Wrench, label: t("auth.providerProfile") },
-                { value: "business", icon: Store, label: t("auth.businessProfile") },
                 { value: "beleza", icon: Scissors, label: t("auth.belezaProfile") },
               ] as const).map(({ value, icon: Icon, label }) => (
                 <button

@@ -4,10 +4,9 @@ import { Input } from "@/components/ui/input";
 import { Search, MapPin, ChevronRight } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import servicosBg from "@/assets/cat-servicos.jpg";
-import restaurantesBg from "@/assets/cat-restaurantes.jpg";
 import belezaBg from "@/assets/cat-beleza.jpg";
 
-type SectionKey = "servicos" | "lojas" | "beleza";
+type SectionKey = "servicos" | "beleza";
 
 const Index = () => {
   const { t } = useTranslation();
@@ -16,7 +15,6 @@ const Index = () => {
 
   const cards: { tipo: SectionKey; title: string; tagline: string; bg: string }[] = [
     { tipo: "servicos", title: t("home.providersShort"), tagline: t("home.servicosTagline"), bg: servicosBg },
-    { tipo: "lojas", title: t("home.shopsShort"), tagline: t("home.restaurantesTagline"), bg: restaurantesBg },
     { tipo: "beleza", title: t("home.belezaShort"), tagline: t("home.belezaTagline"), bg: belezaBg },
   ];
 

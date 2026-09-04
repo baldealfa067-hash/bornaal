@@ -15,13 +15,12 @@ import { getCategoryName } from "@/lib/categoryI18n";
 
 const PAGE_SIZE = 10;
 
-type SectionKey = "servicos" | "lojas" | "beleza";
+type SectionKey = "servicos" | "beleza";
 
 const Explore = () => {
   const { t, i18n } = useTranslation();
   const SECTIONS = [
     { key: "servicos" as const, label: t("explore.providersTitle"), short: t("explore.providersShort") },
-    { key: "lojas" as const, label: t("explore.shopsTitle"), short: t("explore.shopsShort") },
     { key: "beleza" as const, label: t("explore.belezaTitle"), short: t("explore.belezaShort") },
   ] as const;
   const [searchParams, setSearchParams] = useSearchParams();
@@ -36,16 +35,17 @@ const Explore = () => {
   const [page, setPage] = useState(1);
 
   const { data: providers = [], isLoading: loadingProviders, error: providersError } = useProviders(
-    section === "lojas" ? "business" : section === "beleza" ? "beleza" : "provider"
+    section === "beleza" ? "beleza" : "provider"
   );
   const { data: serviceCategories = [] } = useCategories();
+  // Mantido por compatibilidade interna (não exibido ao público)
   const { data: businessCategories = [] } = useBusinessCategories();
   const { data: beautyCategories = [] } = useBeautyCategories();
   const { data: bairros = [] } = useBairros();
   const bairroOptions = bairros.length ? [BAIRROS_FILTER[0], ...bairros] : BAIRROS_FILTER;
   const displayBairro = (loc: string) => (loc === BAIRROS_FILTER[0] ? t("common.allNeighborhoods") : loc);
 
-  const categories = section === "lojas" ? businessCategories : section === "beleza" ? beautyCategories : serviceCategories;
+  const categories = section === "beleza" ? beautyCategories : serviceCategories;
 
   // Sync q param to search state on mount
   useEffect(() => {
