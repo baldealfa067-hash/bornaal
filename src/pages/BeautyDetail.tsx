@@ -1,7 +1,7 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useRef, useState } from "react";
-import { AlertCircle, MapPin, Phone, BadgeCheck, CheckCircle2, ShieldAlert, Scissors, Loader2, ShoppingCart, Plus, Minus, MessageSquare, MessageCircle } from "lucide-react";
+import { AlertCircle, MapPin, Phone, BadgeCheck, CheckCircle2, ShieldAlert, Scissors, Loader2, ShoppingCart, Plus, Minus, MessageSquare, MessageCircle, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -26,7 +26,6 @@ import { useUnreadFromUser } from "@/hooks/useChat";
 import { useRequireClientAuth } from "@/hooks/useRequireClientAuth";
 import { ClientSignupDialog } from "@/components/ClientSignupDialog";
 import { useCreateAppointment } from "@/hooks/useAppointments";
-import { Calendar } from "@/components/ui/calendar";
 
 type ReportReasonKey = "food" | "charge" | "behaviour" | "fake" | "hygiene" | "other";
 const REPORT_REASONS: { key: ReportReasonKey; labelKey: string }[] = [
